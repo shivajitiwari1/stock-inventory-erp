@@ -205,7 +205,7 @@ const UsersPage: React.FC = () => {
         <UserModal
           user={editingUser}
           onClose={() => { setShowModal(false); setEditingUser(null); }}
-          onSave={(user) => {
+          onSave={(user: User) => {
             if (editingUser) {
               setUsers(users.map(u => u.id === user.id ? user : u));
             } else {

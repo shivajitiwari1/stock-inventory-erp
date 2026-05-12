@@ -157,7 +157,7 @@ export default function WarehousesPage() {
         <WarehouseModal
           warehouse={editingWarehouse}
           onClose={() => { setShowModal(false); setEditingWarehouse(null); }}
-          onSave={(warehouse) => {
+          onSave={(warehouse: Warehouse) => {
             if (editingWarehouse) {
               setWarehouses(warehouses.map(w => w.id === warehouse.id ? warehouse : w));
             } else {

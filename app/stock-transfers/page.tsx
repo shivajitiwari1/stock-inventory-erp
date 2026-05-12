@@ -168,7 +168,7 @@ export default function StockTransfersPage() {
           transfer={editingTransfer}
           warehouses={warehouses}
           onClose={() => { setShowModal(false); setEditingTransfer(null); }}
-          onSave={(saved) => {
+          onSave={(saved: Transfer) => {
             if (editingTransfer) {
               setTransfers(transfers.map((t) => (t.id === saved.id ? saved : t)));
             } else {

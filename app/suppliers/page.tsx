@@ -145,7 +145,7 @@ export default function SuppliersPage() {
         <SupplierModal
           supplier={editingSupplier}
           onClose={() => { setShowModal(false); setEditingSupplier(null); }}
-          onSave={(supplier) => {
+          onSave={(supplier: Supplier) => {
             if (editingSupplier) {
               setSuppliers(suppliers.map(s => s.id === supplier.id ? supplier : s));
             } else {
