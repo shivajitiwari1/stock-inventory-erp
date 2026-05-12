@@ -1,26 +1,147 @@
 @import "tailwindcss";
 
+/* Enable .dark class-based dark mode for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f9fafb;
+  --foreground: #111827;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  color-scheme: dark;
+  --background: #0f172a;
+  --foreground: #e2e8f0;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
+
+/* ================================================================
+   DARK MODE OVERRIDES
+   Only targets neutral/gray classes — leaves color badges intact
+   ================================================================ */
+
+/* --- Gradient from/to colors (gray scale) --- */
+.dark .from-gray-50  { --tw-gradient-from: #0f172a !important; }
+.dark .from-gray-100 { --tw-gradient-from: #1e293b !important; }
+.dark .from-gray-200 { --tw-gradient-from: #334155 !important; }
+.dark .to-gray-50    { --tw-gradient-to:   #0f172a !important; }
+.dark .to-gray-100   { --tw-gradient-to:   #1e293b !important; }
+.dark .to-gray-200   { --tw-gradient-to:   #334155 !important; }
+.dark .via-gray-100  { --tw-gradient-via:  #1e293b !important; }
+
+/* --- Backgrounds --- */
+.dark .bg-white          { background-color: #1e293b !important; }
+.dark .bg-gray-50        { background-color: #0f172a !important; }
+.dark .bg-gray-100       { background-color: #1e293b !important; }
+.dark .bg-gray-200       { background-color: #475569 !important; }
+.dark .min-h-screen.bg-gradient-to-br.from-blue-50 { background: #0f172a !important; }
+
+/* --- Text (neutral scale — fully readable against #1e293b card bg) --- */
+.dark .text-gray-900     { color: #f1f5f9 !important; }  /* slate-100  ~13:1 */
+.dark .text-gray-800     { color: #e2e8f0 !important; }  /* slate-200  ~11:1 */
+.dark .text-gray-700     { color: #cbd5e1 !important; }  /* slate-300  ~8:1  */
+.dark .text-gray-600     { color: #94a3b8 !important; }  /* slate-400  ~4.5:1 */
+.dark .text-gray-500     { color: #94a3b8 !important; }  /* slate-400  ~4.5:1 */
+.dark .text-gray-400     { color: #94a3b8 !important; }  /* slate-400  ~4.5:1 – was too dark */
+.dark .text-gray-300     { color: #64748b !important; }  /* slate-500  dim/disabled */
+
+/* --- Purple text (dark purples invisible on dark bg) --- */
+.dark .text-purple-900   { color: #e9d5ff !important; }
+.dark .text-purple-800   { color: #ddd6fe !important; }
+.dark .text-purple-700   { color: #c4b5fd !important; }
+.dark .text-purple-600   { color: #a78bfa !important; }
+.dark .text-purple-500   { color: #a78bfa !important; }
+
+/* --- Blue dark shades --- */
+.dark .text-blue-800     { color: #bfdbfe !important; }
+.dark .text-blue-900     { color: #dbeafe !important; }
+
+/* --- Green dark shades --- */
+.dark .text-green-800    { color: #bbf7d0 !important; }
+.dark .text-green-900    { color: #dcfce7 !important; }
+
+/* --- Red dark shades --- */
+.dark .text-red-800      { color: #fecaca !important; }
+.dark .text-red-900      { color: #fee2e2 !important; }
+
+/* --- Yellow/amber dark shades --- */
+.dark .text-yellow-800   { color: #fde68a !important; }
+.dark .text-yellow-900   { color: #fef3c7 !important; }
+
+/* --- Borders --- */
+.dark .border-gray-200   { border-color: #334155 !important; }
+.dark .border-gray-100   { border-color: #1e293b !important; }
+.dark .border-gray-300   { border-color: #475569 !important; }
+
+/* --- Hover states --- */
+.dark .hover\:bg-gray-50:hover   { background-color: #1e293b !important; }
+.dark .hover\:bg-gray-100:hover  { background-color: #334155 !important; }
+.dark .hover\:bg-gray-400:hover  { background-color: #475569 !important; }
+
+/* --- Divide lines (table rows) --- */
+.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-color: #334155 !important; }
+.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) { border-color: #1e293b !important; }
+
+/* --- Form inputs --- */
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark textarea,
+.dark select {
+  background-color: #1e293b !important;
+  color: #f1f5f9 !important;
+  border-color: #475569 !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+/* --- Gray buttons --- */
+.dark .bg-gray-300 { background-color: #64748b !important; }
+.dark .hover\:bg-gray-300:hover  { background-color: #64748b !important; }
+.dark .hover\:bg-gray-200:hover  { background-color: #475569 !important; }
+
+/* --- Shadows --- */
+.dark .shadow-sm   { box-shadow: 0 1px 3px rgba(0,0,0,0.4) !important; }
+.dark .shadow-md   { box-shadow: 0 4px 6px rgba(0,0,0,0.4) !important; }
+.dark .shadow-lg   { box-shadow: 0 10px 20px rgba(0,0,0,0.5) !important; }
+.dark .shadow-xl   { box-shadow: 0 20px 40px rgba(0,0,0,0.5) !important; }
+.dark .shadow-2xl  { box-shadow: 0 25px 50px rgba(0,0,0,0.6) !important; }
+
+/* --- Modal overlay --- */
+.dark .bg-black.bg-opacity-50 { background-color: rgba(0,0,0,0.7) !important; }
+
+/* --- Gradient stat cards in Dashboard — keep their colors, just slightly darken --- */
+.dark .from-blue-500   { --tw-gradient-from: #1d4ed8; }
+.dark .from-green-500  { --tw-gradient-from: #15803d; }
+.dark .from-yellow-500 { --tw-gradient-from: #b45309; }
+.dark .from-red-500    { --tw-gradient-from: #b91c1c; }
+
+/* --- Purple section backgrounds (variant distribution box, etc.) --- */
+.dark .bg-purple-50  { background-color: #1e1b4b !important; }
+.dark .border-purple-200 { border-color: #4338ca !important; }
+.dark .bg-purple-200 { background-color: #312e81 !important; }
+
+/* --- Other light tinted backgrounds that should darken --- */
+.dark .bg-blue-50    { background-color: #172554 !important; }
+.dark .bg-green-50   { background-color: #052e16 !important; }
+.dark .bg-yellow-50  { background-color: #1c1917 !important; }
+.dark .bg-red-50     { background-color: #450a0a !important; }
+
+/* --- Tinted borders in dark mode --- */
+.dark .border-purple-200 { border-color: #4338ca !important; }
+.dark .border-blue-200   { border-color: #1d4ed8 !important; }
+.dark .border-green-200  { border-color: #166534 !important; }
+.dark .border-yellow-200 { border-color: #92400e !important; }
+.dark .border-red-200    { border-color: #991b1b !important; }
+
+/* --- Scrollbar (webkit) --- */
+.dark ::-webkit-scrollbar             { background: #0f172a; }
+.dark ::-webkit-scrollbar-thumb       { background: #334155; border-radius: 4px; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }

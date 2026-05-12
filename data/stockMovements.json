@@ -1,0 +1,41 @@
+{
+  "stockMovements": [
+    {
+      "id": "SM001",
+      "type": "STOCK_IN",
+      "productId": "P001",
+      "warehouseId": "WH001",
+      "quantity": 20,
+      "supplierId": "SUP001",
+      "reference": "PO-2026-001",
+      "notes": "Purchase entry",
+      "timestamp": "2026-05-09T10:00:00Z",
+      "userId": "U001",
+      "userName": "John Admin"
+    },
+    {
+      "id": "SM002",
+      "type": "STOCK_OUT",
+      "productId": "P001",
+      "warehouseId": "WH001",
+      "quantity": 5,
+      "reference": "SO-2026-001",
+      "notes": "Sales entry",
+      "timestamp": "2026-05-09T14:30:00Z",
+      "userId": "U002",
+      "userName": "Jane Manager"
+    },
+    {
+      "id": "SM003",
+      "type": "ADJUSTMENT",
+      "productId": "P002",
+      "warehouseId": "WH001",
+      "quantity": -3,
+      "adjustmentReason": "DAMAGED",
+      "notes": "Damaged items removed",
+      "timestamp": "2026-05-08T11:15:00Z",
+      "userId": "U003",
+      "userName": "Bob Staff"
+    }
+  ]
+}

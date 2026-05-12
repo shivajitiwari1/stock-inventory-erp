@@ -1,0 +1,26 @@
+{
+  "warehouses": [
+    {
+      "id": "WH001",
+      "name": "Main Warehouse",
+      "location": "San Francisco",
+      "address": "789 Warehouse Blvd",
+      "manager": "John Smith",
+      "capacity": 10000,
+      "currentUsage": 2500,
+      "status": "ACTIVE",
+      "createdAt": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "WH002",
+      "name": "Secondary Warehouse",
+      "location": "Los Angeles",
+      "address": "321 Distribution Center",
+      "manager": "Jane Doe",
+      "capacity": 5000,
+      "currentUsage": 1200,
+      "status": "ACTIVE",
+      "createdAt": "2026-02-01T00:00:00Z"
+    }
+  ]
+}

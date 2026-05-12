@@ -1,0 +1,26 @@
+{
+  "suppliers": [
+    {
+      "id": "SUP001",
+      "name": "Tech Supplies Inc",
+      "email": "contact@techsupplies.com",
+      "phone": "+1-555-0101",
+      "address": "123 Tech Street, San Francisco, CA",
+      "city": "San Francisco",
+      "country": "USA",
+      "status": "ACTIVE",
+      "createdAt": "2026-01-10T09:00:00Z"
+    },
+    {
+      "id": "SUP002",
+      "name": "Electronics Global",
+      "email": "sales@electronicsglob.com",
+      "phone": "+1-555-0102",
+      "address": "456 Electronics Ave, New York, NY",
+      "city": "New York",
+      "country": "USA",
+      "status": "ACTIVE",
+      "createdAt": "2026-02-15T10:30:00Z"
+    }
+  ]
+}

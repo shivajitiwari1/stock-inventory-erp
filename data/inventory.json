@@ -1,0 +1,136 @@
+{
+  "inventory": [
+    {
+      "id": "INV001",
+      "productId": "P001",
+      "warehouseId": "WH001",
+      "totalQuantity": 44,
+      "availableQuantity": 44,
+      "reservedQuantity": 0,
+      "damagedQuantity": 0,
+      "lostQuantity": 0,
+      "lastUpdated": "2026-05-11T04:42:43.644Z"
+    },
+    {
+      "id": "INV002",
+      "productId": "P002",
+      "warehouseId": "WH001",
+      "totalQuantity": 8,
+      "availableQuantity": 8,
+      "reservedQuantity": 0,
+      "damagedQuantity": 0,
+      "lostQuantity": 0,
+      "lastUpdated": "2026-05-09T15:30:00Z"
+    },
+    {
+      "id": "INV003",
+      "productId": "P003",
+      "warehouseId": "WH001",
+      "totalQuantity": 15,
+      "availableQuantity": 15,
+      "reservedQuantity": 0,
+      "damagedQuantity": 0,
+      "lostQuantity": 0,
+      "lastUpdated": "2026-05-08T12:00:00Z"
+    },
+    {
+      "id": "INV004",
+      "productId": "P004",
+      "warehouseId": "WH001",
+      "totalQuantity": 85,
+      "availableQuantity": 80,
+      "reservedQuantity": 5,
+      "damagedQuantity": 0,
+      "lostQuantity": 0,
+      "lastUpdated": "2026-05-10T09:00:00Z"
+    },
+    {
+      "id": "INV005",
+      "productId": "P005",
+      "warehouseId": "WH001",
+      "totalQuantity": 30,
+      "availableQuantity": 28,
+      "reservedQuantity": 2,
+      "damagedQuantity": 0,
+      "lostQuantity": 0,
+      "lastUpdated": "2026-05-09T10:00:00Z"
+    },
+    {
+      "id": "INV006",
+      "productId": "P006",
+      "warehouseId": "WH001",
+      "totalQuantity": 12,
+      "availableQuantity": 12,
+      "reservedQuantity": 0,
+      "damagedQuantity": 0,
+      "lostQuantity": 0,
+      "lastUpdated": "2026-05-08T14:00:00Z"
+    },
+    {
+      "id": "INV007",
+      "productId": "P007",
+      "warehouseId": "WH001",
+      "totalQuantity": 20,
+      "availableQuantity": 10,
+      "reservedQuantity": 10,
+      "damagedQuantity": 0,
+      "lostQuantity": 0,
+      "lastUpdated": "2026-05-11T04:22:21.379Z"
+    },
+    {
+      "id": "INV008",
+      "productId": "P008",
+      "warehouseId": "WH002",
+      "totalQuantity": 20,
+      "availableQuantity": 18,
+      "reservedQuantity": 2,
+      "damagedQuantity": 0,
+      "lostQuantity": 0,
+      "lastUpdated": "2026-05-10T10:00:00Z"
+    },
+    {
+      "id": "INV009",
+      "productId": "P009",
+      "warehouseId": "WH002",
+      "totalQuantity": 4,
+      "availableQuantity": 4,
+      "reservedQuantity": 0,
+      "damagedQuantity": 0,
+      "lostQuantity": 0,
+      "lastUpdated": "2026-05-09T13:00:00Z"
+    },
+    {
+      "id": "INV010",
+      "productId": "P010",
+      "warehouseId": "WH002",
+      "totalQuantity": 45,
+      "availableQuantity": 40,
+      "reservedQuantity": 5,
+      "damagedQuantity": 0,
+      "lostQuantity": 0,
+      "lastUpdated": "2026-05-10T11:00:00Z"
+    },
+    {
+      "id": "INV011",
+      "productId": "P011",
+      "warehouseId": "WH002",
+      "totalQuantity": 6,
+      "availableQuantity": 6,
+      "reservedQuantity": 0,
+      "damagedQuantity": 0,
+      "lostQuantity": 0,
+      "lastUpdated": "2026-05-08T09:00:00Z"
+    },
+    {
+      "id": "INV012",
+      "productId": "P012",
+      "warehouseId": "WH002",
+      "totalQuantity": 200,
+      "availableQuantity": 190,
+      "reservedQuantity": 10,
+      "damagedQuantity": 0,
+      "lostQuantity": 0,
+      "lastUpdated": "2026-05-10T07:00:00Z"
+    }
+  ]
+}

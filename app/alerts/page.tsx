@@ -1,0 +1,150 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
+interface AlertItem {
+  id: string;
+  productId: string;
+  warehouseId: string;
+  productName: string;
+  warehouseName: string;
+  availableQuantity: number;
+  minQuantity: number;
+}
+
+export default function AlertsPage() {
+  const [lowStock, setLowStock] = useState<AlertItem[]>([]);
+  const [outOfStock, setOutOfStock] = useState<AlertItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [invRes, prodRes, whRes] = await Promise.all([
+          fetch('/api/inventory'),
+          fetch('/api/products'),
+          fetch('/api/warehouses'),
+        ]);
+        const [inventory, products, warehouses] = await Promise.all([
+          invRes.json(),
+          prodRes.json(),
+          whRes.json(),
+        ]);
+
+        const enriched = (inventory || []).map((item: any) => {
+          const product = (products || []).find((p: any) => p.id === item.productId) || {};
+          const warehouse = (warehouses || []).find((w: any) => w.id === item.warehouseId) || {};
+          return {
+            ...item,
+            productName: product.name || item.productId,
+            warehouseName: warehouse.name || item.warehouseId,
+            minQuantity: product.minQuantity || 0,
+          };
+        });
+
+        setLowStock(enriched.filter((item: any) =>
+          item.minQuantity > 0 && item.availableQuantity > 0 && item.availableQuantity <= item.minQuantity
+        ));
+        setOutOfStock(enriched.filter((item: any) => item.availableQuantity === 0));
+      } catch (error) {
+        console.error('Failed to fetch alerts data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Alerts</h1>
+        <p className="mt-2 text-gray-600">Track low stock and out of stock conditions across your warehouses.</p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <p className="text-sm text-gray-500">Low Stock</p>
+          <p className="mt-3 text-3xl font-semibold text-yellow-600">{lowStock.length}</p>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <p className="text-sm text-gray-500">Out of Stock</p>
+          <p className="mt-3 text-3xl font-semibold text-red-600">{outOfStock.length}</p>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <p className="text-sm text-gray-500">Total Alert Items</p>
+          <p className="mt-3 text-3xl font-semibold text-gray-900">{lowStock.length + outOfStock.length}</p>
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="rounded-xl bg-white shadow-sm border border-gray-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900">Low Stock Alerts</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Product</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Warehouse</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Available</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Min Qty</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {lowStock.length === 0 ? (
+                  <tr><td colSpan={4} className="px-6 py-6 text-center text-gray-400">No low stock alerts.</td></tr>
+                ) : lowStock.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm text-gray-900">{item.productName}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500">{item.warehouseName}</td>
+                    <td className="px-6 py-4 text-sm text-right text-yellow-600 font-semibold">{item.availableQuantity}</td>
+                    <td className="px-6 py-4 text-sm text-right text-gray-900">{item.minQuantity}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="rounded-xl bg-white shadow-sm border border-gray-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900">Out of Stock Alerts</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Product</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Warehouse</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {outOfStock.length === 0 ? (
+                  <tr><td colSpan={3} className="px-6 py-6 text-center text-gray-400">No out of stock items.</td></tr>
+                ) : outOfStock.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm text-gray-900">{item.productName}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500">{item.warehouseName}</td>
+                    <td className="px-6 py-4 text-sm text-right text-red-600 font-semibold">Out of Stock</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
