@@ -86,18 +86,18 @@ const Dashboard: React.FC<{ data: DashboardData }> = ({ data }) => {
       {/* Stock Summary Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Stock Trend Chart */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-gray-800">Stock Trend</h3>
+        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-100 min-w-0">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-800">Stock Trend</h3>
             <div className="p-2 bg-blue-100 rounded-lg">
               <FiTrendingUp className="w-5 h-5 text-blue-600" />
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={data.stockTrend}>
+          <ResponsiveContainer width="100%" height={240}>
+            <LineChart data={data.stockTrend} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} />
-              <XAxis dataKey="date" stroke={chartAxisColor} fontSize={12} tick={{ fill: chartAxisColor }} />
-              <YAxis stroke={chartAxisColor} fontSize={12} tick={{ fill: chartAxisColor }} />
+              <XAxis dataKey="date" stroke={chartAxisColor} fontSize={11} tick={{ fill: chartAxisColor }} />
+              <YAxis stroke={chartAxisColor} fontSize={11} tick={{ fill: chartAxisColor }} width={40} />
               <Tooltip
                 contentStyle={{
                   backgroundColor: chartBgColor,
@@ -107,14 +107,14 @@ const Dashboard: React.FC<{ data: DashboardData }> = ({ data }) => {
                   boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
                 }}
               />
-              <Legend wrapperStyle={{ color: chartAxisColor }} />
+              <Legend wrapperStyle={{ color: chartAxisColor, fontSize: '12px' }} />
               <Line
                 type="monotone"
                 dataKey="quantity"
                 stroke="#3b82f6"
                 strokeWidth={3}
-                dot={{ fill: '#3b82f6', strokeWidth: 2, r: 6 }}
-                activeDot={{ r: 8, stroke: '#3b82f6', strokeWidth: 2, fill: isDark ? '#1e293b' : '#ffffff' }}
+                dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#3b82f6', strokeWidth: 2, fill: isDark ? '#1e293b' : '#ffffff' }}
                 name="Available Stock"
               />
             </LineChart>
@@ -122,35 +122,22 @@ const Dashboard: React.FC<{ data: DashboardData }> = ({ data }) => {
         </div>
 
         {/* Category Distribution */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-gray-800">Stock by Category</h3>
+        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-100 min-w-0">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-800">Stock by Category</h3>
             <div className="p-2 bg-purple-100 rounded-lg">
               <FiPackage className="w-5 h-5 text-purple-600" />
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={data.categoryDistribution}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent, x, y, midAngle }) => (
-                  <text x={x} y={y} fill={isDark ? '#cbd5e1' : '#374151'} textAnchor="middle" dominantBaseline="central" fontSize={12}>
-                    {`${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
-                  </text>
-                )}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="value"
-                stroke={isDark ? '#1e293b' : '#ffffff'}
-                strokeWidth={2}
-              >
-                {data.categoryDistribution.map((entry: any, index: number) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart
+              data={data.categoryDistribution}
+              layout="vertical"
+              margin={{ top: 0, right: 20, left: 0, bottom: 0 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} horizontal={false} />
+              <XAxis type="number" stroke={chartAxisColor} fontSize={11} tick={{ fill: chartAxisColor }} />
+              <YAxis type="category" dataKey="name" stroke={chartAxisColor} fontSize={11} tick={{ fill: chartAxisColor }} width={80} />
               <Tooltip
                 contentStyle={{
                   backgroundColor: chartBgColor,
@@ -160,7 +147,12 @@ const Dashboard: React.FC<{ data: DashboardData }> = ({ data }) => {
                   boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
                 }}
               />
-            </PieChart>
+              <Bar dataKey="value" name="Stock" radius={[0, 4, 4, 0]}>
+                {data.categoryDistribution.map((entry: any, index: number) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Bar>
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
@@ -212,23 +204,23 @@ const Dashboard: React.FC<{ data: DashboardData }> = ({ data }) => {
             <FiClock className="w-5 h-5 text-indigo-600" />
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6">
+          <table className="w-full min-w-[400px]">
             <thead className="bg-gray-50 rounded-lg">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Product</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Type</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Quantity</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Warehouse</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Date</th>
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Product</th>
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Type</th>
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Qty</th>
+                <th className="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Warehouse</th>
+                <th className="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Date</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {data.recentMovements.slice(0, 8).map((movement: any) => (
                 <tr key={movement.id} className="hover:bg-gray-50 transition-colors duration-200">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{movement.productName}</td>
-                  <td className="px-6 py-4 text-sm">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  <td className="px-3 sm:px-6 py-3 text-sm font-medium text-gray-900">{movement.productName}</td>
+                  <td className="px-3 sm:px-6 py-3 text-sm">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
                       movement.type === 'STOCK_IN'
                         ? 'bg-green-100 text-green-700'
                         : movement.type === 'ADJUSTMENT'
@@ -239,14 +231,14 @@ const Dashboard: React.FC<{ data: DashboardData }> = ({ data }) => {
                     }`}>
                       {movement.type === 'STOCK_IN' ? 'Stock In'
                         : movement.type === 'STOCK_OUT' ? 'Stock Out'
-                        : movement.type === 'ADJUSTMENT' ? 'Adjustment'
+                        : movement.type === 'ADJUSTMENT' ? 'Adj.'
                         : movement.type === 'TRANSFER' ? 'Transfer'
                         : movement.type}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900 font-medium">{movement.quantity}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{movement.warehouseName || 'Main Warehouse'}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
+                  <td className="px-3 sm:px-6 py-3 text-sm text-gray-900 font-medium">{movement.quantity}</td>
+                  <td className="hidden sm:table-cell px-3 sm:px-6 py-3 text-sm text-gray-600">{movement.warehouseName || 'Main Warehouse'}</td>
+                  <td className="hidden sm:table-cell px-3 sm:px-6 py-3 text-sm text-gray-500">
                     {new Date(movement.timestamp).toLocaleDateString()}
                   </td>
                 </tr>

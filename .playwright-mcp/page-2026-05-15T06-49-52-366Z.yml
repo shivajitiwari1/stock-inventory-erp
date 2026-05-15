@@ -1,0 +1,71 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - heading "Stock ERP" [level=1] [ref=e5]
+        - button [ref=e6]:
+          - img [ref=e7]
+      - navigation [ref=e8]:
+        - link "Dashboard" [ref=e9] [cursor=pointer]:
+          - /url: /
+          - img [ref=e10]
+          - generic [ref=e13]: Dashboard
+        - link "Products" [ref=e14] [cursor=pointer]:
+          - /url: /products
+          - img [ref=e15]
+          - generic [ref=e19]: Products
+        - link "Inventory" [ref=e20] [cursor=pointer]:
+          - /url: /inventory
+          - img [ref=e21]
+          - generic [ref=e24]: Inventory
+        - link "Stock Management" [ref=e25] [cursor=pointer]:
+          - /url: /stock-management
+          - img [ref=e26]
+          - generic [ref=e29]: Stock Management
+        - link "Stock Transfer" [ref=e30] [cursor=pointer]:
+          - /url: /stock-transfers
+          - img [ref=e31]
+          - generic [ref=e36]: Stock Transfer
+        - link "Low Stock Alerts" [ref=e37] [cursor=pointer]:
+          - /url: /alerts
+          - img [ref=e38]
+          - generic [ref=e40]: Low Stock Alerts
+        - link "Reports" [ref=e41] [cursor=pointer]:
+          - /url: /reports
+          - img [ref=e42]
+          - generic [ref=e43]: Reports
+        - link "Suppliers" [ref=e44] [cursor=pointer]:
+          - /url: /suppliers
+          - img [ref=e45]
+          - generic [ref=e50]: Suppliers
+        - link "Warehouses" [ref=e51] [cursor=pointer]:
+          - /url: /warehouses
+          - img [ref=e52]
+          - generic [ref=e55]: Warehouses
+        - link "User Management" [ref=e56] [cursor=pointer]:
+          - /url: /users
+          - img [ref=e57]
+          - generic [ref=e62]: User Management
+        - link "Audit & Logs" [ref=e63] [cursor=pointer]:
+          - /url: /audit-logs
+          - img [ref=e64]
+          - generic [ref=e66]: Audit & Logs
+      - generic [ref=e67]:
+        - button "Light Mode" [ref=e68]:
+          - img [ref=e69]
+          - generic [ref=e75]: Light Mode
+        - generic [ref=e76]:
+          - generic [ref=e77]:
+            - paragraph [ref=e78]: John Admin
+            - paragraph [ref=e79]: ADMIN
+          - button "Logout" [ref=e80]:
+            - img [ref=e81]
+            - generic [ref=e84]: Logout
+    - generic [ref=e85]:
+      - button [ref=e86]:
+        - img [ref=e87]
+      - generic [ref=e88]: Stock ERP
+    - main [ref=e89]
+  - button "Open Next.js Dev Tools" [ref=e98] [cursor=pointer]:
+    - img [ref=e99]
+  - alert [ref=e102]

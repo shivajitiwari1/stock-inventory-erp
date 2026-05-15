@@ -1,0 +1,114 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - generic [ref=e6]: 🎓
+          - generic [ref=e7]:
+            - generic [ref=e8]: EduManage
+            - generic [ref=e9]: School Management System
+        - navigation [ref=e10]:
+          - link "Home" [ref=e11] [cursor=pointer]:
+            - /url: "#home"
+          - link "Services" [ref=e12] [cursor=pointer]:
+            - /url: "#services"
+          - link "Why Us" [ref=e13] [cursor=pointer]:
+            - /url: "#why"
+          - link "Login" [ref=e14] [cursor=pointer]:
+            - /url: /login
+        - link "Get Started" [ref=e16] [cursor=pointer]:
+          - /url: /login
+    - generic [ref=e18]:
+      - generic [ref=e19]:
+        - generic [ref=e20]:
+          - generic [ref=e21]: 🎓
+          - generic [ref=e22]: School ERP & Website
+        - heading "Modern school management built for parents, teachers, and administrators." [level=1] [ref=e23]
+        - paragraph [ref=e24]: Manage admissions, fees, attendance, results, notices and dashboards from one clean and responsive platform.
+        - generic [ref=e25]:
+          - link "Admin Login" [ref=e26] [cursor=pointer]:
+            - /url: /login
+          - link "Student / Parent Login" [ref=e27] [cursor=pointer]:
+            - /url: /login
+      - generic [ref=e28]:
+        - generic [ref=e29]:
+          - paragraph [ref=e30]: Transform your school with features that drive attendance, fees, admissions and results.
+          - generic [ref=e31]:
+            - generic [ref=e32]:
+              - generic [ref=e33]: ✓
+              - paragraph [ref=e34]: Live attendance
+            - generic [ref=e35]:
+              - generic [ref=e36]: ✓
+              - paragraph [ref=e37]: Fee collection
+            - generic [ref=e38]:
+              - generic [ref=e39]: ✓
+              - paragraph [ref=e40]: Noticeboard
+            - generic [ref=e41]:
+              - generic [ref=e42]: ✓
+              - paragraph [ref=e43]: Admissions portal
+        - generic [ref=e44]:
+          - generic [ref=e45]:
+            - paragraph [ref=e46]: VISITOR STATISTICS
+            - generic [ref=e47]:
+              - generic [ref=e48]:
+                - generic [ref=e49]: Schools onboarded
+                - strong [ref=e50]: 120+
+              - generic [ref=e51]:
+                - generic [ref=e52]: Daily attendance
+                - strong [ref=e53]: 95%+
+              - generic [ref=e54]:
+                - generic [ref=e55]: Fee collection rate
+                - strong [ref=e56]: 98%
+          - generic [ref=e57]:
+            - paragraph [ref=e58]: SCHOOL WEBSITE
+            - heading "A beautiful landing page and student portal, ready to use." [level=3] [ref=e59]
+    - generic [ref=e60]:
+      - generic [ref=e61]:
+        - paragraph [ref=e62]: Core Services
+        - heading "Everything your school needs in a single package" [level=2] [ref=e63]
+        - paragraph [ref=e64]: From admissions to reports, the platform supports every essential school workflow with clean interfaces and real-time insights.
+      - generic [ref=e65]:
+        - generic [ref=e66]:
+          - heading "Admissions" [level=3] [ref=e67]
+          - paragraph [ref=e68]: Simplified student enrollment and application tracking.
+        - generic [ref=e69]:
+          - heading "Fee Management" [level=3] [ref=e70]
+          - paragraph [ref=e71]: Instant billing, payment records, and fee reminders.
+        - generic [ref=e72]:
+          - heading "Attendance" [level=3] [ref=e73]
+          - paragraph [ref=e74]: Daily attendance capture for students and teachers.
+        - generic [ref=e75]:
+          - heading "Results" [level=3] [ref=e76]
+          - paragraph [ref=e77]: Grade books, report cards, and academic insights.
+    - generic [ref=e79]:
+      - generic [ref=e80]:
+        - paragraph [ref=e81]: Why EduManage?
+        - heading "Designed to simplify school life for everyone" [level=2] [ref=e82]
+        - paragraph [ref=e83]: Deliver modern digital experiences for parents, teachers, and administrators with one easy-to-use platform.
+        - generic [ref=e84]:
+          - generic [ref=e85]:
+            - generic [ref=e86]: ✓
+            - generic [ref=e87]:
+              - heading "Parent Communication" [level=3] [ref=e88]
+              - paragraph [ref=e89]: Publish notices, events, and announcements instantly.
+          - generic [ref=e90]:
+            - generic [ref=e91]: ✓
+            - generic [ref=e92]:
+              - heading "Staff Productivity" [level=3] [ref=e93]
+              - paragraph [ref=e94]: Give teachers one place to manage classes and students.
+          - generic [ref=e95]:
+            - generic [ref=e96]: ✓
+            - generic [ref=e97]:
+              - heading "Secure Records" [level=3] [ref=e98]
+              - paragraph [ref=e99]: Keep student, fee and academic information safe.
+      - generic [ref=e101]:
+        - generic [ref=e102]:
+          - heading "Fast onboarding" [level=3] [ref=e103]
+          - paragraph [ref=e104]: Start with demo accounts and a ready-made dashboard for your school.
+        - generic [ref=e105]:
+          - heading "Responsive experience" [level=3] [ref=e106]
+          - paragraph [ref=e107]: Accessible on phones, tablets, and desktops for students and parents.
+    - contentinfo [ref=e108]:
+      - paragraph [ref=e109]: EduManage
+      - paragraph [ref=e110]: A complete school management system for modern institutions. Login to access the dashboard and manage your school online.
+  - alert [ref=e111]

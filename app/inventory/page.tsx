@@ -102,12 +102,12 @@ export default function InventoryPage() {
     <div className="space-y-6">
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900">Inventory Management</h1>
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900">Inventory Management</h1>
           <p className="mt-2 text-gray-600">Monitor stock levels across all warehouses</p>
         </div>
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg text-sm">
+        <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg text-sm shrink-0">
           Last Updated: {lastUpdated}
         </div>
       </div>

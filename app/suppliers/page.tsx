@@ -63,14 +63,14 @@ export default function SuppliersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Suppliers</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Suppliers</h1>
           <p className="mt-2 text-gray-600">Manage supplier details, contacts, and performance.</p>
         </div>
         <button
           onClick={() => { setEditingSupplier(null); setShowModal(true); }}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2 shrink-0"
         >
           <FiPlus className="w-4 h-4" />
           <span>Add Supplier</span>

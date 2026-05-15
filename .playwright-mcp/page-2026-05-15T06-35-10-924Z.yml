@@ -1,0 +1,4 @@
+- generic [active] [ref=e1]:
+  - main [ref=e3]:
+    - heading "Dashboard" [level=2] [ref=e6]
+  - alert [ref=e13]

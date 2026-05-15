@@ -1,0 +1,176 @@
+- generic [ref=e1]:
+  - button "Open Next.js Dev Tools" [ref=e9] [cursor=pointer]:
+    - img [ref=e10]
+  - alert [ref=e13]
+  - generic [ref=e59]:
+    - complementary [ref=e60]:
+      - generic [ref=e61]:
+        - heading "Stock ERP" [level=1] [ref=e62]
+        - button [ref=e63]:
+          - img [ref=e374]
+      - navigation [ref=e65]:
+        - link "Dashboard" [ref=e377] [cursor=pointer]:
+          - /url: /
+          - img [ref=e378]
+          - generic [ref=e381]: Dashboard
+        - link "Products" [ref=e382] [cursor=pointer]:
+          - /url: /products
+          - img [ref=e383]
+          - generic [ref=e387]: Products
+        - link "Inventory" [ref=e388] [cursor=pointer]:
+          - /url: /inventory
+          - img [ref=e389]
+          - generic [ref=e392]: Inventory
+        - link "Stock Management" [ref=e393] [cursor=pointer]:
+          - /url: /stock-management
+          - img [ref=e394]
+          - generic [ref=e397]: Stock Management
+        - link "Stock Transfer" [ref=e398] [cursor=pointer]:
+          - /url: /stock-transfers
+          - img [ref=e399]
+          - generic [ref=e404]: Stock Transfer
+        - link "Low Stock Alerts" [ref=e405] [cursor=pointer]:
+          - /url: /alerts
+          - img [ref=e406]
+          - generic [ref=e408]: Low Stock Alerts
+        - link "Reports" [ref=e409] [cursor=pointer]:
+          - /url: /reports
+          - img [ref=e410]
+          - generic [ref=e411]: Reports
+        - link "Suppliers" [ref=e412] [cursor=pointer]:
+          - /url: /suppliers
+          - img [ref=e413]
+          - generic [ref=e418]: Suppliers
+        - link "Warehouses" [ref=e419] [cursor=pointer]:
+          - /url: /warehouses
+          - img [ref=e420]
+          - generic [ref=e423]: Warehouses
+        - link "User Management" [ref=e424] [cursor=pointer]:
+          - /url: /users
+          - img [ref=e425]
+          - generic [ref=e430]: User Management
+        - link "Audit & Logs" [ref=e431] [cursor=pointer]:
+          - /url: /audit-logs
+          - img [ref=e432]
+          - generic [ref=e434]: Audit & Logs
+      - generic [ref=e124]:
+        - button "Light Mode" [ref=e125]:
+          - img [ref=e126]
+          - generic [ref=e132]: Light Mode
+        - generic [ref=e133]:
+          - generic [ref=e134]:
+            - paragraph [ref=e135]: John Admin
+            - paragraph [ref=e136]: ADMIN
+          - button "Logout" [ref=e137]:
+            - img [ref=e138]
+            - generic [ref=e141]: Logout
+    - generic [ref=e142]:
+      - button [active] [ref=e143]:
+        - img [ref=e144]
+      - generic [ref=e145]: Stock ERP
+    - main [ref=e146]:
+      - generic [ref=e148]:
+        - generic [ref=e149]:
+          - generic [ref=e153]:
+            - generic [ref=e154]:
+              - paragraph [ref=e155]: Total Stock Quantity
+              - paragraph [ref=e156]: "489"
+            - img [ref=e158]
+          - generic [ref=e166]:
+            - generic [ref=e167]:
+              - paragraph [ref=e168]: Available Stock
+              - paragraph [ref=e169]: "455"
+            - img [ref=e171]
+          - generic [ref=e178]:
+            - generic [ref=e179]:
+              - paragraph [ref=e180]: Low Stock Alert
+              - paragraph [ref=e181]: "6"
+            - img [ref=e183]
+          - generic [ref=e189]:
+            - generic [ref=e190]:
+              - paragraph [ref=e191]: Out of Stock Items
+              - paragraph [ref=e192]: "0"
+            - img [ref=e194]
+        - generic [ref=e198]:
+          - generic [ref=e199]:
+            - generic [ref=e200]:
+              - heading "Stock Trend" [level=3] [ref=e201]
+              - img [ref=e203]
+            - generic [ref=e207]:
+              - list [ref=e209]:
+                - listitem [ref=e210]:
+                  - img "Available Stock legend icon" [ref=e211]
+                  - text: Available Stock
+              - application [ref=e213]:
+                - generic [ref=e237]:
+                  - generic [ref=e238]:
+                    - generic [ref=e240]: May 11
+                    - generic [ref=e242]: May 10
+                    - generic [ref=e244]: May 9
+                    - generic [ref=e246]: May 10
+                    - generic [ref=e248]: May 8
+                    - generic [ref=e250]: May 10
+                  - generic [ref=e251]:
+                    - generic [ref=e253]: "0"
+                    - generic [ref=e255]: "50"
+                    - generic [ref=e257]: "100"
+                    - generic [ref=e259]: "150"
+                    - generic [ref=e261]: "200"
+          - generic [ref=e262]:
+            - generic [ref=e263]:
+              - heading "Stock by Category" [level=3] [ref=e264]
+              - img [ref=e266]
+            - application [ref=e272]:
+              - generic [ref=e364]:
+                - generic [ref=e366]: Electronics 28%
+                - generic [ref=e368]: Accessories 25%
+                - generic [ref=e370]: Furniture 5%
+                - generic [ref=e372]: Stationery 42%
+        - generic [ref=e288]:
+          - generic [ref=e290]:
+            - generic [ref=e291]:
+              - generic [ref=e292]: "489"
+              - generic [ref=e293]: Total Stock Quantity
+            - img [ref=e295]
+          - generic [ref=e300]:
+            - generic [ref=e301]:
+              - generic [ref=e302]: 93.0%
+              - generic [ref=e303]: Stock Availability Rate
+            - img [ref=e305]
+          - generic [ref=e309]:
+            - generic [ref=e310]:
+              - generic [ref=e311]: "6"
+              - generic [ref=e312]: Items Needing Attention
+            - img [ref=e314]
+        - generic [ref=e316]:
+          - generic [ref=e317]:
+            - heading "Recent Activity" [level=2] [ref=e318]
+            - img [ref=e320]
+          - table [ref=e324]:
+            - rowgroup [ref=e325]:
+              - row "Product Type Quantity Warehouse Date" [ref=e326]:
+                - columnheader "Product" [ref=e327]
+                - columnheader "Type" [ref=e328]
+                - columnheader "Quantity" [ref=e329]
+                - columnheader "Warehouse" [ref=e330]
+                - columnheader "Date" [ref=e331]
+            - rowgroup [ref=e332]:
+              - row "Laptop Stock Out 5 Main Warehouse 5/9/2026" [ref=e333]:
+                - cell "Laptop" [ref=e334]
+                - cell "Stock Out" [ref=e335]
+                - cell "5" [ref=e336]
+                - cell "Main Warehouse" [ref=e337]
+                - cell "5/9/2026" [ref=e338]
+              - row "Laptop Stock In 20 Main Warehouse 5/9/2026" [ref=e339]:
+                - cell "Laptop" [ref=e340]
+                - cell "Stock In" [ref=e341]
+                - cell "20" [ref=e342]
+                - cell "Main Warehouse" [ref=e343]
+                - cell "5/9/2026" [ref=e344]
+              - row "Mechanical Keyboard Adjustment -3 Main Warehouse 5/8/2026" [ref=e345]:
+                - cell "Mechanical Keyboard" [ref=e346]
+                - cell "Adjustment" [ref=e347]
+                - cell "-3" [ref=e348]
+                - cell "Main Warehouse" [ref=e349]
+                - cell "5/8/2026" [ref=e350]
+  - generic [ref=e351]: "0"
