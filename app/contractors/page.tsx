@@ -1,0 +1,199 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { FiPlus, FiEdit, FiTrash2, FiSearch, FiBriefcase } from 'react-icons/fi';
+
+interface Contractor {
+  id: string;
+  name: string;
+  phone: string;
+  role: 'Contractor' | 'Daily Worker';
+  company: string;
+  createdAt: string;
+}
+
+const ROLES = ['Contractor', 'Daily Worker'] as const;
+
+const roleBadge = (role: string) =>
+  role === 'Contractor'
+    ? 'bg-green-100 text-green-700'
+    : 'bg-blue-100 text-blue-700';
+
+export default function ContractorsPage() {
+  const [contractors, setContractors] = useState<Contractor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState<Contractor | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => { fetchContractors(); }, []);
+
+  const fetchContractors = async () => {
+    try {
+      const res = await fetch('/api/contractors');
+      const data = await res.json();
+      setContractors(Array.isArray(data) ? data : []);
+    } catch { /* silent */ } finally { setLoading(false); }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this contractor?')) return;
+    await fetch(`/api/contractors/${id}`, { method: 'DELETE' });
+    setContractors(prev => prev.filter(c => c.id !== id));
+  };
+
+  const filtered = contractors.filter(c =>
+    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.company.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-600" />
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100">Contractors & Workers</h1>
+          <p className="mt-2 text-gray-600 dark:text-slate-400">Manage contractors and daily workers for stock issuance.</p>
+        </div>
+        <button
+          onClick={() => { setEditing(null); setShowModal(true); }}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2 shrink-0"
+        >
+          <FiPlus className="w-4 h-4" />
+          <span>Add Contractor</span>
+        </button>
+      </div>
+
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
+        <div className="relative">
+          <FiSearch className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Search by name or company..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100"
+          />
+        </div>
+      </div>
+
+      <div className="rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+            <thead className="bg-gray-50 dark:bg-slate-700">
+              <tr>
+                {['Name', 'Phone', 'Role', 'Company', 'Actions'].map(h => (
+                  <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
+              {filtered.length === 0 && (
+                <tr><td colSpan={5} className="px-6 py-10 text-center text-gray-400">No contractors found.</td></tr>
+              )}
+              {filtered.map(c => (
+                <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-slate-700">
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-slate-100">{c.name}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">{c.phone}</td>
+                  <td className="px-6 py-4 text-sm">
+                    <span className={`rounded-full px-2 py-1 text-xs font-semibold ${roleBadge(c.role)}`}>{c.role}</span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">{c.company || '—'}</td>
+                  <td className="px-6 py-4 text-sm space-x-2">
+                    <button onClick={() => { setEditing(c); setShowModal(true); }} className="text-blue-600 hover:text-blue-800 inline-block">
+                      <FiEdit className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => handleDelete(c.id)} className="text-red-600 hover:text-red-800 inline-block">
+                      <FiTrash2 className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {showModal && (
+        <ContractorModal
+          contractor={editing}
+          onClose={() => { setShowModal(false); setEditing(null); }}
+          onSave={saved => {
+            setContractors(prev => editing ? prev.map(c => c.id === saved.id ? saved : c) : [...prev, saved]);
+            setShowModal(false);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function ContractorModal({ contractor, onClose, onSave }: { contractor: Contractor | null; onClose: () => void; onSave: (c: Contractor) => void }) {
+  const [form, setForm] = useState({
+    name: contractor?.name || '',
+    phone: contractor?.phone || '',
+    role: contractor?.role || 'Contractor',
+    company: contractor?.company || '',
+  });
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const url = contractor ? `/api/contractors/${contractor.id}` : '/api/contractors';
+      const method = contractor ? 'PUT' : 'POST';
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      if (res.ok) onSave(await res.json());
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md p-6">
+        <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-slate-100">{contractor ? 'Edit' : 'Add'} Contractor / Worker</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Full Name *</label>
+            <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required
+              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Phone Number *</label>
+            <input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} required
+              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Role *</label>
+            <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value as any })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100">
+              {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+              Company Name {form.role === 'Daily Worker' && <span className="text-gray-400 text-xs">(optional)</span>}
+            </label>
+            <input type="text" value={form.company} onChange={e => setForm({ ...form, company: e.target.value })}
+              required={form.role === 'Contractor'}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100" />
+          </div>
+          <div className="flex space-x-3 pt-2">
+            <button type="submit" disabled={saving}
+              className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              {saving ? 'Saving...' : contractor ? 'Update' : 'Add'} Contractor
+            </button>
+            <button type="button" onClick={onClose} className="flex-1 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-300 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-slate-600">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
