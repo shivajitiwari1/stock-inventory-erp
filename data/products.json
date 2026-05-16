@@ -9,12 +9,9 @@
       "unitType": "PCS",
       "price": 999.99,
       "image": "/images/placeholder.png",
-      "minQuantity": 19,
-      "attributes": [],
-      "attributePriceRules": [],
-      "attributeQuantityRules": [],
+      "minQuantity": 50,
       "createdAt": "2026-01-15T10:30:00Z",
-      "updatedAt": "2026-05-11T04:42:19.049Z"
+      "updatedAt": "2026-05-16T15:22:22.453Z"
     },
     {
       "id": "P002",
@@ -26,8 +23,6 @@
       "price": 79.99,
       "image": "/images/placeholder.png",
       "minQuantity": 10,
-      "attributes": [],
-      "attributePriceRules": [],
       "createdAt": "2026-01-16T14:20:00Z",
       "updatedAt": "2026-05-11T04:15:43.930Z"
     },
@@ -41,8 +36,6 @@
       "price": 19.99,
       "image": "/images/placeholder.png",
       "minQuantity": 20,
-      "attributes": [],
-      "attributePriceRules": [],
       "createdAt": "2026-01-17T11:45:00Z",
       "updatedAt": "2026-05-11T04:15:54.225Z"
     },
@@ -56,8 +49,6 @@
       "price": 39.99,
       "image": "/images/placeholder.png",
       "minQuantity": 15,
-      "attributes": [],
-      "attributePriceRules": [],
       "createdAt": "2026-02-01T09:00:00Z",
       "updatedAt": "2026-05-11T00:00:00Z"
     },
@@ -71,8 +62,6 @@
       "price": 249.99,
       "image": "/images/placeholder.png",
       "minQuantity": 10,
-      "attributes": [],
-      "attributePriceRules": [],
       "createdAt": "2026-02-05T10:00:00Z",
       "updatedAt": "2026-05-11T00:00:00Z"
     },
@@ -86,8 +75,6 @@
       "price": 49.99,
       "image": "/images/placeholder.png",
       "minQuantity": 20,
-      "attributes": [],
-      "attributePriceRules": [],
       "createdAt": "2026-02-10T08:30:00Z",
       "updatedAt": "2026-05-11T00:00:00Z"
     },
@@ -101,8 +88,6 @@
       "price": 89.99,
       "image": "/images/placeholder.png",
       "minQuantity": 10,
-      "attributes": [],
-      "attributePriceRules": [],
       "createdAt": "2026-02-15T11:00:00Z",
       "updatedAt": "2026-05-11T00:00:00Z"
     },
@@ -116,8 +101,6 @@
       "price": 349.99,
       "image": "/images/placeholder.png",
       "minQuantity": 5,
-      "attributes": [],
-      "attributePriceRules": [],
       "createdAt": "2026-02-20T14:00:00Z",
       "updatedAt": "2026-05-11T00:00:00Z"
     },
@@ -131,8 +114,6 @@
       "price": 599.99,
       "image": "/images/placeholder.png",
       "minQuantity": 5,
-      "attributes": [],
-      "attributePriceRules": [],
       "createdAt": "2026-03-01T09:00:00Z",
       "updatedAt": "2026-05-11T00:00:00Z"
     },
@@ -146,8 +127,6 @@
       "price": 199.99,
       "image": "/images/placeholder.png",
       "minQuantity": 10,
-      "attributes": [],
-      "attributePriceRules": [],
       "createdAt": "2026-03-05T10:00:00Z",
       "updatedAt": "2026-05-11T00:00:00Z"
     },
@@ -161,8 +140,6 @@
       "price": 179.99,
       "image": "/images/placeholder.png",
       "minQuantity": 8,
-      "attributes": [],
-      "attributePriceRules": [],
       "createdAt": "2026-03-10T11:00:00Z",
       "updatedAt": "2026-05-11T00:00:00Z"
     },
@@ -176,8 +153,6 @@
       "price": 9.99,
       "image": "/images/placeholder.png",
       "minQuantity": 50,
-      "attributes": [],
-      "attributePriceRules": [],
       "createdAt": "2026-03-15T08:00:00Z",
       "updatedAt": "2026-05-11T00:00:00Z"
     }
