@@ -54,6 +54,34 @@ export async function DELETE(_request: NextRequest, context: any) {
     data.products.splice(index, 1);
     writeJSON('products.json', data);
 
+    // Cascade: remove inventory entries for this product
+    const invData = readJSON('inventory.json');
+    if (invData?.inventory) {
+      invData.inventory = invData.inventory.filter((i: any) => i.productId !== id);
+      writeJSON('inventory.json', invData);
+    }
+
+    // Cascade: remove stock movements for this product
+    const movData = readJSON('stockMovements.json');
+    if (movData?.stockMovements) {
+      movData.stockMovements = movData.stockMovements.filter((m: any) => m.productId !== id);
+      writeJSON('stockMovements.json', movData);
+    }
+
+    // Cascade: remove stock transfers for this product
+    const trData = readJSON('stockTransfers.json');
+    if (trData?.transfers) {
+      trData.transfers = trData.transfers.filter((t: any) => t.productId !== id);
+      writeJSON('stockTransfers.json', trData);
+    }
+
+    // Cascade: remove stock issues for this product
+    const siData = readJSON('stockIssues.json');
+    if (siData?.stockIssues) {
+      siData.stockIssues = siData.stockIssues.filter((s: any) => s.productId !== id);
+      writeJSON('stockIssues.json', siData);
+    }
+
     return NextResponse.json({ message: 'Product deleted successfully' });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });

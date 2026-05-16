@@ -1,17 +1,6 @@
 {
   "inventory": [
     {
-      "id": "INV001",
-      "productId": "P001",
-      "warehouseId": "WH001",
-      "totalQuantity": 44,
-      "availableQuantity": 44,
-      "reservedQuantity": 0,
-      "damagedQuantity": 0,
-      "lostQuantity": 0,
-      "lastUpdated": "2026-05-11T04:42:43.644Z"
-    },
-    {
       "id": "INV002",
       "productId": "P002",
       "warehouseId": "WH001",
