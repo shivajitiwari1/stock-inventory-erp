@@ -48,7 +48,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         <span className="text-lg font-bold text-gray-800 dark:text-slate-100">Stock ERP</span>
       </div>
 
-      <main className={`flex-1 ${mainMargin} pt-20 lg:pt-0 p-4 md:p-6 lg:p-8 min-h-screen bg-gray-50 dark:bg-slate-900 transition-all duration-300 min-w-0`}>
+      <main className={`flex-1 ${mainMargin} pt-20 lg:pt-8 p-4 md:p-6 lg:p-8 min-h-screen bg-gray-50 dark:bg-slate-900 transition-all duration-300 min-w-0`}>
         {children}
       </main>
     </div>

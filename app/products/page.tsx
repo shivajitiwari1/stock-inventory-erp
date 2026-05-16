@@ -28,6 +28,7 @@ interface Product {
   description: string;
   unitType: string;
   price: number;
+  quantity?: number;
   image: string;
   minQuantity: number;
   createdAt: string;
@@ -146,9 +147,9 @@ export default function ProductsPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Attributes</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price Rules</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty by Variant</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Stock Qty</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total Stock</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Price</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Min Qty</th>
@@ -177,25 +178,11 @@ export default function ProductsPage() {
                     <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">{product.category}</span>
                   </td>
                   <td className="px-6 py-4 text-sm">
-                    {product.attributes?.length ? (
-                      <div className="flex flex-wrap gap-1">
-                        {product.attributes.slice(0, 2).map((attr) => (
-                          <span key={attr.key + attr.value} className="px-2 py-1 text-xs bg-gray-100 rounded-full text-gray-700">
-                            {attr.key}: {attr.value}
-                          </span>
-                        ))}
-                        {product.attributes.length > 2 && (
-                          <span className="px-2 py-1 text-xs bg-gray-100 rounded-full text-gray-500">+{product.attributes.length - 2}</span>
-                        )}
-                      </div>
-                    ) : <span className="text-gray-400 text-xs">—</span>}
-                  </td>
-                  <td className="px-6 py-4 text-sm">
                     {product.attributePriceRules?.length ? (
                       <div className="flex flex-wrap gap-1">
                         {product.attributePriceRules.slice(0, 2).map((rule, idx) => (
                           <span key={idx} className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full">
-                            {rule.value}: ${rule.price.toFixed(2)}
+                            {rule.value}: ₹{rule.price.toFixed(2)}
                           </span>
                         ))}
                         {product.attributePriceRules.length > 2 && (
@@ -219,9 +206,12 @@ export default function ProductsPage() {
                     ) : <span className="text-gray-400 text-xs">—</span>}
                   </td>
                   <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900">
+                    {product.quantity ?? 0}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900">
                     {getStock(product.id).total}
                   </td>
-                  <td className="px-6 py-4 text-sm text-right text-gray-900">${product.price.toFixed(2)}</td>
+                  <td className="px-6 py-4 text-sm text-right text-gray-900">₹{product.price.toFixed(2)}</td>
                   <td className="px-6 py-4 text-sm text-right text-gray-900">{product.minQuantity}</td>
                   <td className="px-6 py-4 text-sm space-x-2">
                     <button onClick={() => setEditingProduct(product)} className="text-blue-600 hover:text-blue-800">
@@ -265,6 +255,7 @@ function ProductModal({ product, onClose, onSave }: { product?: Product | null; 
     description: product?.description || '',
     unitType: product?.unitType || 'PCS',
     price: product?.price || 0,
+    quantity: product?.quantity || 0,
     minQuantity: product?.minQuantity || 0,
     attributes: product?.attributes || [] as Attribute[],
     attributePriceRules: product?.attributePriceRules || [] as AttributePriceRule[],
@@ -343,10 +334,16 @@ function ProductModal({ product, onClose, onSave }: { product?: Product | null; 
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
               <input type="number" step="0.01" value={formData.price}
                 onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
+              <input type="number" min="0" value={formData.quantity}
+                onChange={e => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Min Quantity</label>

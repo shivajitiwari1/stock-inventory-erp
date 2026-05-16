@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { FiSearch, FiFilter } from 'react-icons/fi';
+import { FiSearch, FiFilter, FiDownload } from 'react-icons/fi';
 
 interface InventoryItem {
   id: string;
@@ -80,6 +80,37 @@ export default function InventoryPage() {
     });
   }, [inventory, search, warehouseFilter, categoryFilter, statusFilter]);
 
+  const exportXML = () => {
+    const escape = (s: string | number) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const lines = [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<inventory>',
+      ...filtered.map(item => [
+        '  <item>',
+        `    <productName>${escape(item.productName)}</productName>`,
+        `    <sku>${escape(item.sku)}</sku>`,
+        `    <category>${escape(item.category)}</category>`,
+        `    <warehouse>${escape(item.warehouseName)}</warehouse>`,
+        `    <available>${item.availableQuantity}</available>`,
+        `    <reserved>${item.reservedQuantity || 0}</reserved>`,
+        `    <total>${item.totalQuantity}</total>`,
+        `    <minQty>${item.minQuantity}</minQty>`,
+        `    <lastUpdated>${escape(item.lastUpdated || '')}</lastUpdated>`,
+        '  </item>',
+      ].join('\n')),
+      '</inventory>',
+    ];
+    const blob = new Blob([lines.join('\n')], { type: 'application/xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `inventory-${new Date().toISOString().slice(0, 10)}.xml`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   // Summary stats (from filtered list)
   const totalQty = filtered.reduce((s, i) => s + i.totalQuantity, 0);
   const availableQty = filtered.reduce((s, i) => s + i.availableQuantity, 0);
@@ -107,8 +138,17 @@ export default function InventoryPage() {
           <h1 className="text-2xl sm:text-4xl font-bold text-gray-900">Inventory Management</h1>
           <p className="mt-2 text-gray-600">Monitor stock levels across all warehouses</p>
         </div>
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg text-sm shrink-0">
-          Last Updated: {lastUpdated}
+        <div className="flex items-center gap-3 shrink-0">
+          <button
+            onClick={exportXML}
+            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-xl font-semibold shadow-md hover:bg-green-700 text-sm"
+          >
+            <FiDownload className="w-4 h-4" />
+            Export XML
+          </button>
+          <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg text-sm">
+            Last Updated: {lastUpdated}
+          </div>
         </div>
       </div>
 
