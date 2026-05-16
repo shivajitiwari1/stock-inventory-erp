@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FiPlus, FiEdit, FiTrash2, FiSearch, FiBriefcase } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiSearch } from 'react-icons/fi';
 
 interface Contractor {
   id: string;
@@ -33,13 +33,23 @@ export default function ContractorsPage() {
       const res = await fetch('/api/contractors');
       const data = await res.json();
       setContractors(Array.isArray(data) ? data : []);
-    } catch { /* silent */ } finally { setLoading(false); }
+    } catch (error) {
+      console.error('Failed to fetch contractors:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this contractor?')) return;
-    await fetch(`/api/contractors/${id}`, { method: 'DELETE' });
-    setContractors(prev => prev.filter(c => c.id !== id));
+    try {
+      const res = await fetch(`/api/contractors/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setContractors(prev => prev.filter(c => c.id !== id));
+      }
+    } catch (error) {
+      console.error('Failed to delete contractor:', error);
+    }
   };
 
   const filtered = contractors.filter(c =>
@@ -150,7 +160,11 @@ function ContractorModal({ contractor, onClose, onSave }: { contractor: Contract
       const method = contractor ? 'PUT' : 'POST';
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
       if (res.ok) onSave(await res.json());
-    } finally { setSaving(false); }
+    } catch (error) {
+      console.error('Failed to save contractor:', error);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -170,7 +184,7 @@ function ContractorModal({ contractor, onClose, onSave }: { contractor: Contract
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Role *</label>
-            <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value as any })}
+            <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value as 'Contractor' | 'Daily Worker' })}
               className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100">
               {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
             </select>
