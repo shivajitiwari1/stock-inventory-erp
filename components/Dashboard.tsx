@@ -22,7 +22,10 @@ export interface DashboardData {
 }
 
 const Dashboard: React.FC<{ data: DashboardData }> = ({ data }) => {
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+  // Brighter palette for dark mode so all bars are clearly visible
+  const COLORS = isDark
+    ? ['#60a5fa', '#4ade80', '#fcd34d', '#f87171', '#c084fc']
+    : ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const chartAxisColor   = isDark ? '#cbd5e1' : '#6b7280';
