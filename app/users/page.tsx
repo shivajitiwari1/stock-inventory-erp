@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { FiPlus, FiEdit, FiTrash2, FiSearch, FiShield, FiUsers, FiToggleLeft, FiToggleRight } from 'react-icons/fi';
-import type { UserPermissions } from '@/components/AuthContext';
+import { useAuth, type UserPermissions } from '@/components/AuthContext';
 
 interface Role {
   id: string;
@@ -55,6 +55,7 @@ const roleBadge = (role: string) => {
 // ─── Main page ───────────────────────────────────────────────────────────────
 
 const UsersPage: React.FC = () => {
+  const { user: currentUser } = useAuth();
   const [tab, setTab] = useState<'users' | 'roles'>('users');
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
@@ -91,6 +92,10 @@ const UsersPage: React.FC = () => {
   };
 
   const handleToggleStatus = async (user: User) => {
+    if (currentUser?.id === user.id) {
+      alert('You cannot deactivate your own account.');
+      return;
+    }
     const newStatus = user.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
     try {
       const res = await fetch(`/api/users/${user.id}`, {
@@ -219,16 +224,23 @@ const UsersPage: React.FC = () => {
                         <span className={`rounded-full px-2 py-1 text-xs font-semibold ${roleBadge(u.role)}`}>{getRoleName(u.role)}</span>
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        <button
-                          onClick={() => handleToggleStatus(u)}
-                          title={u.status === 'ACTIVE' ? 'Click to deactivate' : 'Click to activate'}
-                          className="flex items-center gap-1.5 group"
-                        >
-                          {u.status === 'ACTIVE'
-                            ? <FiToggleRight className="w-5 h-5 text-green-500 group-hover:text-green-700" />
-                            : <FiToggleLeft className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />}
-                          <span className={`text-xs font-medium ${u.status === 'ACTIVE' ? 'text-green-600' : 'text-gray-400'}`}>{u.status}</span>
-                        </button>
+                        {currentUser?.id === u.id ? (
+                          <span title="Cannot deactivate your own account" className="flex items-center gap-1.5 opacity-40 cursor-not-allowed">
+                            <FiToggleRight className="w-5 h-5 text-green-500" />
+                            <span className="text-xs font-medium text-green-600">{u.status}</span>
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleToggleStatus(u)}
+                            title={u.status === 'ACTIVE' ? 'Click to deactivate' : 'Click to activate'}
+                            className="flex items-center gap-1.5 group"
+                          >
+                            {u.status === 'ACTIVE'
+                              ? <FiToggleRight className="w-5 h-5 text-green-500 group-hover:text-green-700" />
+                              : <FiToggleLeft className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />}
+                            <span className={`text-xs font-medium ${u.status === 'ACTIVE' ? 'text-green-600' : 'text-gray-400'}`}>{u.status}</span>
+                          </button>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
                         {u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('en-IN') : '—'}
