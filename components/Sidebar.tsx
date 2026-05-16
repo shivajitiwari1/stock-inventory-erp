@@ -7,6 +7,7 @@ import {
   FiMenu, FiX, FiHome, FiPackage, FiBox, FiTrendingUp,
   FiUsers, FiActivity, FiBarChart, FiAlertCircle,
   FiLogOut, FiLogIn, FiSun, FiMoon, FiRepeat,
+  FiFileText, FiArrowUpRight, FiBriefcase,
 } from 'react-icons/fi';
 import { useAuth } from './AuthContext';
 import { useTheme } from './ThemeContext';
@@ -29,6 +30,9 @@ export const Sidebar: React.FC = () => {
     { href: '/alerts',            label: 'Low Stock Alerts',icon: FiAlertCircle,  roles: ['ADMIN', 'INVENTORY_MANAGER', 'STAFF'] },
     { href: '/reports',           label: 'Reports',         icon: FiBarChart,     roles: ['ADMIN', 'INVENTORY_MANAGER'] },
     { href: '/suppliers',         label: 'Suppliers',       icon: FiUsers,        roles: ['ADMIN', 'INVENTORY_MANAGER'] },
+    { href: '/supply-receipts',  label: 'Supply Receipts',  icon: FiFileText,      roles: ['ADMIN', 'INVENTORY_MANAGER'] },
+    { href: '/stock-issues',     label: 'Stock Issues',     icon: FiArrowUpRight,  roles: ['ADMIN', 'INVENTORY_MANAGER', 'STAFF'] },
+    { href: '/contractors',      label: 'Contractors',      icon: FiBriefcase,     roles: ['ADMIN', 'INVENTORY_MANAGER'] },
     { href: '/warehouses',        label: 'Warehouses',      icon: FiBox,          roles: ['ADMIN', 'INVENTORY_MANAGER'] },
     { href: '/users',             label: 'User Management', icon: FiUsers,        roles: ['ADMIN'] },
     { href: '/audit-logs',        label: 'Audit & Logs',    icon: FiActivity,     roles: ['ADMIN'] },
