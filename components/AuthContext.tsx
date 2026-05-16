@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-export type UserRole = 'ADMIN' | 'INVENTORY_MANAGER' | 'STAFF';
+export type UserRole = string; // supports dynamic roles; 'ADMIN' always has full access
 export type UserAction = 'add' | 'edit' | 'delete';
 
 export interface PagePermission {

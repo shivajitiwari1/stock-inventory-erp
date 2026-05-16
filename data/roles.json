@@ -1,0 +1,61 @@
+{
+  "roles": [
+    {
+      "id": "ROLE001",
+      "name": "Admin",
+      "key": "ADMIN",
+      "description": "Full system access — all pages and actions",
+      "isSystem": true,
+      "isAdmin": true,
+      "permissions": {}
+    },
+    {
+      "id": "ROLE002",
+      "name": "Inventory Manager",
+      "key": "INVENTORY_MANAGER",
+      "description": "Manage inventory, suppliers, receipts, and reports",
+      "isSystem": true,
+      "isAdmin": false,
+      "permissions": {
+        "dashboard":        { "view": true },
+        "products":         { "view": true, "add": true,  "edit": true,  "delete": false },
+        "inventory":        { "view": true },
+        "stock-management": { "view": true, "add": true,  "edit": true,  "delete": false },
+        "stock-transfers":  { "view": true, "add": true,  "edit": true,  "delete": false },
+        "alerts":           { "view": true },
+        "reports":          { "view": true },
+        "suppliers":        { "view": true, "add": true,  "edit": true,  "delete": false },
+        "supply-receipts":  { "view": true, "add": true,  "edit": true,  "delete": false },
+        "stock-issues":     { "view": true, "add": true,  "edit": true,  "delete": false },
+        "contractors":      { "view": true, "add": true,  "edit": true,  "delete": false },
+        "warehouses":       { "view": true, "add": true,  "edit": true,  "delete": false },
+        "users":            { "view": false },
+        "audit-logs":       { "view": false }
+      }
+    },
+    {
+      "id": "ROLE003",
+      "name": "Staff",
+      "key": "STAFF",
+      "description": "Basic stock operations and issue tracking",
+      "isSystem": true,
+      "isAdmin": false,
+      "permissions": {
+        "dashboard":        { "view": true },
+        "products":         { "view": true,  "add": false, "edit": false, "delete": false },
+        "inventory":        { "view": true },
+        "stock-management": { "view": true,  "add": true,  "edit": false, "delete": false },
+        "stock-transfers":  { "view": false },
+        "alerts":           { "view": true },
+        "reports":          { "view": false },
+        "suppliers":        { "view": false },
+        "supply-receipts":  { "view": false },
+        "stock-issues":     { "view": true,  "add": true,  "edit": true,  "delete": false },
+        "contractors":      { "view": false },
+        "warehouses":       { "view": false },
+        "users":            { "view": false },
+        "audit-logs":       { "view": false }
+      }
+    }
+  ]
+}
