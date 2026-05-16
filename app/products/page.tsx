@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { FiPlus, FiEdit, FiTrash2, FiSearch } from 'react-icons/fi';
+import { useAuth } from '@/components/AuthContext';
 
 interface Product {
   id: string;
@@ -19,6 +20,7 @@ interface Product {
 }
 
 export default function ProductsPage() {
+  const { canDo } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [inventory, setInventory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,13 +84,15 @@ export default function ProductsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-slate-100">Product Management</h1>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2 shrink-0"
-        >
-          <FiPlus className="w-4 h-4" />
-          <span>Add Product</span>
-        </button>
+        {canDo('products', 'add') && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2 shrink-0"
+          >
+            <FiPlus className="w-4 h-4" />
+            <span>Add Product</span>
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -161,12 +165,16 @@ export default function ProductsPage() {
                   <td className="px-6 py-4 text-sm text-right text-gray-900 dark:text-slate-100">₹{product.price.toFixed(2)}</td>
                   <td className="px-6 py-4 text-sm text-right text-gray-900 dark:text-slate-100">{product.minQuantity}</td>
                   <td className="px-6 py-4 text-sm space-x-2">
-                    <button onClick={() => setEditingProduct(product)} className="text-blue-600 hover:text-blue-800">
-                      <FiEdit className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => handleDelete(product.id)} className="text-red-600 hover:text-red-800">
-                      <FiTrash2 className="w-4 h-4" />
-                    </button>
+                    {canDo('products', 'edit') && (
+                      <button onClick={() => setEditingProduct(product)} className="text-blue-600 hover:text-blue-800">
+                        <FiEdit className="w-4 h-4" />
+                      </button>
+                    )}
+                    {canDo('products', 'delete') && (
+                      <button onClick={() => handleDelete(product.id)} className="text-red-600 hover:text-red-800">
+                        <FiTrash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

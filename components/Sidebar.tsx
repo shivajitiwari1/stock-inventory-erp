@@ -17,7 +17,7 @@ import { useSidebar } from './SidebarContext';
 export const Sidebar: React.FC = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const pathname = usePathname();
-  const { user, logout, hasPermission } = useAuth();
+  const { user, logout, hasPermission, canView } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { isOpen, isMobile, toggle, close } = useSidebar();
 
@@ -40,9 +40,10 @@ export const Sidebar: React.FC = () => {
 
   const showLabel = !isMobile && isOpen || isMobile;
 
-  const NavItem = ({ href, label, icon: Icon, roles }: any) => {
+  const NavItem = ({ href, label, icon: Icon }: any) => {
     const isActive = pathname === href;
-    const hasAccess = !user || roles.some((role: string) => hasPermission(role as any));
+    const pageKey = href === '/' ? 'dashboard' : href.slice(1);
+    const hasAccess = !user || canView(pageKey);
     if (!hasAccess) return null;
     return (
       <Link

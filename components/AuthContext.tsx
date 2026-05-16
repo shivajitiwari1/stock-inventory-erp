@@ -3,6 +3,18 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export type UserRole = 'ADMIN' | 'INVENTORY_MANAGER' | 'STAFF';
+export type UserAction = 'add' | 'edit' | 'delete';
+
+export interface PagePermission {
+  view: boolean;
+  add?: boolean;
+  edit?: boolean;
+  delete?: boolean;
+}
+
+export interface UserPermissions {
+  [page: string]: PagePermission;
+}
 
 export interface User {
   id: string;
@@ -10,6 +22,7 @@ export interface User {
   email: string;
   role: UserRole;
   status: 'ACTIVE' | 'INACTIVE';
+  permissions?: UserPermissions;
 }
 
 interface AuthContextType {
@@ -17,6 +30,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   hasPermission: (requiredRole: UserRole) => boolean;
+  canView: (page: string) => boolean;
+  canDo: (page: string, action: UserAction) => boolean;
   isLoading: boolean;
 }
 
@@ -30,16 +45,11 @@ export const useAuth = () => {
   return context;
 };
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for stored user session
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
       try {
@@ -57,10 +67,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await fetch('/api/users');
       const data = await response.json();
       const foundUser = data.users.find((u: User) => u.email === email);
-
       if (foundUser && foundUser.status === 'ACTIVE') {
-        // In a real app, you'd verify the password hash
-        // For demo purposes, we'll accept any password for existing users
         setUser(foundUser);
         localStorage.setItem('currentUser', JSON.stringify(foundUser));
         return true;
@@ -80,26 +87,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const hasPermission = (requiredRole: UserRole): boolean => {
     if (!user) return false;
-
-    const roleHierarchy = {
-      'STAFF': 1,
-      'INVENTORY_MANAGER': 2,
-      'ADMIN': 3,
-    };
-
-    return roleHierarchy[user.role] >= roleHierarchy[requiredRole];
+    const hierarchy = { STAFF: 1, INVENTORY_MANAGER: 2, ADMIN: 3 };
+    return hierarchy[user.role] >= hierarchy[requiredRole];
   };
 
-  const value: AuthContextType = {
-    user,
-    login,
-    logout,
-    hasPermission,
-    isLoading,
+  // ADMIN always has full access; others check their permissions object
+  const canView = (page: string): boolean => {
+    if (!user) return false;
+    if (user.role === 'ADMIN') return true;
+    return user.permissions?.[page]?.view ?? false;
+  };
+
+  const canDo = (page: string, action: UserAction): boolean => {
+    if (!user) return false;
+    if (user.role === 'ADMIN') return true;
+    return user.permissions?.[page]?.[action] ?? false;
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, login, logout, hasPermission, canView, canDo, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
