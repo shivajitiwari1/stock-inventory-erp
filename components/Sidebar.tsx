@@ -7,7 +7,7 @@ import {
   FiMenu, FiX, FiHome, FiPackage, FiBox, FiTrendingUp,
   FiUsers, FiActivity, FiBarChart, FiAlertCircle,
   FiLogOut, FiLogIn, FiSun, FiMoon, FiRepeat,
-  FiFileText, FiArrowUpRight, FiBriefcase,
+  FiFileText, FiArrowUpRight, FiBriefcase, FiBell,
 } from 'react-icons/fi';
 import { useAuth } from './AuthContext';
 import { useTheme } from './ThemeContext';
@@ -35,6 +35,7 @@ export const Sidebar: React.FC = () => {
     { href: '/contractors',      label: 'Contractors',      icon: FiBriefcase,     roles: ['ADMIN', 'INVENTORY_MANAGER'] },
     { href: '/warehouses',        label: 'Warehouses',      icon: FiBox,          roles: ['ADMIN', 'INVENTORY_MANAGER'] },
     { href: '/users',             label: 'User Management', icon: FiUsers,        roles: ['ADMIN'] },
+    { href: '/notifications',     label: 'Notifications',   icon: FiBell,         roles: ['ADMIN'] },
     { href: '/audit-logs',        label: 'Audit & Logs',    icon: FiActivity,     roles: ['ADMIN'] },
   ];
 

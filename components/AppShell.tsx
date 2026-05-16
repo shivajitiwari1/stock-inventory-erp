@@ -6,6 +6,7 @@ import { useAuth } from './AuthContext';
 import Sidebar from './Sidebar';
 import { SidebarProvider, useSidebar } from './SidebarContext';
 import { FiMenu } from 'react-icons/fi';
+import NotificationBanner from './NotificationBanner';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -49,6 +50,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       <main className={`flex-1 ${mainMargin} pt-20 lg:pt-8 p-4 md:p-6 lg:p-8 min-h-screen bg-gray-50 dark:bg-slate-900 transition-all duration-300 min-w-0`}>
+        <NotificationBanner />
         {children}
       </main>
     </div>
