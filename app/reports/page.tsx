@@ -95,7 +95,7 @@ export default function ReportsPage() {
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <p className="text-sm text-gray-500">Inventory Valuation</p>
           <p className="mt-3 text-3xl font-semibold text-gray-900">
-            ${totalValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+            ₹{totalValue.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
           </p>
         </div>
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -130,7 +130,7 @@ export default function ReportsPage() {
                 <tr key={row.warehouseId} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">{row.warehouseName}</td>
                   <td className="px-6 py-4 text-sm text-right text-gray-900">
-                    ${row.value.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    ₹{row.value.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                   </td>
                   <td className="px-6 py-4 text-sm text-right text-gray-900">{row.itemCount}</td>
                 </tr>
