@@ -3,6 +3,10 @@ import { writeFile } from 'fs/promises';
 import { readJSON, writeJSON } from '@/lib/db';
 import path from 'path';
 
+const ALLOWED_EXTENSIONS = new Set(['.pdf', '.jpg', '.jpeg', '.png']);
+const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'receipts');
+const RECEIPT_ID_PATTERN = /^SR\d+$/;
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -13,8 +17,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing file or receiptId' }, { status: 400 });
     }
 
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
-    if (!allowedTypes.includes(file.type)) {
+    // Validate receiptId format to prevent path traversal
+    if (!RECEIPT_ID_PATTERN.test(receiptId)) {
+      return NextResponse.json({ error: 'Invalid receiptId' }, { status: 400 });
+    }
+
+    // Validate file extension server-side (not relying on client-supplied MIME type)
+    const ext = path.extname(file.name).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.has(ext)) {
       return NextResponse.json({ error: 'Only PDF, JPG, PNG allowed' }, { status: 400 });
     }
 
@@ -22,12 +32,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File too large (max 10MB)' }, { status: 400 });
     }
 
-    const ext = path.extname(file.name) || '.bin';
     const filename = `${receiptId}${ext}`;
-    const uploadPath = path.join(process.cwd(), 'public', 'uploads', 'receipts', filename);
+    const uploadPath = path.join(UPLOAD_DIR, filename);
+
+    // Verify resolved path stays within upload directory (prevent path traversal)
+    const resolvedPath = path.resolve(uploadPath);
+    if (!resolvedPath.startsWith(path.resolve(UPLOAD_DIR))) {
+      return NextResponse.json({ error: 'Invalid file path' }, { status: 400 });
+    }
 
     const bytes = await file.arrayBuffer();
-    await writeFile(uploadPath, Buffer.from(bytes));
+    await writeFile(resolvedPath, Buffer.from(bytes));
 
     const filePath = `/uploads/receipts/${filename}`;
 
@@ -43,6 +58,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ filePath });
   } catch (error) {
+    console.error('Upload error:', error);
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
   }
 }
