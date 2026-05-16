@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { FiPlus, FiEdit, FiTrash2, FiSearch, FiPaperclip, FiExternalLink } from 'react-icons/fi';
+import { useAuth } from '@/components/AuthContext';
 
 interface ReceiptItem {
   productId: string;
@@ -38,6 +39,7 @@ export default function SupplyReceiptsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<SupplyReceipt | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const { canDo } = useAuth();
 
   useEffect(() => {
     Promise.all([
@@ -85,6 +87,7 @@ export default function SupplyReceiptsPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100">Supply Receipts</h1>
           <p className="mt-2 text-gray-600 dark:text-slate-400">Record goods received from suppliers at site warehouses.</p>
         </div>
+        {canDo('supply-receipts', 'add') && (
         <button
           onClick={() => { setEditing(null); setShowModal(true); }}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2 shrink-0"
@@ -92,6 +95,7 @@ export default function SupplyReceiptsPage() {
           <FiPlus className="w-4 h-4" />
           <span>Add Receipt</span>
         </button>
+        )}
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
@@ -139,12 +143,16 @@ export default function SupplyReceiptsPage() {
                     ) : <span className="text-gray-400">—</span>}
                   </td>
                   <td className="px-4 py-4 text-sm space-x-2">
+                    {canDo('supply-receipts', 'edit') && (
                     <button onClick={() => { setEditing(r); setShowModal(true); }} className="text-blue-600 hover:text-blue-800 inline-block">
                       <FiEdit className="w-4 h-4" />
                     </button>
+                    )}
+                    {canDo('supply-receipts', 'delete') && (
                     <button onClick={() => handleDelete(r.id)} className="text-red-600 hover:text-red-800 inline-block">
                       <FiTrash2 className="w-4 h-4" />
                     </button>
+                    )}
                   </td>
                 </tr>
               ))}

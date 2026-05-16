@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { FiPlus, FiEdit, FiTrash2, FiSearch, FiFilter } from 'react-icons/fi';
+import { useAuth } from '@/components/AuthContext';
 
 interface StockIssue {
   id: string;
@@ -41,6 +42,7 @@ export default function StockIssuesPage() {
   const [editing, setEditing] = useState<StockIssue | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const { canDo } = useAuth();
 
   useEffect(() => {
     Promise.all([
@@ -88,6 +90,7 @@ export default function StockIssuesPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100">Stock Issues</h1>
           <p className="mt-2 text-gray-600 dark:text-slate-400">Track materials issued to contractors and workers on site.</p>
         </div>
+        {canDo('stock-issues', 'add') && (
         <button
           onClick={() => { setEditing(null); setShowModal(true); }}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2 shrink-0"
@@ -95,6 +98,7 @@ export default function StockIssuesPage() {
           <FiPlus className="w-4 h-4" />
           <span>Issue Stock</span>
         </button>
+        )}
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
@@ -149,12 +153,16 @@ export default function StockIssuesPage() {
                     <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusBadge(issue.status)}`}>{issue.status}</span>
                   </td>
                   <td className="px-6 py-4 text-sm space-x-2">
+                    {canDo('stock-issues', 'edit') && (
                     <button onClick={() => { setEditing(issue); setShowModal(true); }} className="text-blue-600 hover:text-blue-800 inline-block">
                       <FiEdit className="w-4 h-4" />
                     </button>
+                    )}
+                    {canDo('stock-issues', 'delete') && (
                     <button onClick={() => handleDelete(issue.id)} className="text-red-600 hover:text-red-800 inline-block">
                       <FiTrash2 className="w-4 h-4" />
                     </button>
+                    )}
                   </td>
                 </tr>
               ))}
