@@ -25,10 +25,20 @@ const Dashboard: React.FC<{ data: DashboardData }> = ({ data }) => {
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
   const { theme } = useTheme();
   const isDark = theme === 'dark';
-  const chartAxisColor   = isDark ? '#94a3b8' : '#6b7280';
+  const chartAxisColor   = isDark ? '#cbd5e1' : '#6b7280';
   const chartGridColor   = isDark ? '#334155' : '#e5e7eb';
-  const chartBgColor     = isDark ? '#1e293b' : '#ffffff';
-  const chartBorderColor = isDark ? '#475569' : '#e2e8f0';
+  const chartBgColor     = isDark ? '#0f172a' : '#ffffff';
+  const chartBorderColor = isDark ? '#3b82f6' : '#e2e8f0';
+  const chartTextColor   = isDark ? '#f1f5f9' : '#111827';
+  const tooltipStyle = {
+    backgroundColor: chartBgColor,
+    border: `1px solid ${chartBorderColor}`,
+    borderRadius: '10px',
+    color: chartTextColor,
+    boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.6)' : '0 8px 24px rgba(0,0,0,0.12)',
+    fontSize: '13px',
+  };
+  const tooltipLabelStyle = { color: isDark ? '#93c5fd' : '#1d4ed8', fontWeight: 700, marginBottom: 4 };
   const { products } = data;
 
   const StatCard = ({ icon: Icon, label, value, color, bgColor }: any) => (
@@ -86,7 +96,7 @@ const Dashboard: React.FC<{ data: DashboardData }> = ({ data }) => {
       {/* Stock Summary Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Stock Trend Chart */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-100 dark:border-slate-700 min-w-0">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-100 dark:border-slate-600 min-w-0">
           <div className="flex items-center justify-between mb-4 sm:mb-6">
             <h3 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-slate-100">Stock Trend</h3>
             <div className="p-2 bg-blue-100 rounded-lg">
@@ -98,15 +108,7 @@ const Dashboard: React.FC<{ data: DashboardData }> = ({ data }) => {
               <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} />
               <XAxis dataKey="date" stroke={chartAxisColor} fontSize={11} tick={{ fill: chartAxisColor }} />
               <YAxis stroke={chartAxisColor} fontSize={11} tick={{ fill: chartAxisColor }} width={40} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: chartBgColor,
-                  border: `1px solid ${chartBorderColor}`,
-                  borderRadius: '12px',
-                  color: isDark ? '#f1f5f9' : '#111827',
-                  boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
-                }}
-              />
+              <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} />
               <Legend wrapperStyle={{ color: chartAxisColor, fontSize: '12px' }} />
               <Line
                 type="monotone"
@@ -122,7 +124,7 @@ const Dashboard: React.FC<{ data: DashboardData }> = ({ data }) => {
         </div>
 
         {/* Category Distribution */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-100 dark:border-slate-700 min-w-0">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-100 dark:border-slate-600 min-w-0">
           <div className="flex items-center justify-between mb-4 sm:mb-6">
             <h3 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-slate-100">Stock by Category</h3>
             <div className="p-2 bg-purple-100 rounded-lg">
@@ -137,17 +139,8 @@ const Dashboard: React.FC<{ data: DashboardData }> = ({ data }) => {
             >
               <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} horizontal={false} />
               <XAxis type="number" stroke={chartAxisColor} fontSize={11} tick={{ fill: chartAxisColor }} />
-              <YAxis type="category" dataKey="name" stroke={chartAxisColor} fontSize={11} tick={{ fill: chartAxisColor }} width={80} />
-              <Tooltip
-                cursor={false}
-                contentStyle={{
-                  backgroundColor: chartBgColor,
-                  border: `1px solid ${chartBorderColor}`,
-                  borderRadius: '12px',
-                  color: isDark ? '#f1f5f9' : '#111827',
-                  boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
-                }}
-              />
+              <YAxis type="category" dataKey="name" stroke={chartAxisColor} fontSize={12} tick={{ fill: chartAxisColor, fontWeight: 500 }} width={90} />
+              <Tooltip cursor={false} contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} />
               <Bar dataKey="value" name="Stock" radius={[0, 4, 4, 0]}>
                 {data.categoryDistribution.map((entry: any, index: number) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
