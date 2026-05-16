@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { FiSearch, FiFilter, FiDownload } from 'react-icons/fi';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 interface InventoryItem {
   id: string;
@@ -81,24 +81,94 @@ export default function InventoryPage() {
     });
   }, [inventory, search, warehouseFilter, categoryFilter, statusFilter]);
 
-  const exportXLS = () => {
-    const rows = filtered.map(item => ({
-      'Product Name': item.productName,
-      'SKU': item.sku,
-      'Category': item.category,
-      'Warehouse': item.warehouseName,
-      'Available Qty': item.availableQuantity,
-      'Reserved Qty': item.reservedQuantity || 0,
-      'Total Qty': item.totalQuantity,
-      'Min Qty': item.minQuantity,
-      'Status': item.availableQuantity === 0 ? 'Out of Stock'
-        : item.availableQuantity <= item.minQuantity ? 'Low Stock' : 'In Stock',
-      'Last Updated': item.lastUpdated ? new Date(item.lastUpdated).toLocaleDateString('en-IN') : '',
-    }));
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Inventory');
-    XLSX.writeFile(wb, `inventory-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  const exportXLS = async () => {
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'Stock ERP';
+    wb.created = new Date();
+
+    const ws = wb.addWorksheet('Inventory', {
+      views: [{ state: 'frozen', ySplit: 1 }],
+    });
+
+    const columns = [
+      { header: 'Product Name',  key: 'productName',        width: 28 },
+      { header: 'SKU',           key: 'sku',                width: 14 },
+      { header: 'Category',      key: 'category',           width: 16 },
+      { header: 'Warehouse',     key: 'warehouseName',      width: 22 },
+      { header: 'Available Qty', key: 'availableQuantity',  width: 14 },
+      { header: 'Reserved Qty',  key: 'reservedQuantity',   width: 14 },
+      { header: 'Total Qty',     key: 'totalQuantity',      width: 12 },
+      { header: 'Min Qty',       key: 'minQuantity',        width: 10 },
+      { header: 'Status',        key: 'status',             width: 14 },
+      { header: 'Last Updated',  key: 'lastUpdated',        width: 16 },
+    ];
+    ws.columns = columns;
+
+    // Style header row
+    const headerRow = ws.getRow(1);
+    headerRow.height = 22;
+    headerRow.eachCell(cell => {
+      cell.font = { bold: true, size: 12, color: { argb: 'FF1F2937' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1D5DB' } };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.border = {
+        top:    { style: 'thin', color: { argb: 'FF9CA3AF' } },
+        bottom: { style: 'medium', color: { argb: 'FF6B7280' } },
+        left:   { style: 'thin', color: { argb: 'FF9CA3AF' } },
+        right:  { style: 'thin', color: { argb: 'FF9CA3AF' } },
+      };
+    });
+
+    // Add data rows
+    filtered.forEach((item, idx) => {
+      const status = item.availableQuantity === 0 ? 'Out of Stock'
+        : item.availableQuantity <= item.minQuantity ? 'Low Stock' : 'In Stock';
+      const row = ws.addRow({
+        productName:       item.productName,
+        sku:               item.sku,
+        category:          item.category,
+        warehouseName:     item.warehouseName,
+        availableQuantity: item.availableQuantity,
+        reservedQuantity:  item.reservedQuantity || 0,
+        totalQuantity:     item.totalQuantity,
+        minQuantity:       item.minQuantity,
+        status,
+        lastUpdated:       item.lastUpdated ? new Date(item.lastUpdated).toLocaleDateString('en-IN') : '',
+      });
+
+      // Alternating row background
+      const bg = idx % 2 === 0 ? 'FFFFFFFF' : 'FFF9FAFB';
+      row.eachCell(cell => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
+        cell.font = { size: 11 };
+        cell.alignment = { vertical: 'middle' };
+        cell.border = {
+          top:    { style: 'hair', color: { argb: 'FFE5E7EB' } },
+          bottom: { style: 'hair', color: { argb: 'FFE5E7EB' } },
+          left:   { style: 'hair', color: { argb: 'FFE5E7EB' } },
+          right:  { style: 'hair', color: { argb: 'FFE5E7EB' } },
+        };
+      });
+
+      // Color-code Status cell
+      const statusCell = row.getCell('status');
+      statusCell.font = {
+        size: 11, bold: true,
+        color: { argb: status === 'In Stock' ? 'FF166534' : status === 'Low Stock' ? 'FF92400E' : 'FF991B1B' },
+      };
+    });
+
+    // Download
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `inventory-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   // Summary stats (from filtered list)
@@ -130,7 +200,7 @@ export default function InventoryPage() {
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <button
-            onClick={exportXLS}
+            onClick={() => exportXLS()}
             className="flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-xl font-semibold shadow-md hover:bg-green-700 text-sm"
           >
             <FiDownload className="w-4 h-4" />
