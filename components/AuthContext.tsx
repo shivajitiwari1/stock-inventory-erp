@@ -87,8 +87,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const hasPermission = (requiredRole: UserRole): boolean => {
     if (!user) return false;
-    const hierarchy = { STAFF: 1, INVENTORY_MANAGER: 2, ADMIN: 3 };
-    return hierarchy[user.role] >= hierarchy[requiredRole];
+    const hierarchy: Record<string, number> = { STAFF: 1, INVENTORY_MANAGER: 2, ADMIN: 3 };
+    return (hierarchy[user.role] ?? 0) >= (hierarchy[requiredRole] ?? 0);
   };
 
   // ADMIN always has full access; others check their permissions object
