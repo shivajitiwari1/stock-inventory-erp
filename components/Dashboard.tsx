@@ -86,9 +86,9 @@ const Dashboard: React.FC<{ data: DashboardData }> = ({ data }) => {
       {/* Stock Summary Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Stock Trend Chart */}
-        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-100 min-w-0">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-100 dark:border-slate-700 min-w-0">
           <div className="flex items-center justify-between mb-4 sm:mb-6">
-            <h3 className="text-lg sm:text-xl font-bold text-gray-800">Stock Trend</h3>
+            <h3 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-slate-100">Stock Trend</h3>
             <div className="p-2 bg-blue-100 rounded-lg">
               <FiTrendingUp className="w-5 h-5 text-blue-600" />
             </div>
@@ -122,9 +122,9 @@ const Dashboard: React.FC<{ data: DashboardData }> = ({ data }) => {
         </div>
 
         {/* Category Distribution */}
-        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-100 min-w-0">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-100 dark:border-slate-700 min-w-0">
           <div className="flex items-center justify-between mb-4 sm:mb-6">
-            <h3 className="text-lg sm:text-xl font-bold text-gray-800">Stock by Category</h3>
+            <h3 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-slate-100">Stock by Category</h3>
             <div className="p-2 bg-purple-100 rounded-lg">
               <FiPackage className="w-5 h-5 text-purple-600" />
             </div>
@@ -139,6 +139,7 @@ const Dashboard: React.FC<{ data: DashboardData }> = ({ data }) => {
               <XAxis type="number" stroke={chartAxisColor} fontSize={11} tick={{ fill: chartAxisColor }} />
               <YAxis type="category" dataKey="name" stroke={chartAxisColor} fontSize={11} tick={{ fill: chartAxisColor }} width={80} />
               <Tooltip
+                cursor={false}
                 contentStyle={{
                   backgroundColor: chartBgColor,
                   border: `1px solid ${chartBorderColor}`,
@@ -197,28 +198,28 @@ const Dashboard: React.FC<{ data: DashboardData }> = ({ data }) => {
       </div>
 
       {/* Recently Added Products */}
-      <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 border border-gray-100 dark:border-slate-700">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Recent Activity</h2>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-slate-100">Recent Activity</h2>
           <div className="p-2 bg-indigo-100 rounded-lg">
             <FiClock className="w-5 h-5 text-indigo-600" />
           </div>
         </div>
         <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6">
           <table className="w-full min-w-[400px]">
-            <thead className="bg-gray-50 rounded-lg">
+            <thead className="bg-gray-50 dark:bg-slate-700 rounded-lg">
               <tr>
-                <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Product</th>
-                <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Type</th>
-                <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Qty</th>
-                <th className="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Warehouse</th>
-                <th className="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Date</th>
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wide">Product</th>
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wide">Type</th>
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wide">Qty</th>
+                <th className="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wide">Warehouse</th>
+                <th className="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-slate-300 uppercase tracking-wide">Date</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
               {data.recentMovements.slice(0, 8).map((movement: any) => (
-                <tr key={movement.id} className="hover:bg-gray-50 transition-colors duration-200">
-                  <td className="px-3 sm:px-6 py-3 text-sm font-medium text-gray-900">{movement.productName}</td>
+                <tr key={movement.id} className="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors duration-200">
+                  <td className="px-3 sm:px-6 py-3 text-sm font-medium text-gray-900 dark:text-slate-100">{movement.productName}</td>
                   <td className="px-3 sm:px-6 py-3 text-sm">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
                       movement.type === 'STOCK_IN'
@@ -237,8 +238,8 @@ const Dashboard: React.FC<{ data: DashboardData }> = ({ data }) => {
                     </span>
                   </td>
                   <td className="px-3 sm:px-6 py-3 text-sm text-gray-900 font-medium">{movement.quantity}</td>
-                  <td className="hidden sm:table-cell px-3 sm:px-6 py-3 text-sm text-gray-600">{movement.warehouseName || 'Main Warehouse'}</td>
-                  <td className="hidden sm:table-cell px-3 sm:px-6 py-3 text-sm text-gray-500">
+                  <td className="hidden sm:table-cell px-3 sm:px-6 py-3 text-sm text-gray-600 dark:text-slate-400">{movement.warehouseName || 'Main Warehouse'}</td>
+                  <td className="hidden sm:table-cell px-3 sm:px-6 py-3 text-sm text-gray-500 dark:text-slate-400">
                     {new Date(movement.timestamp).toLocaleDateString()}
                   </td>
                 </tr>
