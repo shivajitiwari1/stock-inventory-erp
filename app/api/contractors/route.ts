@@ -6,7 +6,7 @@ export async function GET() {
     const data = readJSON('contractors.json');
     if (!data) return NextResponse.json({ error: 'Failed to read contractors' }, { status: 500 });
     return NextResponse.json(data.contractors || []);
-  } catch {
+  } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     data.contractors.push(newContractor);
     writeJSON('contractors.json', data);
     return NextResponse.json(newContractor, { status: 201 });
-  } catch {
+  } catch (error) {
     return NextResponse.json({ error: 'Failed to create contractor' }, { status: 500 });
   }
 }

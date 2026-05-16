@@ -18,7 +18,7 @@ export async function PUT(request: NextRequest, context: any) {
     };
     writeJSON('contractors.json', data);
     return NextResponse.json(data.contractors[index]);
-  } catch {
+  } catch (error) {
     return NextResponse.json({ error: 'Failed to update contractor' }, { status: 500 });
   }
 }
@@ -32,7 +32,7 @@ export async function DELETE(_request: NextRequest, context: any) {
     data.contractors.splice(index, 1);
     writeJSON('contractors.json', data);
     return NextResponse.json({ message: 'Contractor deleted successfully' });
-  } catch {
+  } catch (error) {
     return NextResponse.json({ error: 'Failed to delete contractor' }, { status: 500 });
   }
 }
