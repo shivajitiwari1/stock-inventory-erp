@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FiPlus, FiEdit, FiTrash2 } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiX } from 'react-icons/fi';
 
 interface Transfer {
   id: string;
@@ -217,7 +217,12 @@ function TransferModal({ transfer, warehouses, onClose, onSave }: any) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 sm:p-8">
-        <h2 className="text-2xl font-bold mb-6">{transfer ? 'Edit Transfer' : 'New Stock Transfer'}</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold">{transfer ? 'Edit Transfer' : 'New Stock Transfer'}</h2>
+          <button type="button" onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-slate-300 dark:hover:bg-slate-700 transition-colors">
+            <FiX className="w-5 h-5" />
+          </button>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>

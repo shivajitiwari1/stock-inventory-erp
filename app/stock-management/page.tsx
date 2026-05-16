@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FiEdit } from 'react-icons/fi';
+import { FiEdit, FiX } from 'react-icons/fi';
 
 interface AttributeQuantityRule {
   key: string;
@@ -283,7 +283,12 @@ function StockAdjustmentModal({ item, onClose, onSave }: {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 sm:p-8">
-        <h2 className="text-2xl font-bold mb-1">Adjust Stock</h2>
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="text-2xl font-bold">Adjust Stock</h2>
+          <button type="button" onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-slate-300 dark:hover:bg-slate-700 transition-colors">
+            <FiX className="w-5 h-5" />
+          </button>
+        </div>
         <p className="text-sm text-gray-500 mb-6">{item.productName} — {item.warehouseName}</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">

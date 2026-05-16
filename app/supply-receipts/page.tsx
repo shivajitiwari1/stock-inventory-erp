@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FiPlus, FiEdit, FiTrash2, FiSearch, FiPaperclip, FiExternalLink } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiSearch, FiPaperclip, FiExternalLink, FiX } from 'react-icons/fi';
 import { useAuth } from '@/components/AuthContext';
 
 interface ReceiptItem {
@@ -268,7 +268,12 @@ function ReceiptModal({ receipt, suppliers, warehouses, products, onClose, onSav
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
-        <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-slate-100">{receipt ? 'Edit' : 'Add'} Supply Receipt</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">{receipt ? 'Edit' : 'Add'} Supply Receipt</h2>
+          <button type="button" onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-slate-300 dark:hover:bg-slate-700 transition-colors">
+            <FiX className="w-5 h-5" />
+          </button>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
 
           <div className="grid grid-cols-2 gap-3">
