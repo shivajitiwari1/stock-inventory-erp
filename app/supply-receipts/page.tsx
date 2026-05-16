@@ -234,13 +234,17 @@ function ReceiptModal({ receipt, suppliers, warehouses, products, onClose, onSav
       const saved: SupplyReceipt = await res.json();
 
       if (file) {
-        const fd = new FormData();
-        fd.append('file', file);
-        fd.append('receiptId', saved.id);
-        const upRes = await fetch('/api/supply-receipts/upload', { method: 'POST', body: fd });
-        if (upRes.ok) {
-          const { filePath } = await upRes.json();
-          saved.receiptFile = filePath;
+        try {
+          const fd = new FormData();
+          fd.append('file', file);
+          fd.append('receiptId', saved.id);
+          const upRes = await fetch('/api/supply-receipts/upload', { method: 'POST', body: fd });
+          if (upRes.ok) {
+            const { filePath } = await upRes.json();
+            saved.receiptFile = filePath;
+          }
+        } catch (uploadError) {
+          console.error('File upload failed:', uploadError);
         }
       }
       onSave(saved);
