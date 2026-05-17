@@ -28,7 +28,7 @@
         "supply-receipts":  { "view": true, "add": true,  "edit": true,  "delete": false },
         "stock-issues":     { "view": true, "add": true,  "edit": true,  "delete": false },
         "contractors":      { "view": true, "add": true,  "edit": true,  "delete": false },
-        "warehouses":       { "view": true, "add": true,  "edit": true,  "delete": false },
+        "warehouses":       { "view": true, "add": true,  "edit": true,  "delete": false, "archive": false },
         "users":            { "view": false },
         "audit-logs":       { "view": false }
       }
