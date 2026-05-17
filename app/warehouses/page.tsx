@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FiPlus, FiEdit, FiTrash2, FiSearch, FiX } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiSearch, FiX, FiArchive, FiRefreshCw } from 'react-icons/fi';
 
 interface Warehouse {
   id: string;
@@ -10,9 +10,10 @@ interface Warehouse {
   manager: string;
   capacity: number;
   currentUsage: number;
-  status: 'ACTIVE' | 'INACTIVE';
+  status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED';
   address?: string;
   phone?: string;
+  archivedAt?: string;
 }
 
 export default function WarehousesPage() {
@@ -21,6 +22,8 @@ export default function WarehousesPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingWarehouse, setEditingWarehouse] = useState<Warehouse | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showArchived, setShowArchived] = useState(false);
+  const [archiveTarget, setArchiveTarget] = useState<string | null>(null);
 
   useEffect(() => {
     fetchWarehouses();
@@ -38,20 +41,47 @@ export default function WarehousesPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this warehouse?')) return;
+  const handleArchive = async (id: string) => {
     try {
-      await fetch(`/api/warehouses/${id}`, { method: 'DELETE' });
-      setWarehouses(warehouses.filter(w => w.id !== id));
+      const res = await fetch(`/api/warehouses/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        const updated = await res.json();
+        setWarehouses(warehouses.map(w => w.id === id ? updated : w));
+      }
     } catch (error) {
-      console.error('Failed to delete warehouse:', error);
+      console.error('Failed to archive warehouse:', error);
+    } finally {
+      setArchiveTarget(null);
     }
   };
 
-  const filteredWarehouses = warehouses.filter(warehouse =>
-    warehouse.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    warehouse.location.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleRestore = async (id: string) => {
+    try {
+      const res = await fetch(`/api/warehouses/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'ACTIVE' }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setWarehouses(warehouses.map(w => w.id === id ? updated : w));
+      }
+    } catch (error) {
+      console.error('Failed to restore warehouse:', error);
+    }
+  };
+
+  const filteredWarehouses = warehouses
+    .filter(w => showArchived ? true : w.status !== 'ARCHIVED')
+    .filter(w =>
+      w.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      w.location.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      if (a.status === 'ARCHIVED' && b.status !== 'ARCHIVED') return 1;
+      if (a.status !== 'ARCHIVED' && b.status === 'ARCHIVED') return -1;
+      return 0;
+    });
 
   if (loading) {
     return (
@@ -68,13 +98,24 @@ export default function WarehousesPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Warehouses</h1>
           <p className="mt-2 text-gray-600">Manage warehouse locations, capacity, and stock storage.</p>
         </div>
-        <button
-          onClick={() => { setEditingWarehouse(null); setShowModal(true); }}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2 shrink-0"
-        >
-          <FiPlus className="w-4 h-4" />
-          <span>Add Warehouse</span>
-        </button>
+        <div className="flex items-center gap-3 shrink-0">
+          <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-gray-600">
+            <div
+              onClick={() => setShowArchived(v => !v)}
+              className={`relative w-10 h-5 rounded-full transition-colors ${showArchived ? 'bg-blue-600' : 'bg-gray-300'}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${showArchived ? 'translate-x-5' : 'translate-x-0'}`} />
+            </div>
+            Show Archived
+          </label>
+          <button
+            onClick={() => { setEditingWarehouse(null); setShowModal(true); }}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+          >
+            <FiPlus className="w-4 h-4" />
+            <span>Add Warehouse</span>
+          </button>
+        </div>
       </div>
 
       {/* Search */}
@@ -111,9 +152,10 @@ export default function WarehousesPage() {
                 <tr><td colSpan={7} className="px-6 py-10 text-center text-gray-400">No warehouses found.</td></tr>
               )}
               {filteredWarehouses.map((warehouse: any) => {
+                const isArchived = warehouse.status === 'ARCHIVED';
                 const usagePercent = warehouse.capacity > 0 ? (warehouse.currentUsage / warehouse.capacity) * 100 : 0;
                 return (
-                  <tr key={warehouse.id} className="hover:bg-gray-50">
+                  <tr key={warehouse.id} className={`hover:bg-gray-50 ${isArchived ? 'opacity-50' : ''}`}>
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">{warehouse.name}</td>
                     <td className="px-6 py-4 text-sm text-gray-500">{warehouse.location}</td>
                     <td className="px-6 py-4 text-sm text-gray-500">{warehouse.manager}</td>
@@ -121,29 +163,49 @@ export default function WarehousesPage() {
                     <td className="px-6 py-4 text-sm text-right">
                       <div className="flex items-center space-x-2">
                         <div className="w-20 bg-gray-200 rounded-full h-2">
-                          <div className={`h-2 rounded-full ${usagePercent > 80 ? 'bg-red-500' : usagePercent > 60 ? 'bg-yellow-500' : 'bg-green-500'}`} style={{ width: `${usagePercent}%` }}></div>
+                          <div
+                            className={`h-2 rounded-full ${usagePercent > 80 ? 'bg-red-500' : usagePercent > 60 ? 'bg-yellow-500' : 'bg-green-500'}`}
+                            style={{ width: `${usagePercent}%` }}
+                          />
                         </div>
                         <span className="text-gray-900">{warehouse.currentUsage}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm">
-                      <span className={`rounded-full px-2 py-1 text-xs font-semibold ${warehouse.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                      <span className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                        warehouse.status === 'ACTIVE' ? 'bg-green-100 text-green-700' :
+                        warehouse.status === 'ARCHIVED' ? 'bg-orange-100 text-orange-700' :
+                        'bg-gray-100 text-gray-700'
+                      }`}>
                         {warehouse.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm space-x-2">
-                      <button
-                        onClick={() => { setEditingWarehouse(warehouse); setShowModal(true); }}
-                        className="text-blue-600 hover:text-blue-800 inline-block"
-                      >
-                        <FiEdit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(warehouse.id)}
-                        className="text-red-600 hover:text-red-800 inline-block"
-                      >
-                        <FiTrash2 className="w-4 h-4" />
-                      </button>
+                      {isArchived ? (
+                        <button
+                          onClick={() => handleRestore(warehouse.id)}
+                          title="Restore warehouse"
+                          className="text-green-600 hover:text-green-800 inline-block"
+                        >
+                          <FiRefreshCw className="w-4 h-4" />
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => { setEditingWarehouse(warehouse); setShowModal(true); }}
+                            className="text-blue-600 hover:text-blue-800 inline-block"
+                          >
+                            <FiEdit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setArchiveTarget(warehouse.id)}
+                            className="text-red-600 hover:text-red-800 inline-block"
+                            title="Archive warehouse"
+                          >
+                            <FiTrash2 className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 );
@@ -167,6 +229,44 @@ export default function WarehousesPage() {
           }}
         />
       )}
+      {archiveTarget && (
+        <ArchiveConfirmModal
+          onConfirm={() => handleArchive(archiveTarget)}
+          onCancel={() => setArchiveTarget(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function ArchiveConfirmModal({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-gray-900">Archive Warehouse</h2>
+          <button type="button" onClick={onCancel} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+            <FiX className="w-5 h-5" />
+          </button>
+        </div>
+        <p className="text-gray-600 mb-6">
+          Archive this warehouse? It will be hidden from the active list but all stock data is preserved.
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={onConfirm}
+            className="flex-1 bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700 font-medium"
+          >
+            Archive
+          </button>
+          <button
+            onClick={onCancel}
+            className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 font-medium"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
