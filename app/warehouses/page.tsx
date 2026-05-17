@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/components/AuthContext';
 import { FiPlus, FiEdit, FiTrash2, FiSearch, FiX, FiRefreshCw } from 'react-icons/fi';
 
 interface Warehouse {
@@ -25,6 +26,7 @@ export default function WarehousesPage() {
   const [showArchived, setShowArchived] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState<string | null>(null);
   const [archiving, setArchiving] = useState(false);
+  const { canDo } = useAuth();
 
   useEffect(() => {
     fetchWarehouses();
@@ -185,13 +187,15 @@ export default function WarehousesPage() {
                     </td>
                     <td className="px-6 py-4 text-sm space-x-2">
                       {isArchived ? (
-                        <button
-                          onClick={() => handleRestore(warehouse.id)}
-                          title="Restore warehouse"
-                          className="text-green-600 hover:text-green-800 inline-block"
-                        >
-                          <FiRefreshCw className="w-4 h-4" />
-                        </button>
+                        canDo('warehouses', 'archive') && (
+                          <button
+                            onClick={() => handleRestore(warehouse.id)}
+                            title="Restore warehouse"
+                            className="text-green-600 hover:text-green-800 inline-block"
+                          >
+                            <FiRefreshCw className="w-4 h-4" />
+                          </button>
+                        )
                       ) : (
                         <>
                           <button
@@ -200,13 +204,15 @@ export default function WarehousesPage() {
                           >
                             <FiEdit className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => setArchiveTarget(warehouse.id)}
-                            className="text-red-600 hover:text-red-800 inline-block"
-                            title="Archive warehouse"
-                          >
-                            <FiTrash2 className="w-4 h-4" />
-                          </button>
+                          {canDo('warehouses', 'archive') && (
+                            <button
+                              onClick={() => setArchiveTarget(warehouse.id)}
+                              className="text-red-600 hover:text-red-800 inline-block"
+                              title="Archive warehouse"
+                            >
+                              <FiTrash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </>
                       )}
                     </td>
