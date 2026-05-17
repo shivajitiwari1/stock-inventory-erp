@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FiPlus, FiEdit, FiTrash2, FiSearch, FiX, FiArchive, FiRefreshCw } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiSearch, FiX, FiRefreshCw } from 'react-icons/fi';
 
 interface Warehouse {
   id: string;
@@ -99,11 +99,11 @@ export default function WarehousesPage() {
           <p className="mt-2 text-gray-600">Manage warehouse locations, capacity, and stock storage.</p>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-gray-600">
-            <div
-              onClick={() => setShowArchived(v => !v)}
-              className={`relative w-10 h-5 rounded-full transition-colors ${showArchived ? 'bg-blue-600' : 'bg-gray-300'}`}
-            >
+          <label
+            onClick={() => setShowArchived(v => !v)}
+            className="flex items-center gap-2 cursor-pointer select-none text-sm text-gray-600"
+          >
+            <div className={`relative w-10 h-5 rounded-full transition-colors ${showArchived ? 'bg-blue-600' : 'bg-gray-300'}`}>
               <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${showArchived ? 'translate-x-5' : 'translate-x-0'}`} />
             </div>
             Show Archived
