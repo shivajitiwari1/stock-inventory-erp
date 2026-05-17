@@ -24,6 +24,7 @@ export default function WarehousesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showArchived, setShowArchived] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState<string | null>(null);
+  const [archiving, setArchiving] = useState(false);
 
   useEffect(() => {
     fetchWarehouses();
@@ -42,6 +43,7 @@ export default function WarehousesPage() {
   };
 
   const handleArchive = async (id: string) => {
+    setArchiving(true);
     try {
       const res = await fetch(`/api/warehouses/${id}`, { method: 'DELETE' });
       if (res.ok) {
@@ -51,6 +53,7 @@ export default function WarehousesPage() {
     } catch (error) {
       console.error('Failed to archive warehouse:', error);
     } finally {
+      setArchiving(false);
       setArchiveTarget(null);
     }
   };
@@ -233,13 +236,14 @@ export default function WarehousesPage() {
         <ArchiveConfirmModal
           onConfirm={() => handleArchive(archiveTarget)}
           onCancel={() => setArchiveTarget(null)}
+          isLoading={archiving}
         />
       )}
     </div>
   );
 }
 
-function ArchiveConfirmModal({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
+function ArchiveConfirmModal({ onConfirm, onCancel, isLoading }: { onConfirm: () => void; onCancel: () => void; isLoading?: boolean }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
@@ -255,9 +259,10 @@ function ArchiveConfirmModal({ onConfirm, onCancel }: { onConfirm: () => void; o
         <div className="flex gap-3">
           <button
             onClick={onConfirm}
-            className="flex-1 bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700 font-medium"
+            disabled={isLoading}
+            className="flex-1 bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Archive
+            {isLoading ? 'Archiving...' : 'Archive'}
           </button>
           <button
             onClick={onCancel}
