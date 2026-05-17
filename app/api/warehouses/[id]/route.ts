@@ -26,7 +26,11 @@ export async function PUT(request: NextRequest, context: any) {
       return NextResponse.json({ error: 'Warehouse not found' }, { status: 404 });
     }
 
-    data.warehouses[index] = { ...data.warehouses[index], ...body, updatedAt: new Date().toISOString() };
+    const updated: any = { ...data.warehouses[index], ...body, updatedAt: new Date().toISOString() };
+    if (body.status === 'ACTIVE') {
+      delete updated.archivedAt;
+    }
+    data.warehouses[index] = updated;
     writeJSON('warehouses.json', data);
     return NextResponse.json(data.warehouses[index]);
   } catch (error) {
@@ -44,10 +48,14 @@ export async function DELETE(_request: NextRequest, context: any) {
       return NextResponse.json({ error: 'Warehouse not found' }, { status: 404 });
     }
 
-    data.warehouses.splice(index, 1);
+    data.warehouses[index] = {
+      ...data.warehouses[index],
+      status: 'ARCHIVED',
+      archivedAt: new Date().toISOString(),
+    };
     writeJSON('warehouses.json', data);
-    return NextResponse.json({ message: 'Warehouse deleted successfully' });
+    return NextResponse.json(data.warehouses[index]);
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to delete warehouse' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to archive warehouse' }, { status: 500 });
   }
 }
