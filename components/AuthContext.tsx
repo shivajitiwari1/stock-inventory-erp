@@ -3,13 +3,14 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export type UserRole = string; // supports dynamic roles; 'ADMIN' always has full access
-export type UserAction = 'add' | 'edit' | 'delete';
+export type UserAction = 'add' | 'edit' | 'delete' | 'archive';
 
 export interface PagePermission {
   view: boolean;
   add?: boolean;
   edit?: boolean;
   delete?: boolean;
+  archive?: boolean;
 }
 
 export interface UserPermissions {
