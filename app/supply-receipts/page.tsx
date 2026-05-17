@@ -27,7 +27,7 @@ interface SupplyReceipt {
 }
 
 interface Supplier { id: string; name: string; }
-interface Warehouse { id: string; name: string; }
+interface Warehouse { id: string; name: string; status?: string; }
 interface Product { id: string; name: string; }
 
 export default function SupplyReceiptsPage() {
@@ -288,7 +288,7 @@ function ReceiptModal({ receipt, suppliers, warehouses, products, onClose, onSav
               <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Warehouse *</label>
               <select value={form.warehouseId} onChange={e => setWarehouse(e.target.value)} required className={inputCls}>
                 <option value="">Select Warehouse</option>
-                {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                {warehouses.filter(w => w.status !== 'ARCHIVED').map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
               </select>
             </div>
           </div>
