@@ -234,7 +234,7 @@ function TransferModal({ transfer, warehouses, onClose, onSave }: any) {
                 required
               >
                 <option value="">Select warehouse...</option>
-                {warehouses.map((w: any) => (
+                {warehouses.filter((w: any) => w.status !== 'ARCHIVED').map((w: any) => (
                   <option key={w.id} value={w.id}>{w.name}</option>
                 ))}
               </select>
@@ -248,7 +248,7 @@ function TransferModal({ transfer, warehouses, onClose, onSave }: any) {
                 required
               >
                 <option value="">Select warehouse...</option>
-                {warehouses.map((w: any) => (
+                {warehouses.filter((w: any) => w.status !== 'ARCHIVED').map((w: any) => (
                   <option key={w.id} value={w.id}>{w.name}</option>
                 ))}
               </select>
