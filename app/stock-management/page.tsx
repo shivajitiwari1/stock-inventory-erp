@@ -145,14 +145,13 @@ export default function StockManagementPage() {
                 <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Reserved</th>
                 <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Total</th>
                 <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Min Qty</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Variants</th>
                 <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Status</th>
                 <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Action</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {displayInventory.length === 0 ? (
-                <tr><td colSpan={9} className="px-6 py-10 text-center text-gray-400">No inventory records found.</td></tr>
+                <tr><td colSpan={8} className="px-6 py-10 text-center text-gray-400">No inventory records found.</td></tr>
               ) : displayInventory.map((item) => {
                 const status = item.availableQuantity === 0 ? 'out'
                   : item.availableQuantity <= item.minQuantity ? 'low' : 'healthy';
@@ -176,19 +175,6 @@ export default function StockManagementPage() {
                     <td className="px-6 py-4 text-sm text-right text-gray-600 hidden md:table-cell">{item.reservedQuantity}</td>
                     <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900">{item.totalQuantity}</td>
                     <td className="px-6 py-4 text-sm text-right text-gray-500 hidden md:table-cell">{item.minQuantity}</td>
-                    <td className="px-6 py-4 hidden md:table-cell">
-                      {item.attributeQuantityRules.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {item.attributeQuantityRules.map((r, i) => (
-                            <span key={i} className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs">
-                              {r.value}: {r.quantity}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-gray-300 text-xs">—</span>
-                      )}
-                    </td>
                     <td className="px-6 py-4 text-center">
                       <span className={`rounded-full px-2 py-1 text-xs font-semibold ${
                         status === 'out' ? 'bg-red-100 text-red-700' :

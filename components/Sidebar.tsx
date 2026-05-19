@@ -62,7 +62,7 @@ export const Sidebar: React.FC = () => {
     );
   };
 
-  const sidebarWidth = isMobile ? 'w-64' : isOpen ? 'w-56' : 'w-16';
+  const sidebarWidth = isMobile ? 'w-64' : isOpen ? 'w-56' : 'w-24';
   const sidebarTranslate = isMobile
     ? isOpen ? 'translate-x-0' : '-translate-x-full'
     : 'translate-x-0';
@@ -80,11 +80,19 @@ export const Sidebar: React.FC = () => {
       <aside className={`${sidebarWidth} ${sidebarTranslate} bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 transition-all duration-300 fixed h-screen overflow-y-auto flex flex-col z-40`}>
 
         {/* Header */}
-        <div className="p-4 flex items-center justify-between border-b border-gray-200 dark:border-slate-700 shrink-0">
-          <h1 className="text-xl font-bold text-gray-800 dark:text-slate-100">Stock ERP</h1>
+        <div className={`border-b border-gray-200 dark:border-slate-700 shrink-0 ${showLabel ? 'p-4 flex items-center justify-between' : 'px-2 py-3 flex items-start justify-between gap-1'}`}>
+          {showLabel ? (
+            <h1 className="text-xl font-bold text-gray-800 dark:text-slate-100">Stock ERP</h1>
+          ) : (
+            <h1 className="text-[11px] leading-tight font-bold text-gray-800 dark:text-slate-100">
+              <span className="block">Stock</span>
+              <span className="block">ERP</span>
+            </h1>
+          )}
           <button
             onClick={toggle}
             className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg text-gray-600 dark:text-slate-300"
+            aria-label={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
           >
             {isOpen ? <FiX className="w-5 h-5" /> : <FiMenu className="w-5 h-5" />}
           </button>

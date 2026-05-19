@@ -32,7 +32,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   if (isLoginPage) return <>{children}</>;
   if (!user) return null;
 
-  const mainMargin = isMobile ? 'ml-0' : isOpen ? 'ml-56' : 'ml-16';
+  const mainMargin = isMobile ? 'ml-0' : isOpen ? 'ml-56' : 'ml-24';
 
   return (
     <div className="min-h-screen flex w-full overflow-x-hidden">

@@ -10,7 +10,7 @@
       "currentUsage": 2500,
       "status": "ACTIVE",
       "createdAt": "2026-01-01T00:00:00Z",
-      "updatedAt": "2026-05-17T08:47:09.736Z"
+      "updatedAt": "2026-05-19T15:03:08.500Z"
     },
     {
       "id": "WH002",
@@ -22,7 +22,7 @@
       "currentUsage": 1200,
       "status": "ACTIVE",
       "createdAt": "2026-02-01T00:00:00Z",
-      "updatedAt": "2026-05-17T08:47:18.546Z"
+      "updatedAt": "2026-05-19T15:03:02.563Z"
     },
     {
       "id": "WH003",
@@ -46,7 +46,7 @@
       "currentUsage": 1800,
       "status": "ACTIVE",
       "createdAt": "2026-03-15T00:00:00Z",
-      "updatedAt": "2026-05-12T08:00:00Z"
+      "updatedAt": "2026-05-19T15:03:02.813Z"
     },
     {
       "id": "WH005",
@@ -56,10 +56,9 @@
       "manager": "Amit Singh",
       "capacity": 3000,
       "currentUsage": 0,
-      "status": "ARCHIVED",
-      "archivedAt": "2026-03-15T00:00:00Z",
+      "status": "ACTIVE",
       "createdAt": "2026-01-10T00:00:00Z",
-      "updatedAt": "2026-03-15T00:00:00Z"
+      "updatedAt": "2026-05-19T15:03:03.744Z"
     }
   ]
 }
