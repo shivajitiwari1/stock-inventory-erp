@@ -57,10 +57,10 @@ export default function AuditLogsPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Timestamp</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">User</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">User</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Action</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Entity</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Details</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Entity</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Details</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -73,14 +73,14 @@ export default function AuditLogsPage() {
                   <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                     {new Date(log.timestamp).toLocaleString()}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{log.userName}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900 hidden sm:table-cell">{log.userName}</td>
                   <td className="px-6 py-4 text-sm">
                     <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
                       {log.action}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{log.entityType} {log.entityId}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{log.details}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500 hidden md:table-cell">{log.entityType} {log.entityId}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500 hidden md:table-cell">{log.details}</td>
                 </tr>
               ))}
             </tbody>
