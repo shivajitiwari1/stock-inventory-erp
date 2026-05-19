@@ -132,9 +132,12 @@ export default function StockIssuesPage() {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
             <thead className="bg-gray-50 dark:bg-slate-700">
               <tr>
-                {['Item', 'Qty', 'Contractor / Worker', 'Issue Date', 'Status', 'Actions'].map(h => (
-                  <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">{h}</th>
-                ))}
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Item</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Qty</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden sm:table-cell">Contractor / Worker</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden md:table-cell">Issue Date</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
@@ -145,8 +148,8 @@ export default function StockIssuesPage() {
                 <tr key={issue.id} className="hover:bg-gray-50 dark:hover:bg-slate-700">
                   <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-slate-100">{issue.productName}</td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">{issue.quantity} {issue.unit}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">{issue.contractorName}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
+                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400 hidden sm:table-cell">{issue.contractorName}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400 hidden md:table-cell">
                     {new Date(issue.issueDate).toLocaleDateString('en-IN')}
                   </td>
                   <td className="px-6 py-4 text-sm">
@@ -236,7 +239,7 @@ function StockIssueModal({ issue, products, contractors, onClose, onSave }: {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md p-6">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">{issue ? 'Edit' : 'Issue'} Stock</h2>
           <button type="button" onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-slate-300 dark:hover:bg-slate-700 transition-colors">
@@ -253,7 +256,7 @@ function StockIssueModal({ issue, products, contractors, onClose, onSave }: {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Quantity *</label>
               <input type="number" min="1" value={form.quantity} onChange={e => setForm({ ...form, quantity: e.target.value })} required className={inputCls} placeholder="e.g. 10" />
