@@ -122,12 +122,12 @@ export default function StockManagementPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Product</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Warehouse</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">Warehouse</th>
                 <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Available</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Reserved</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Reserved</th>
                 <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Total</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Min Qty</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Variants</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Min Qty</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Variants</th>
                 <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Status</th>
                 <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Action</th>
               </tr>
@@ -144,12 +144,12 @@ export default function StockManagementPage() {
                       <div className="text-sm font-medium text-gray-900">{item.productName}</div>
                       <div className="text-xs text-gray-400 font-mono">{item.sku}</div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{item.warehouseName}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500 hidden sm:table-cell">{item.warehouseName}</td>
                     <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900">{item.availableQuantity}</td>
-                    <td className="px-6 py-4 text-sm text-right text-gray-600">{item.reservedQuantity}</td>
+                    <td className="px-6 py-4 text-sm text-right text-gray-600 hidden md:table-cell">{item.reservedQuantity}</td>
                     <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900">{item.totalQuantity}</td>
-                    <td className="px-6 py-4 text-sm text-right text-gray-500">{item.minQuantity}</td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 text-sm text-right text-gray-500 hidden md:table-cell">{item.minQuantity}</td>
+                    <td className="px-6 py-4 hidden md:table-cell">
                       {item.attributeQuantityRules.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
                           {item.attributeQuantityRules.map((r, i) => (
@@ -286,7 +286,7 @@ function StockAdjustmentModal({ item, onClose, onSave }: {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 sm:p-8">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-1">
           <h2 className="text-2xl font-bold">Adjust Stock</h2>
           <button type="button" onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-slate-300 dark:hover:bg-slate-700 transition-colors">
@@ -296,7 +296,7 @@ function StockAdjustmentModal({ item, onClose, onSave }: {
         <p className="text-sm text-gray-500 mb-6">{item.productName} — {item.warehouseName}</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Available Qty</label>
               <input type="number" value={availableQuantity} min="0"
