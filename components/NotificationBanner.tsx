@@ -27,7 +27,7 @@ export default function NotificationBanner() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const fetchNotifications = useCallback(async () => {
-    if (!user) return;
+    if (!user || user.role === 'ADMIN') return;
     try {
       const res = await fetch('/api/notifications');
       if (!res.ok) return;
