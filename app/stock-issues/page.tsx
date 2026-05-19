@@ -71,8 +71,8 @@ export default function StockIssuesPage() {
   };
 
   const filtered = issues.filter(i => {
-    const matchSearch = i.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      i.contractorName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchSearch = (i.productName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (i.contractorName || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchStatus = statusFilter ? i.status === statusFilter : true;
     return matchSearch && matchStatus;
   });
