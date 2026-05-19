@@ -116,9 +116,14 @@ export default function SupplyReceiptsPage() {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
             <thead className="bg-gray-50 dark:bg-slate-700">
               <tr>
-                {['Receipt ID', 'Supplier', 'Warehouse', 'Date', 'Amount (₹)', 'Gate Pass', 'Receipt', 'Actions'].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">{h}</th>
-                ))}
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden sm:table-cell">Receipt ID</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Supplier</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden sm:table-cell">Warehouse</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden sm:table-cell">Date</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden md:table-cell">Amount (₹)</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden md:table-cell">Gate Pass</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Receipt</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
@@ -127,14 +132,14 @@ export default function SupplyReceiptsPage() {
               )}
               {filtered.map(r => (
                 <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-slate-700">
-                  <td className="px-4 py-4 text-xs text-gray-500 dark:text-slate-400 font-mono">{r.id}</td>
+                  <td className="px-4 py-4 text-xs text-gray-500 dark:text-slate-400 font-mono hidden sm:table-cell">{r.id}</td>
                   <td className="px-4 py-4 text-sm font-medium text-gray-900 dark:text-slate-100">{r.supplierName}</td>
-                  <td className="px-4 py-4 text-sm text-gray-500 dark:text-slate-400">{r.warehouseName}</td>
-                  <td className="px-4 py-4 text-sm text-gray-500 dark:text-slate-400">
+                  <td className="px-4 py-4 text-sm text-gray-500 dark:text-slate-400 hidden sm:table-cell">{r.warehouseName}</td>
+                  <td className="px-4 py-4 text-sm text-gray-500 dark:text-slate-400 hidden sm:table-cell">
                     {new Date(r.dateTime).toLocaleDateString('en-IN')}
                   </td>
-                  <td className="px-4 py-4 text-sm text-gray-900 dark:text-slate-100">₹{r.totalAmount.toLocaleString('en-IN')}</td>
-                  <td className="px-4 py-4 text-sm text-gray-500 dark:text-slate-400">{r.gatePassNumber || '—'}</td>
+                  <td className="px-4 py-4 text-sm text-gray-900 dark:text-slate-100 hidden md:table-cell">₹{r.totalAmount.toLocaleString('en-IN')}</td>
+                  <td className="px-4 py-4 text-sm text-gray-500 dark:text-slate-400 hidden md:table-cell">{r.gatePassNumber || '—'}</td>
                   <td className="px-4 py-4 text-sm">
                     {r.receiptFile ? (
                       <a href={r.receiptFile} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center gap-1">
@@ -276,7 +281,7 @@ function ReceiptModal({ receipt, suppliers, warehouses, products, onClose, onSav
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Supplier *</label>
               <select value={form.supplierId} onChange={e => setSupplier(e.target.value)} required className={inputCls}>
@@ -293,7 +298,7 @@ function ReceiptModal({ receipt, suppliers, warehouses, products, onClose, onSav
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Date & Time *</label>
               <input type="datetime-local" value={form.dateTime} onChange={e => setForm({ ...form, dateTime: e.target.value })} required className={inputCls} />
@@ -304,7 +309,7 @@ function ReceiptModal({ receipt, suppliers, warehouses, products, onClose, onSav
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Total Amount (₹) *</label>
               <input type="number" min="0" value={form.totalAmount} onChange={e => setForm({ ...form, totalAmount: e.target.value })} required className={inputCls} placeholder="e.g. 45000" />
