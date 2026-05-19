@@ -96,7 +96,7 @@ export default function AlertsPage() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Product</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Warehouse</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Warehouse</th>
                   <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Available</th>
                   <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Min Qty</th>
                 </tr>
@@ -107,7 +107,7 @@ export default function AlertsPage() {
                 ) : lowStock.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 text-sm text-gray-900">{item.productName}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{item.warehouseName}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500 hidden sm:table-cell">{item.warehouseName}</td>
                     <td className="px-6 py-4 text-sm text-right text-yellow-600 font-semibold">{item.availableQuantity}</td>
                     <td className="px-6 py-4 text-sm text-right text-gray-900">{item.minQuantity}</td>
                   </tr>
@@ -126,7 +126,7 @@ export default function AlertsPage() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Product</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Warehouse</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Warehouse</th>
                   <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                 </tr>
               </thead>
@@ -136,7 +136,7 @@ export default function AlertsPage() {
                 ) : outOfStock.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 text-sm text-gray-900">{item.productName}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{item.warehouseName}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500 hidden sm:table-cell">{item.warehouseName}</td>
                     <td className="px-6 py-4 text-sm text-right text-red-600 font-semibold">Out of Stock</td>
                   </tr>
                 ))}
