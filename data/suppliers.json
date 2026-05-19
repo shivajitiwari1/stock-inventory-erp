@@ -21,6 +21,39 @@
       "country": "USA",
       "status": "ACTIVE",
       "createdAt": "2026-02-15T10:30:00Z"
+    },
+    {
+      "id": "SUP003",
+      "name": "UltraTech Cement Ltd",
+      "email": "orders@ultratech.com",
+      "phone": "+91-22-66543210",
+      "address": "B Wing, Century Bhavan, Dr Annie Besant Road, Worli, Mumbai",
+      "city": "Mumbai",
+      "country": "India",
+      "status": "ACTIVE",
+      "createdAt": "2026-05-01T11:00:00Z"
+    },
+    {
+      "id": "SUP004",
+      "name": "TATA Steel Distributors",
+      "email": "steel@tata.in",
+      "phone": "+91-22-55432109",
+      "address": "Plot No. 2, MIDC Industrial Area, Bhosari, Pune",
+      "city": "Pune",
+      "country": "India",
+      "status": "ACTIVE",
+      "createdAt": "2026-05-01T11:05:00Z"
+    },
+    {
+      "id": "SUP005",
+      "name": "Kajaria Tiles Pvt Ltd",
+      "email": "tiles@kajaria.com",
+      "phone": "+91-11-44321098",
+      "address": "SF-11, 2nd Floor, JMD Megapolis, Sohna Road, Gurugram",
+      "city": "New Delhi",
+      "country": "India",
+      "status": "ACTIVE",
+      "createdAt": "2026-05-01T11:10:00Z"
     }
   ]
 }

@@ -1,16 +1,124 @@
 {
   "stockMovements": [
     {
+      "id": "SM001",
+      "productId": "P013",
+      "warehouseId": "WH003",
+      "type": "IN",
+      "quantity": 150,
+      "reason": "Purchase Order Receipt - PO#PO2026-0501",
+      "reference": "PO2026-0501",
+      "performedBy": "Rajesh Kumar",
+      "notes": "UltraTech OPC 53 Grade cement received from supplier",
+      "createdAt": "2026-05-02T09:30:00Z"
+    },
+    {
+      "id": "SM002",
+      "productId": "P014",
+      "warehouseId": "WH003",
+      "type": "IN",
+      "quantity": 1000,
+      "reason": "Purchase Order Receipt - PO#PO2026-0502",
+      "reference": "PO2026-0502",
+      "performedBy": "Rajesh Kumar",
+      "notes": "TATA Steel TMT bars 12mm received, verified weight and grade",
+      "createdAt": "2026-05-03T10:00:00Z"
+    },
+    {
       "id": "SM003",
-      "type": "ADJUSTMENT",
-      "productId": "P002",
-      "warehouseId": "WH001",
-      "quantity": -3,
-      "adjustmentReason": "DAMAGED",
-      "notes": "Damaged items removed",
-      "timestamp": "2026-05-08T11:15:00Z",
-      "userId": "U003",
-      "userName": "Bob Staff"
+      "productId": "P015",
+      "warehouseId": "WH003",
+      "type": "IN",
+      "quantity": 3000,
+      "reason": "Purchase Order Receipt - PO#PO2026-0503",
+      "reference": "PO2026-0503",
+      "performedBy": "Naresh Singh",
+      "notes": "Red clay bricks received, first class quality verified",
+      "createdAt": "2026-05-04T08:00:00Z"
+    },
+    {
+      "id": "SM004",
+      "productId": "P013",
+      "warehouseId": "WH003",
+      "type": "OUT",
+      "quantity": 30,
+      "reason": "Issued to Site - Foundation work Block A",
+      "reference": "SI-2026-001",
+      "performedBy": "Naresh Singh",
+      "notes": "Cement issued for foundation concrete mixing at Block A",
+      "createdAt": "2026-05-06T07:30:00Z"
+    },
+    {
+      "id": "SM005",
+      "productId": "P014",
+      "warehouseId": "WH003",
+      "type": "OUT",
+      "quantity": 150,
+      "reason": "Issued to Site - RCC columns Ground Floor",
+      "reference": "SI-2026-002",
+      "performedBy": "Ramesh Verma",
+      "notes": "TMT bars issued for ground floor RCC column reinforcement",
+      "createdAt": "2026-05-07T08:00:00Z"
+    },
+    {
+      "id": "SM006",
+      "productId": "P015",
+      "warehouseId": "WH003",
+      "type": "OUT",
+      "quantity": 500,
+      "reason": "Issued to Site - Boundary wall construction",
+      "reference": "SI-2026-003",
+      "performedBy": "Ramesh Verma",
+      "notes": "Red clay bricks issued for boundary wall masonry work",
+      "createdAt": "2026-05-08T09:00:00Z"
+    },
+    {
+      "id": "SM007",
+      "productId": "P018",
+      "warehouseId": "WH004",
+      "type": "IN",
+      "quantity": 250,
+      "reason": "Purchase Order Receipt - PO#PO2026-0504",
+      "reference": "PO2026-0504",
+      "performedBy": "Priya Sharma",
+      "notes": "Portland Pozzolana Cement received at Mumbai site",
+      "createdAt": "2026-05-10T10:00:00Z"
+    },
+    {
+      "id": "SM008",
+      "productId": "P021",
+      "warehouseId": "WH004",
+      "type": "IN",
+      "quantity": 1000,
+      "reason": "Purchase Order Receipt - PO#PO2026-0505",
+      "reference": "PO2026-0505",
+      "performedBy": "Priya Sharma",
+      "notes": "Kajaria ceramic floor tiles 2x2 received, checked for breakage",
+      "createdAt": "2026-05-11T09:00:00Z"
+    },
+    {
+      "id": "SM009",
+      "productId": "P020",
+      "warehouseId": "WH003",
+      "type": "IN",
+      "quantity": 500,
+      "reason": "Purchase Order Receipt - PO#PO2026-0506",
+      "reference": "PO2026-0506",
+      "performedBy": "Suresh Patel",
+      "notes": "FR PVC copper wire 2.5mm received for electrical work",
+      "createdAt": "2026-05-12T11:00:00Z"
+    },
+    {
+      "id": "SM010",
+      "productId": "P024",
+      "warehouseId": "WH004",
+      "type": "IN",
+      "quantity": 150,
+      "reason": "Purchase Order Receipt - PO#PO2026-0507",
+      "reference": "PO2026-0507",
+      "performedBy": "Priya Sharma",
+      "notes": "Wall primer received for finishing work at Mumbai site, 20L drums",
+      "createdAt": "2026-05-14T10:30:00Z"
     }
   ]
 }

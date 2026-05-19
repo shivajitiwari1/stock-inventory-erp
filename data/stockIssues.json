@@ -1,3 +1,69 @@
 {
-  "stockIssues": []
+  "stockIssues": [
+    {
+      "id": "SI2026001",
+      "productId": "P013",
+      "warehouseId": "WH003",
+      "contractorId": "CON1780000000001",
+      "quantity": 20,
+      "purpose": "Foundation concrete mix for Block A footing",
+      "issuedBy": "Naresh Singh",
+      "status": "ISSUED",
+      "notes": "20 bags OPC 53 Grade cement issued for Block A foundation work. Expected return of empty bags.",
+      "createdAt": "2026-05-06T07:30:00Z",
+      "updatedAt": "2026-05-06T07:30:00Z"
+    },
+    {
+      "id": "SI2026002",
+      "productId": "P014",
+      "warehouseId": "WH003",
+      "contractorId": "CON1780000000001",
+      "quantity": 200,
+      "purpose": "RCC column reinforcement - Ground floor",
+      "issuedBy": "Naresh Singh",
+      "status": "ISSUED",
+      "notes": "200 kg TMT 12mm bars for ground floor column cages. Ramesh Verma to confirm usage report by end of week.",
+      "createdAt": "2026-05-07T08:00:00Z",
+      "updatedAt": "2026-05-07T08:00:00Z"
+    },
+    {
+      "id": "SI2026003",
+      "productId": "P020",
+      "warehouseId": "WH003",
+      "contractorId": "CON1780000000002",
+      "quantity": 150,
+      "purpose": "House wiring - 1st floor circuits",
+      "issuedBy": "Naresh Singh",
+      "status": "ISSUED",
+      "notes": "150 mtrs FR PVC wire issued for 1st floor power points and lighting circuits. Suresh Patel to submit wiring diagram on completion.",
+      "createdAt": "2026-05-09T09:00:00Z",
+      "updatedAt": "2026-05-09T09:00:00Z"
+    },
+    {
+      "id": "SI2026004",
+      "productId": "P023",
+      "warehouseId": "WH004",
+      "contractorId": "CON1780000000004",
+      "quantity": 12,
+      "purpose": "Door and window shuttering frames",
+      "issuedBy": "Priya Sharma",
+      "status": "ISSUED",
+      "notes": "12 sheets 18mm plywood for door frame shuttering and temporary formwork. Dinesh Kumar to return usable offcuts.",
+      "createdAt": "2026-05-13T10:00:00Z",
+      "updatedAt": "2026-05-13T10:00:00Z"
+    },
+    {
+      "id": "SI2026005",
+      "productId": "P024",
+      "warehouseId": "WH004",
+      "contractorId": "CON1780000000005",
+      "quantity": 40,
+      "purpose": "Exterior wall priming - 2nd floor",
+      "issuedBy": "Priya Sharma",
+      "status": "ISSUED",
+      "notes": "40 litres wall primer for 2nd floor exterior surfaces. Ganesh Rao to provide surface coverage report after application.",
+      "createdAt": "2026-05-15T09:30:00Z",
+      "updatedAt": "2026-05-15T09:30:00Z"
+    }
+  ]
 }
