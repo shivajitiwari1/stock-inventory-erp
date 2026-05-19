@@ -207,9 +207,12 @@ const UsersPage: React.FC = () => {
               <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
                 <thead className="bg-gray-50 dark:bg-slate-700">
                   <tr>
-                    {['Name', 'Email', 'Role', 'Status', 'Last Login', 'Actions'].map(h => (
-                      <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase">{h}</th>
-                    ))}
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase hidden sm:table-cell">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase">Role</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase hidden md:table-cell">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase hidden md:table-cell">Last Login</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
@@ -219,11 +222,11 @@ const UsersPage: React.FC = () => {
                   {filteredUsers.map(u => (
                     <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-slate-700">
                       <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-slate-100">{u.name}</td>
-                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">{u.email}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400 hidden sm:table-cell">{u.email}</td>
                       <td className="px-6 py-4 text-sm">
                         <span className={`rounded-full px-2 py-1 text-xs font-semibold ${roleBadge(u.role)}`}>{getRoleName(u.role)}</span>
                       </td>
-                      <td className="px-6 py-4 text-sm">
+                      <td className="px-6 py-4 text-sm hidden md:table-cell">
                         {currentUser?.id === u.id ? (
                           <span title="Cannot deactivate your own account" className="flex items-center gap-1.5 opacity-40 cursor-not-allowed">
                             <FiToggleRight className="w-5 h-5 text-green-500" />
@@ -242,7 +245,7 @@ const UsersPage: React.FC = () => {
                           </button>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
+                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400 hidden md:table-cell">
                         {u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('en-IN') : '—'}
                       </td>
                       <td className="px-6 py-4 text-sm space-x-2">
