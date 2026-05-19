@@ -153,8 +153,8 @@ export default function ProductsPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900 dark:text-slate-100 font-mono hidden sm:table-cell">{product.sku}</td>
-                  <td className="px-6 py-4 text-sm hidden sm:table-cell">
-                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">{product.category}</span>
+                  <td className="px-6 py-4 text-sm hidden sm:table-cell w-36">
+                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium whitespace-nowrap">{product.category}</span>
                   </td>
                   <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900 dark:text-slate-100 hidden md:table-cell">
                     {product.quantity ?? 0}
