@@ -18,6 +18,7 @@ interface InventoryItem {
   sku: string;
   category: string;
   warehouseName: string;
+  warehouseArchived: boolean;
   availableQuantity: number;
   reservedQuantity: number;
   totalQuantity: number;
@@ -32,6 +33,7 @@ export default function StockManagementPage() {
   const { canDo } = useAuth();
   const [loading, setLoading] = useState(true);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+  const [showArchivedWh, setShowArchivedWh] = useState(false);
 
   useEffect(() => { fetchInventory(); }, []);
 
@@ -52,6 +54,7 @@ export default function StockManagementPage() {
         sku: product.sku || '-',
         category: product.category || '-',
         warehouseName: warehouse.name || item.warehouseId,
+        warehouseArchived: warehouse.status === 'ARCHIVED',
         minQuantity: product.minQuantity || 0,
         attributeQuantityRules: product.attributeQuantityRules || [],
       };
@@ -81,6 +84,10 @@ export default function StockManagementPage() {
   const lowStockCount = inventory.filter(i => i.availableQuantity > 0 && i.availableQuantity <= i.minQuantity).length;
   const outOfStockCount = inventory.filter(i => i.availableQuantity === 0).length;
 
+  const displayInventory = showArchivedWh
+    ? inventory
+    : inventory.filter(item => !item.warehouseArchived);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -91,9 +98,20 @@ export default function StockManagementPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Stock Management</h1>
-        <p className="mt-2 text-gray-600">Manage stock levels and monitor inventory status across warehouses.</p>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Stock Management</h1>
+          <p className="mt-2 text-gray-600">Manage stock levels and monitor inventory status across warehouses.</p>
+        </div>
+        <label
+          onClick={() => setShowArchivedWh(v => !v)}
+          className="flex items-center gap-2 cursor-pointer select-none text-sm text-gray-600 shrink-0"
+        >
+          <div className={`relative w-10 h-5 rounded-full transition-colors ${showArchivedWh ? 'bg-blue-600' : 'bg-gray-300'}`}>
+            <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${showArchivedWh ? 'translate-x-5' : 'translate-x-0'}`} />
+          </div>
+          Show Archived
+        </label>
       </div>
 
       {/* Summary cards */}
@@ -133,18 +151,27 @@ export default function StockManagementPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {inventory.length === 0 ? (
+              {displayInventory.length === 0 ? (
                 <tr><td colSpan={9} className="px-6 py-10 text-center text-gray-400">No inventory records found.</td></tr>
-              ) : inventory.map((item) => {
+              ) : displayInventory.map((item) => {
                 const status = item.availableQuantity === 0 ? 'out'
                   : item.availableQuantity <= item.minQuantity ? 'low' : 'healthy';
                 return (
-                  <tr key={item.id} className="hover:bg-gray-50">
+                  <tr key={item.id} className={`hover:bg-gray-50 ${item.warehouseArchived ? 'opacity-60' : ''}`}>
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-900">{item.productName}</div>
                       <div className="text-xs text-gray-400 font-mono">{item.sku}</div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500 hidden sm:table-cell">{item.warehouseName}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500 hidden sm:table-cell">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span>{item.warehouseName}</span>
+                        {item.warehouseArchived && (
+                          <span className="rounded-full px-2 py-0.5 text-xs font-semibold bg-orange-100 text-orange-700">
+                            ARCHIVED
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900">{item.availableQuantity}</td>
                     <td className="px-6 py-4 text-sm text-right text-gray-600 hidden md:table-cell">{item.reservedQuantity}</td>
                     <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900">{item.totalQuantity}</td>
