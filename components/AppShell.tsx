@@ -32,7 +32,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   if (isLoginPage) return <>{children}</>;
   if (!user) return null;
 
-  const mainMargin = isMobile ? 'ml-0' : isOpen ? 'ml-64' : 'ml-20';
+  const mainMargin = isMobile ? 'ml-0' : isOpen ? 'ml-56' : 'ml-16';
 
   return (
     <div className="min-h-screen flex w-full overflow-x-hidden">
@@ -49,7 +49,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         <span className="text-lg font-bold text-gray-800 dark:text-slate-100">Stock ERP</span>
       </div>
 
-      <main className={`flex-1 ${mainMargin} pt-20 lg:pt-6 p-3 md:p-4 lg:p-6 min-h-screen bg-gray-50 dark:bg-slate-900 transition-all duration-300 min-w-0`}>
+      <main className={`flex-1 ${mainMargin} pt-20 lg:pt-4 px-2 pb-4 lg:px-3 min-h-screen bg-gray-50 dark:bg-slate-900 transition-all duration-300 min-w-0`}>
         <NotificationBanner />
         {children}
       </main>

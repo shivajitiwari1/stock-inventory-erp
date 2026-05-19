@@ -62,7 +62,7 @@ export const Sidebar: React.FC = () => {
     );
   };
 
-  const sidebarWidth = isMobile ? 'w-72' : isOpen ? 'w-64' : 'w-20';
+  const sidebarWidth = isMobile ? 'w-64' : isOpen ? 'w-56' : 'w-16';
   const sidebarTranslate = isMobile
     ? isOpen ? 'translate-x-0' : '-translate-x-full'
     : 'translate-x-0';
