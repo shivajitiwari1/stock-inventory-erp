@@ -12,6 +12,7 @@ interface InventoryItem {
   sku: string;
   category: string;
   warehouseName: string;
+  warehouseArchived: boolean;
   availableQuantity: number;
   reservedQuantity: number;
   totalQuantity: number;
@@ -26,6 +27,7 @@ export default function InventoryPage() {
   const [warehouseFilter, setWarehouseFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [showArchivedWh, setShowArchivedWh] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -48,6 +50,7 @@ export default function InventoryPage() {
             sku: product.sku || '-',
             category: product.category || 'Unknown',
             warehouseName: warehouse.name || 'Unknown Warehouse',
+            warehouseArchived: warehouse.status === 'ARCHIVED',
             minQuantity: product.minQuantity || 0,
           };
         });
@@ -69,6 +72,7 @@ export default function InventoryPage() {
   // Filtered list
   const filtered = useMemo(() => {
     return inventory.filter(item => {
+      if (!showArchivedWh && item.warehouseArchived) return false;
       const matchSearch = !search ||
         item.productName.toLowerCase().includes(search.toLowerCase()) ||
         item.sku.toLowerCase().includes(search.toLowerCase());
@@ -79,7 +83,7 @@ export default function InventoryPage() {
       const matchStatus = !statusFilter || status === statusFilter;
       return matchSearch && matchWarehouse && matchCategory && matchStatus;
     });
-  }, [inventory, search, warehouseFilter, categoryFilter, statusFilter]);
+  }, [inventory, search, warehouseFilter, categoryFilter, statusFilter, showArchivedWh]);
 
   const exportXLS = async () => {
     const wb = new ExcelJS.Workbook();
@@ -284,6 +288,15 @@ export default function InventoryPage() {
               Clear
             </button>
           )}
+          <label
+            onClick={() => setShowArchivedWh(v => !v)}
+            className="flex items-center gap-2 cursor-pointer select-none text-sm text-gray-600 whitespace-nowrap"
+          >
+            <div className={`relative w-10 h-5 rounded-full transition-colors ${showArchivedWh ? 'bg-blue-600' : 'bg-gray-300'}`}>
+              <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${showArchivedWh ? 'translate-x-5' : 'translate-x-0'}`} />
+            </div>
+            Show Archived
+          </label>
         </div>
       </div>
 
@@ -326,13 +339,22 @@ export default function InventoryPage() {
                 const status = item.availableQuantity === 0 ? 'out'
                   : item.availableQuantity <= item.minQuantity ? 'low' : 'good';
                 return (
-                  <tr key={item.id} className="hover:bg-gray-50 transition-colors duration-150">
+                  <tr key={item.id} className={`hover:bg-gray-50 transition-colors duration-150 ${item.warehouseArchived ? 'opacity-60' : ''}`}>
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.productName}</td>
                     <td className="px-6 py-4 text-sm text-gray-600 font-mono hidden sm:table-cell">{item.sku}</td>
                     <td className="px-6 py-4 text-sm hidden md:table-cell">
                       <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">{item.category}</span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600 hidden sm:table-cell">{item.warehouseName}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 hidden sm:table-cell">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span>{item.warehouseName}</span>
+                        {item.warehouseArchived && (
+                          <span className="rounded-full px-2 py-0.5 text-xs font-semibold bg-orange-100 text-orange-700">
+                            ARCHIVED
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900">{item.availableQuantity}</td>
                     <td className="px-6 py-4 text-sm text-right text-gray-600 hidden md:table-cell">{item.reservedQuantity || 0}</td>
                     <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900">{item.totalQuantity}</td>
