@@ -304,14 +304,14 @@ export default function InventoryPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Product</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">SKU</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Category</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Warehouse</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide hidden sm:table-cell">SKU</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide hidden md:table-cell">Category</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide hidden sm:table-cell">Warehouse</th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide">Available</th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide">Reserved</th>
+                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide hidden md:table-cell">Reserved</th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide">Total</th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide">Min Qty</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Last Updated</th>
+                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide hidden md:table-cell">Min Qty</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide hidden md:table-cell">Last Updated</th>
                 <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wide">Status</th>
               </tr>
             </thead>
@@ -328,16 +328,16 @@ export default function InventoryPage() {
                 return (
                   <tr key={item.id} className="hover:bg-gray-50 transition-colors duration-150">
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.productName}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600 font-mono">{item.sku}</td>
-                    <td className="px-6 py-4 text-sm">
+                    <td className="px-6 py-4 text-sm text-gray-600 font-mono hidden sm:table-cell">{item.sku}</td>
+                    <td className="px-6 py-4 text-sm hidden md:table-cell">
                       <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">{item.category}</span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{item.warehouseName}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 hidden sm:table-cell">{item.warehouseName}</td>
                     <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900">{item.availableQuantity}</td>
-                    <td className="px-6 py-4 text-sm text-right text-gray-600">{item.reservedQuantity || 0}</td>
+                    <td className="px-6 py-4 text-sm text-right text-gray-600 hidden md:table-cell">{item.reservedQuantity || 0}</td>
                     <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900">{item.totalQuantity}</td>
-                    <td className="px-6 py-4 text-sm text-right text-gray-500">{item.minQuantity}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
+                    <td className="px-6 py-4 text-sm text-right text-gray-500 hidden md:table-cell">{item.minQuantity}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500 hidden md:table-cell">
                       {item.lastUpdated ? new Date(item.lastUpdated).toLocaleDateString() : '—'}
                     </td>
                     <td className="px-6 py-4 text-center">
