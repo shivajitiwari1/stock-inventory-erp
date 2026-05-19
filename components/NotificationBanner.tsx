@@ -45,9 +45,12 @@ export default function NotificationBanner() {
 
   useEffect(() => {
     fetchNotifications();
-    // Refresh every 60 seconds
     const interval = setInterval(fetchNotifications, 60000);
-    return () => clearInterval(interval);
+    window.addEventListener('notification-created', fetchNotifications);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('notification-created', fetchNotifications);
+    };
   }, [fetchNotifications]);
 
   const dismiss = async (id: string) => {

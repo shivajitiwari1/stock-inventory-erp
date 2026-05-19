@@ -205,7 +205,10 @@ function SendModal({ users, currentUser, onClose, onSend }: {
           createdByName: currentUser?.name,
         }),
       });
-      if (res.ok) onSend(await res.json());
+      if (res.ok) {
+        onSend(await res.json());
+        window.dispatchEvent(new Event('notification-created'));
+      }
     } catch (error) {
       console.error('Failed to send:', error);
     } finally {
