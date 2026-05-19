@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/components/AuthContext';
 import { FiEdit, FiX } from 'react-icons/fi';
 
 interface AttributeQuantityRule {
@@ -28,6 +29,7 @@ interface InventoryItem {
 
 export default function StockManagementPage() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const { canDo } = useAuth();
   const [loading, setLoading] = useState(true);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
 
@@ -170,12 +172,14 @@ export default function StockManagementPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <button
-                        onClick={() => setEditingItem(item)}
-                        className="text-blue-600 hover:text-blue-800"
-                      >
-                        <FiEdit className="w-4 h-4" />
-                      </button>
+                      {canDo('stock-management', 'edit') && (
+                        <button
+                          onClick={() => setEditingItem(item)}
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          <FiEdit className="w-4 h-4" />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );

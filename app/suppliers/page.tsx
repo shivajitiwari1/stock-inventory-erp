@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/components/AuthContext';
 import { FiPlus, FiEdit, FiTrash2, FiSearch, FiFilter, FiX } from 'react-icons/fi';
 
 interface Supplier {
@@ -17,6 +18,7 @@ interface Supplier {
 
 export default function SuppliersPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const { canDo } = useAuth();
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
@@ -127,12 +129,14 @@ export default function SuppliersPage() {
                     >
                       <FiEdit className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => handleDelete(supplier.id)}
-                      className="text-red-600 hover:text-red-800 inline-block"
-                    >
-                      <FiTrash2 className="w-4 h-4" />
-                    </button>
+                    {canDo('suppliers', 'delete') && (
+                      <button
+                        onClick={() => handleDelete(supplier.id)}
+                        className="text-red-600 hover:text-red-800 inline-block"
+                      >
+                        <FiTrash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

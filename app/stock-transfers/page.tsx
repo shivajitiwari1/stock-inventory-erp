@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/components/AuthContext';
 import { FiPlus, FiEdit, FiTrash2, FiX } from 'react-icons/fi';
 
 interface Transfer {
@@ -22,6 +23,7 @@ interface Warehouse {
 export default function StockTransfersPage() {
   const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const { canDo } = useAuth();
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingTransfer, setEditingTransfer] = useState<Transfer | null>(null);
@@ -150,12 +152,14 @@ export default function StockTransfersPage() {
                     >
                       <FiEdit className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => handleDelete(transfer.id)}
-                      className="text-red-600 hover:text-red-800 inline-block"
-                    >
-                      <FiTrash2 className="w-4 h-4" />
-                    </button>
+                    {canDo('stock-transfers', 'delete') && (
+                      <button
+                        onClick={() => handleDelete(transfer.id)}
+                        className="text-red-600 hover:text-red-800 inline-block"
+                      >
+                        <FiTrash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
