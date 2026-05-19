@@ -34,7 +34,7 @@ export default function NotificationBanner() {
       const all: Notification[] = await res.json();
       // Show notifications targeted at this user or ALL, not yet dismissed by this user
       const visible = all.filter(n =>
-        (n.targetUserId === 'ALL' || n.targetUserId === user.id) &&
+        (n.targetUserId === 'ALL' || n.targetUserId === 'everyone' || n.targetUserId === user.id) &&
         !n.dismissedBy.includes(user.id)
       );
       setNotifications(visible);

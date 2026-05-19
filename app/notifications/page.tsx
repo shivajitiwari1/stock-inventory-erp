@@ -120,7 +120,7 @@ export default function NotificationsPage() {
                 </tr>
               )}
               {[...notifications].reverse().map(n => {
-                const totalTargets = n.targetUserId === 'ALL' ? users.length : 1;
+                const totalTargets = (n.targetUserId === 'ALL' || n.targetUserId === 'everyone') ? users.length : 1;
                 return (
                   <tr key={n.id} className="hover:bg-gray-50 dark:hover:bg-slate-700">
                     <td className="px-5 py-4">{typeBadge(n.type)}</td>
@@ -129,7 +129,7 @@ export default function NotificationsPage() {
                       <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 line-clamp-2">{n.message}</p>
                     </td>
                     <td className="px-5 py-4 text-sm text-gray-600 dark:text-slate-300">
-                      {n.targetUserId === 'ALL' ? (
+                      {(n.targetUserId === 'ALL' || n.targetUserId === 'everyone') ? (
                         <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full font-medium">Everyone</span>
                       ) : (
                         <span>{n.targetUserName}</span>
