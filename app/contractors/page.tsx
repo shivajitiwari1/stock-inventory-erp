@@ -101,9 +101,11 @@ export default function ContractorsPage() {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
             <thead className="bg-gray-50 dark:bg-slate-700">
               <tr>
-                {['Name', 'Phone', 'Role', 'Company', 'Actions'].map(h => (
-                  <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">{h}</th>
-                ))}
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden sm:table-cell">Phone</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Role</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden md:table-cell">Company</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
@@ -113,11 +115,11 @@ export default function ContractorsPage() {
               {filtered.map(c => (
                 <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-slate-700">
                   <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-slate-100">{c.name}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">{c.phone}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400 hidden sm:table-cell">{c.phone}</td>
                   <td className="px-6 py-4 text-sm">
                     <span className={`rounded-full px-2 py-1 text-xs font-semibold ${roleBadge(c.role)}`}>{c.role}</span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">{c.company || '—'}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400 hidden md:table-cell">{c.company || '—'}</td>
                   <td className="px-6 py-4 text-sm space-x-2">
                     {canDo('contractors', 'edit') && (
                     <button onClick={() => { setEditing(c); setShowModal(true); }} className="text-blue-600 hover:text-blue-800 inline-block">
@@ -177,7 +179,7 @@ function ContractorModal({ contractor, onClose, onSave }: { contractor: Contract
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md p-6">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">{contractor ? 'Edit' : 'Add'} Contractor / Worker</h2>
           <button type="button" onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-slate-300 dark:hover:bg-slate-700 transition-colors">
