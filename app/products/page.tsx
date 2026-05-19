@@ -126,12 +126,12 @@ export default function ProductsPage() {
             <thead className="bg-gray-50 dark:bg-slate-700">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Product</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">SKU</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Category</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Stock Qty</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden sm:table-cell">SKU</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden sm:table-cell">Category</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden md:table-cell">Stock Qty</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Total Stock</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Price</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Min Qty</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden md:table-cell">Price</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden md:table-cell">Min Qty</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Actions</th>
               </tr>
             </thead>
@@ -152,18 +152,18 @@ export default function ProductsPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-slate-100 font-mono">{product.sku}</td>
-                  <td className="px-6 py-4 text-sm">
+                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-slate-100 font-mono hidden sm:table-cell">{product.sku}</td>
+                  <td className="px-6 py-4 text-sm hidden sm:table-cell">
                     <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">{product.category}</span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900 dark:text-slate-100">
+                  <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900 dark:text-slate-100 hidden md:table-cell">
                     {product.quantity ?? 0}
                   </td>
                   <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900 dark:text-slate-100">
                     {getStock(product.id)}
                   </td>
-                  <td className="px-6 py-4 text-sm text-right text-gray-900 dark:text-slate-100">₹{product.price.toFixed(2)}</td>
-                  <td className="px-6 py-4 text-sm text-right text-gray-900 dark:text-slate-100">{product.minQuantity}</td>
+                  <td className="px-6 py-4 text-sm text-right text-gray-900 dark:text-slate-100 hidden md:table-cell">₹{product.price.toFixed(2)}</td>
+                  <td className="px-6 py-4 text-sm text-right text-gray-900 dark:text-slate-100 hidden md:table-cell">{product.minQuantity}</td>
                   <td className="px-6 py-4 text-sm space-x-2">
                     {canDo('products', 'edit') && (
                       <button onClick={() => setEditingProduct(product)} className="text-blue-600 hover:text-blue-800">
