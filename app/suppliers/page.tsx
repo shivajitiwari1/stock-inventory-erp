@@ -100,9 +100,9 @@ export default function SuppliersPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Supplier</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Phone</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Location</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Phone</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Location</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
               </tr>
@@ -114,9 +114,9 @@ export default function SuppliersPage() {
               {filteredSuppliers.map((supplier: any) => (
                 <tr key={supplier.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">{supplier.name}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{supplier.email}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{supplier.phone}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{supplier.city}, {supplier.country}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500 hidden sm:table-cell">{supplier.email}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500 hidden md:table-cell">{supplier.phone}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500 hidden md:table-cell">{supplier.city}, {supplier.country}</td>
                   <td className="px-6 py-4 text-sm">
                     <span className={`rounded-full px-2 py-1 text-xs font-semibold ${supplier.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
                       {supplier.status}
@@ -196,7 +196,7 @@ function SupplierModal({ supplier, onClose, onSave }: any) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 sm:p-8">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold">{supplier ? 'Edit Supplier' : 'Add Supplier'}</h2>
           <button type="button" onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-slate-300 dark:hover:bg-slate-700 transition-colors">
