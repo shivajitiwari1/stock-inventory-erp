@@ -111,13 +111,13 @@ export default function StockTransfersPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Transfer ID</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">From</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">To</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Transfer ID</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">From</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">To</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Product</th>
                 <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Quantity</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Date</th>
                 <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
               </tr>
             </thead>
@@ -128,9 +128,9 @@ export default function StockTransfersPage() {
                 </tr>
               ) : transfers.map((transfer) => (
                 <tr key={transfer.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{transfer.id}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{warehouseName(transfer.fromWarehouseId)}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{warehouseName(transfer.toWarehouseId)}</td>
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900 hidden sm:table-cell">{transfer.id}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500 hidden sm:table-cell">{warehouseName(transfer.fromWarehouseId)}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500 hidden sm:table-cell">{warehouseName(transfer.toWarehouseId)}</td>
                   <td className="px-6 py-4 text-sm text-gray-900">{transfer.productName}</td>
                   <td className="px-6 py-4 text-sm text-right text-gray-900">{transfer.quantity}</td>
                   <td className="px-6 py-4 text-sm">
@@ -142,7 +142,7 @@ export default function StockTransfersPage() {
                       {transfer.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
+                  <td className="px-6 py-4 text-sm text-gray-500 hidden md:table-cell">
                     {new Date(transfer.date).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 text-sm space-x-2 text-center">
@@ -221,7 +221,7 @@ function TransferModal({ transfer, warehouses, onClose, onSave }: any) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 sm:p-8">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold">{transfer ? 'Edit Transfer' : 'New Stock Transfer'}</h2>
           <button type="button" onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-slate-300 dark:hover:bg-slate-700 transition-colors">
