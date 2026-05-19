@@ -144,9 +144,9 @@ export default function WarehousesPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Warehouse</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Location</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Manager</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Capacity</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Location</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Manager</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Capacity</th>
                 <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Usage</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
@@ -162,9 +162,9 @@ export default function WarehousesPage() {
                 return (
                   <tr key={warehouse.id} className={`hover:bg-gray-50 ${isArchived ? 'opacity-50' : ''}`}>
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">{warehouse.name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{warehouse.location}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{warehouse.manager}</td>
-                    <td className="px-6 py-4 text-sm text-right text-gray-900">{warehouse.capacity}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500 hidden sm:table-cell">{warehouse.location}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500 hidden md:table-cell">{warehouse.manager}</td>
+                    <td className="px-6 py-4 text-sm text-right text-gray-900 hidden md:table-cell">{warehouse.capacity}</td>
                     <td className="px-6 py-4 text-sm text-right">
                       <div className="flex items-center space-x-2">
                         <div className="w-20 bg-gray-200 rounded-full h-2">
@@ -315,7 +315,7 @@ function WarehouseModal({ warehouse, onClose, onSave }: any) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 sm:p-8">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold">{warehouse ? 'Edit Warehouse' : 'Add Warehouse'}</h2>
           <button type="button" onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-slate-300 dark:hover:bg-slate-700 transition-colors">
