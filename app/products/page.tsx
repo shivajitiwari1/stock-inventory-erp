@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FiPlus, FiEdit, FiTrash2, FiSearch, FiX, FiLoader } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiSearch, FiX, FiLoader, FiInfo } from 'react-icons/fi';
 import { useAuth } from '@/components/AuthContext';
 
 interface Product {
@@ -310,6 +310,14 @@ function ProductModal({ product, onClose, onSave }: { product?: Product | null; 
           <button type="button" onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-slate-300 dark:hover:bg-slate-700 transition-colors">
             <FiX className="w-5 h-5" />
           </button>
+        </div>
+
+        <div className="flex items-start gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3 mb-4 text-sm text-blue-700 dark:text-blue-300">
+          <FiInfo className="w-4 h-4 mt-0.5 shrink-0" />
+          <p>
+            This form defines the <strong>product details</strong> (name, SKU, price, etc.).
+            To manage <strong>stock quantities</strong>, go to <strong>Stock Management</strong> after adding the product.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
