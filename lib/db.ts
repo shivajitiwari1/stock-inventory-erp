@@ -1,13 +1,27 @@
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
+// Vercel's filesystem is read-only; use os.tmpdir() for writes.
+// Reads check tmp first so mutations persist within a warm Lambda instance.
+const TMP_DIR = path.join(os.tmpdir(), 'stock-erp-data');
+
+function ensureTmpDir() {
+  if (!fs.existsSync(TMP_DIR)) {
+    fs.mkdirSync(TMP_DIR, { recursive: true });
+  }
+}
 
 export const readJSON = (file: string) => {
   try {
+    ensureTmpDir();
+    const tmpPath = path.join(TMP_DIR, file);
+    if (fs.existsSync(tmpPath)) {
+      return JSON.parse(fs.readFileSync(tmpPath, 'utf-8'));
+    }
     const filePath = path.join(DATA_DIR, file);
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
-    return JSON.parse(fileContent);
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
   } catch (error) {
     console.error(`Error reading file: ${file}`, error);
     return null;
@@ -16,8 +30,15 @@ export const readJSON = (file: string) => {
 
 export const writeJSON = (file: string, data: any) => {
   try {
-    const filePath = path.join(DATA_DIR, file);
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+    ensureTmpDir();
+    // Always write to tmp (works on Vercel and locally)
+    fs.writeFileSync(path.join(TMP_DIR, file), JSON.stringify(data, null, 2));
+    // Also persist to data dir in local development
+    try {
+      fs.writeFileSync(path.join(DATA_DIR, file), JSON.stringify(data, null, 2));
+    } catch (_) {
+      // Read-only in production — expected, ignore
+    }
     return true;
   } catch (error) {
     console.error(`Error writing file: ${file}`, error);
@@ -25,8 +46,6 @@ export const writeJSON = (file: string, data: any) => {
   }
 };
 
-// Appends an item to the named array inside the JSON wrapper object.
-// e.g. appendToJSON('products.json', 'products', newProduct)
 export const appendToJSON = (file: string, key: string, item: any) => {
   try {
     const data = readJSON(file);
@@ -41,8 +60,6 @@ export const appendToJSON = (file: string, key: string, item: any) => {
   }
 };
 
-// Updates an item by id inside the named array within the JSON wrapper object.
-// e.g. updateInJSON('products.json', 'products', id, updates)
 export const updateInJSON = (file: string, key: string, id: string, updates: any) => {
   try {
     const data = readJSON(file);
@@ -61,8 +78,6 @@ export const updateInJSON = (file: string, key: string, id: string, updates: any
   }
 };
 
-// Deletes an item by id from the named array within the JSON wrapper object.
-// e.g. deleteFromJSON('products.json', 'products', id)
 export const deleteFromJSON = (file: string, key: string, id: string) => {
   try {
     const data = readJSON(file);
