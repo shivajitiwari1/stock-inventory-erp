@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FiPlus, FiTrash2, FiBell, FiInfo, FiAlertTriangle, FiCheckCircle, FiAlertCircle, FiX } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiBell, FiInfo, FiAlertTriangle, FiCheckCircle, FiAlertCircle, FiX, FiLoader } from 'react-icons/fi';
 import { useAuth } from '@/components/AuthContext';
 
 interface Notification {
@@ -24,6 +24,23 @@ interface User {
   status: string;
 }
 
+const STORAGE_KEY = 'erp-notifications';
+
+function readCache(): Notification[] | null {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(list: Notification[]) {
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  } catch { /* storage full — ignore */ }
+}
+
 const TYPE_OPTIONS = [
   { value: 'info',    label: 'Info',    icon: FiInfo,          color: 'text-blue-600'  },
   { value: 'warning', label: 'Warning', icon: FiAlertTriangle, color: 'text-amber-500' },
@@ -43,13 +60,25 @@ export default function NotificationsPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const cached = readCache();
+    if (cached) {
+      setNotifications(cached);
+      setLoading(false);
+      // Still fetch users (lightweight, no caching needed)
+      fetch('/api/users').then(r => r.json()).then(d => setUsers(d.users || []));
+      return;
+    }
     Promise.all([
       fetch('/api/notifications').then(r => r.json()),
       fetch('/api/users').then(r => r.json()),
     ]).then(([notifs, usersData]) => {
-      setNotifications(Array.isArray(notifs) ? notifs : []);
+      const list = Array.isArray(notifs) ? notifs : [];
+      setNotifications(list);
+      writeCache(list);
       setUsers(usersData.users || []);
     }).catch(err => console.error('Failed to load:', err))
       .finally(() => setLoading(false));
@@ -57,12 +86,35 @@ export default function NotificationsPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this notification?')) return;
+    setError(null);
+    setDeletingId(id);
+
+    // Optimistic removal
+    const previous = notifications;
+    const updated = notifications.filter(n => n.id !== id);
+    setNotifications(updated);
+    writeCache(updated);
+
     try {
       const res = await fetch(`/api/notifications/${id}`, { method: 'DELETE' });
-      if (res.ok) setNotifications(prev => prev.filter(n => n.id !== id));
-    } catch (error) {
-      console.error('Failed to delete:', error);
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+    } catch {
+      // Revert
+      setNotifications(previous);
+      writeCache(previous);
+      setError('Failed to delete notification — please try again.');
+    } finally {
+      setDeletingId(null);
     }
+  };
+
+  const handleSend = (notif: Notification) => {
+    setNotifications(prev => {
+      const updated = [...prev, notif];
+      writeCache(updated);
+      return updated;
+    });
+    setShowModal(false);
   };
 
   if (loading) return (
@@ -84,6 +136,15 @@ export default function NotificationsPage() {
           Send Notification
         </button>
       </div>
+
+      {error && (
+        <div className="flex items-center justify-between gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg px-4 py-3 text-sm">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="shrink-0 text-red-500 hover:text-red-700">
+            <FiX className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -121,8 +182,9 @@ export default function NotificationsPage() {
               )}
               {[...notifications].reverse().map(n => {
                 const totalTargets = (n.targetUserId === 'ALL' || n.targetUserId === 'everyone') ? users.length : 1;
+                const isDeleting = deletingId === n.id;
                 return (
-                  <tr key={n.id} className="hover:bg-gray-50 dark:hover:bg-slate-700">
+                  <tr key={n.id} className={`hover:bg-gray-50 dark:hover:bg-slate-700 transition-opacity ${isDeleting ? 'opacity-40' : ''}`}>
                     <td className="px-5 py-4">{typeBadge(n.type)}</td>
                     <td className="px-5 py-4 max-w-xs">
                       <p className="text-sm font-semibold text-gray-900 dark:text-slate-100 truncate">{n.title}</p>
@@ -146,8 +208,15 @@ export default function NotificationsPage() {
                       <span className="text-gray-400 text-xs"> / {totalTargets}</span>
                     </td>
                     <td className="px-5 py-4">
-                      <button onClick={() => handleDelete(n.id)} className="text-red-600 hover:text-red-800">
-                        <FiTrash2 className="w-4 h-4" />
+                      <button
+                        onClick={() => handleDelete(n.id)}
+                        disabled={!!deletingId}
+                        className="text-red-600 hover:text-red-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        {isDeleting
+                          ? <FiLoader className="w-4 h-4 animate-spin" />
+                          : <FiTrash2 className="w-4 h-4" />
+                        }
                       </button>
                     </td>
                   </tr>
@@ -163,10 +232,7 @@ export default function NotificationsPage() {
           users={users}
           currentUser={currentUser}
           onClose={() => setShowModal(false)}
-          onSend={notif => {
-            setNotifications(prev => [...prev, notif]);
-            setShowModal(false);
-          }}
+          onSend={handleSend}
         />
       )}
     </div>
@@ -186,6 +252,7 @@ function SendModal({ users, currentUser, onClose, onSend }: {
     targetUserId: 'ALL',
   });
   const [saving, setSaving] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
 
   const targetUserName = form.targetUserId === 'ALL'
     ? 'Everyone'
@@ -194,6 +261,7 @@ function SendModal({ users, currentUser, onClose, onSend }: {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setSendError(null);
     try {
       const res = await fetch('/api/notifications', {
         method: 'POST',
@@ -205,12 +273,11 @@ function SendModal({ users, currentUser, onClose, onSend }: {
           createdByName: currentUser?.name,
         }),
       });
-      if (res.ok) {
-        onSend(await res.json());
-        window.dispatchEvent(new Event('notification-created'));
-      }
-    } catch (error) {
-      console.error('Failed to send:', error);
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      onSend(await res.json());
+      window.dispatchEvent(new Event('notification-created'));
+    } catch {
+      setSendError('Failed to send notification — please try again.');
     } finally {
       setSaving(false);
     }
@@ -227,8 +294,15 @@ function SendModal({ users, currentUser, onClose, onSend }: {
             <FiX className="w-5 h-5" />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
 
+        {sendError && (
+          <div className="mb-4 flex items-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg px-3 py-2 text-sm">
+            <FiAlertCircle className="w-4 h-4 shrink-0" />
+            <span>{sendError}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Target *</label>
             <select value={form.targetUserId} onChange={e => setForm({ ...form, targetUserId: e.target.value })} className={inputCls}>
@@ -269,7 +343,6 @@ function SendModal({ users, currentUser, onClose, onSend }: {
               required rows={3} className={inputCls} placeholder="Write your notification message here..." />
           </div>
 
-          {/* Preview */}
           {form.title && (
             <div className={`rounded-lg border-l-4 p-3 text-sm ${
               form.type === 'info'    ? 'bg-blue-50 border-blue-500 text-blue-800'   :
@@ -285,7 +358,8 @@ function SendModal({ users, currentUser, onClose, onSend }: {
 
           <div className="flex space-x-3 pt-1">
             <button type="submit" disabled={saving}
-              className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50">
+              className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50 flex items-center justify-center gap-2">
+              {saving && <FiLoader className="w-4 h-4 animate-spin" />}
               {saving ? 'Sending...' : 'Send Notification'}
             </button>
             <button type="button" onClick={onClose}
