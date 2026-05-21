@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { FiPlus, FiEdit, FiTrash2, FiSearch, FiShield, FiUsers, FiToggleLeft, FiToggleRight, FiX } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import { FiPlus, FiEdit, FiTrash2, FiSearch, FiShield, FiUsers, FiToggleLeft, FiToggleRight, FiX, FiLoader } from 'react-icons/fi';
 import { useAuth, type UserPermissions } from '@/components/AuthContext';
 
 interface Role {
@@ -45,6 +45,20 @@ const PAGE_CONFIG = [
 const emptyPermissions = (): UserPermissions =>
   Object.fromEntries(PAGE_CONFIG.map(p => [p.key, { view: false, ...(p.actions ? { add: false, edit: false, delete: false } : {}) }]));
 
+const USERS_CACHE_KEY = 'erp-users';
+const ROLES_CACHE_KEY = 'erp-roles';
+
+function readCache<T>(key: string): T[] | null {
+  try {
+    const raw = sessionStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function writeCache<T>(key: string, list: T[]) {
+  try { sessionStorage.setItem(key, JSON.stringify(list)); } catch {}
+}
+
 const roleBadge = (role: string) => {
   if (role === 'ADMIN') return 'bg-red-100 text-red-700';
   if (role === 'INVENTORY_MANAGER') return 'bg-blue-100 text-blue-700';
@@ -65,29 +79,51 @@ const UsersPage: React.FC = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [deletingRoleId, setDeletingRoleId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const fetchAll = useCallback(async () => {
-    try {
-      const [uRes, rRes] = await Promise.all([fetch('/api/users'), fetch('/api/roles')]);
-      const [uData, rData] = await Promise.all([uRes.json(), rRes.json()]);
-      setUsers(uData.users || []);
-      setRoles(Array.isArray(rData) ? rData : []);
-    } catch (error) {
-      console.error('Failed to fetch data:', error);
-    } finally {
+  useEffect(() => {
+    const cachedUsers = readCache<User>(USERS_CACHE_KEY);
+    const cachedRoles = readCache<Role>(ROLES_CACHE_KEY);
+    if (cachedUsers && cachedRoles) {
+      setUsers(cachedUsers);
+      setRoles(cachedRoles);
       setLoading(false);
+      return;
     }
+    // fall back to API
+    Promise.all([fetch('/api/users'), fetch('/api/roles')])
+      .then(([uRes, rRes]) => Promise.all([uRes.json(), rRes.json()]))
+      .then(([uData, rData]) => {
+        const usersList = uData.users || [];
+        const rolesList = Array.isArray(rData) ? rData : [];
+        setUsers(usersList);
+        setRoles(rolesList);
+        writeCache(USERS_CACHE_KEY, usersList);
+        writeCache(ROLES_CACHE_KEY, rolesList);
+      })
+      .catch(err => console.error('Failed to fetch data:', err))
+      .finally(() => setLoading(false));
   }, []);
-
-  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const handleDeleteUser = async (id: string) => {
     if (!confirm('Delete this user?')) return;
+    setError(null);
+    setDeletingUserId(id);
+    const previous = users;
+    const updated = users.filter(u => u.id !== id);
+    setUsers(updated);
+    writeCache(USERS_CACHE_KEY, updated);
     try {
       const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
-      if (res.ok) setUsers(prev => prev.filter(u => u.id !== id));
-    } catch (error) {
-      console.error('Failed to delete user:', error);
+      if (!res.ok) throw new Error(`${res.status}`);
+    } catch {
+      setUsers(previous);
+      writeCache(USERS_CACHE_KEY, previous);
+      setError('Failed to delete user. Please try again.');
+    } finally {
+      setDeletingUserId(null);
     }
   };
 
@@ -105,7 +141,11 @@ const UsersPage: React.FC = () => {
       });
       if (res.ok) {
         const saved = await res.json();
-        setUsers(prev => prev.map(u => u.id === saved.id ? saved : u));
+        setUsers(prev => {
+          const updated = prev.map(u => u.id === saved.id ? saved : u);
+          writeCache(USERS_CACHE_KEY, updated);
+          return updated;
+        });
       }
     } catch (error) {
       console.error('Failed to toggle status:', error);
@@ -114,15 +154,24 @@ const UsersPage: React.FC = () => {
 
   const handleDeleteRole = async (id: string) => {
     if (!confirm('Delete this role?')) return;
+    setError(null);
+    setDeletingRoleId(id);
+    const previous = roles;
+    const updated = roles.filter(r => r.id !== id);
+    setRoles(updated);
+    writeCache(ROLES_CACHE_KEY, updated);
     try {
       const res = await fetch(`/api/roles/${id}`, { method: 'DELETE' });
-      if (res.ok) setRoles(prev => prev.filter(r => r.id !== id));
-      else {
+      if (!res.ok) {
         const err = await res.json();
-        alert(err.error || 'Cannot delete this role');
+        throw new Error(err.error || 'Cannot delete this role');
       }
-    } catch (error) {
-      console.error('Failed to delete role:', error);
+    } catch (e: any) {
+      setRoles(previous);
+      writeCache(ROLES_CACHE_KEY, previous);
+      setError(e.message || 'Failed to delete role. Please try again.');
+    } finally {
+      setDeletingRoleId(null);
     }
   };
 
@@ -167,6 +216,15 @@ const UsersPage: React.FC = () => {
           <FiShield className="w-4 h-4" /> Roles
         </button>
       </div>
+
+      {error && (
+        <div className="flex items-center justify-between gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg px-4 py-3 text-sm">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="shrink-0 text-red-500 hover:text-red-700">
+            <FiX className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* ── USERS TAB ── */}
       {tab === 'users' && (
@@ -252,8 +310,14 @@ const UsersPage: React.FC = () => {
                         <button onClick={() => { setEditingUser(u); setShowUserModal(true); }} className="text-blue-600 hover:text-blue-800">
                           <FiEdit className="w-4 h-4" />
                         </button>
-                        <button onClick={() => handleDeleteUser(u.id)} className="text-red-600 hover:text-red-800">
-                          <FiTrash2 className="w-4 h-4" />
+                        <button
+                          onClick={() => handleDeleteUser(u.id)}
+                          disabled={!!deletingUserId}
+                          className="text-red-600 hover:text-red-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {deletingUserId === u.id
+                            ? <FiLoader className="w-4 h-4 animate-spin" />
+                            : <FiTrash2 className="w-4 h-4" />}
                         </button>
                       </td>
                     </tr>
@@ -286,9 +350,14 @@ const UsersPage: React.FC = () => {
                     <FiEdit className="w-4 h-4" />
                   </button>
                   {!role.isSystem && (
-                    <button onClick={() => handleDeleteRole(role.id)}
-                      className="text-red-600 hover:text-red-800 p-1">
-                      <FiTrash2 className="w-4 h-4" />
+                    <button
+                      onClick={() => handleDeleteRole(role.id)}
+                      disabled={!!deletingRoleId}
+                      className="text-red-600 hover:text-red-800 p-1 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {deletingRoleId === role.id
+                        ? <FiLoader className="w-4 h-4 animate-spin" />
+                        : <FiTrash2 className="w-4 h-4" />}
                     </button>
                   )}
                 </div>
@@ -308,8 +377,15 @@ const UsersPage: React.FC = () => {
           roles={roles}
           onClose={() => { setShowUserModal(false); setEditingUser(null); }}
           onSave={saved => {
-            setUsers(prev => editingUser ? prev.map(u => u.id === saved.id ? saved : u) : [...prev, saved]);
+            setUsers(prev => {
+              const updated = editingUser
+                ? prev.map(u => u.id === saved.id ? saved : u)
+                : [...prev, saved];
+              writeCache(USERS_CACHE_KEY, updated);
+              return updated;
+            });
             setShowUserModal(false);
+            setEditingUser(null);
           }}
         />
       )}
@@ -318,8 +394,15 @@ const UsersPage: React.FC = () => {
           role={editingRole}
           onClose={() => { setShowRoleModal(false); setEditingRole(null); }}
           onSave={saved => {
-            setRoles(prev => editingRole ? prev.map(r => r.id === saved.id ? saved : r) : [...prev, saved]);
+            setRoles(prev => {
+              const updated = editingRole
+                ? prev.map(r => r.id === saved.id ? saved : r)
+                : [...prev, saved];
+              writeCache(ROLES_CACHE_KEY, updated);
+              return updated;
+            });
             setShowRoleModal(false);
+            setEditingRole(null);
           }}
         />
       )}

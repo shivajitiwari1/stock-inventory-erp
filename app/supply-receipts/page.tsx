@@ -1,8 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FiPlus, FiEdit, FiTrash2, FiSearch, FiPaperclip, FiExternalLink, FiX } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiSearch, FiPaperclip, FiExternalLink, FiX, FiLoader } from 'react-icons/fi';
 import { useAuth } from '@/components/AuthContext';
+
+const CACHE_KEY = 'erp-supply-receipts';
+
+function readCache<T>(): T[] | null {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function writeCache<T>(list: T[]) {
+  try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(list)); } catch {}
+}
 
 interface ReceiptItem {
   productId: string;
@@ -39,33 +52,63 @@ export default function SupplyReceiptsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<SupplyReceipt | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const { canDo } = useAuth();
 
   useEffect(() => {
-    Promise.all([
-      fetch('/api/supply-receipts').then(r => r.json()),
-      fetch('/api/suppliers').then(r => r.json()),
-      fetch('/api/warehouses').then(r => r.json()),
-      fetch('/api/products').then(r => r.json()),
-    ]).then(([rcpts, supps, whs, prods]) => {
-      setReceipts(Array.isArray(rcpts) ? rcpts : []);
-      setSuppliers(Array.isArray(supps) ? supps : (supps.suppliers || []));
-      setWarehouses(Array.isArray(whs) ? whs : (whs.warehouses || []));
-      setProducts(Array.isArray(prods) ? prods : (prods.products || []));
-    }).catch(error => {
-      console.error('Failed to load data:', error);
-    }).finally(() => setLoading(false));
+    const cached = readCache<SupplyReceipt>();
+    if (cached) {
+      setReceipts(cached);
+      setLoading(false);
+      // Still fetch auxiliary data for modal dropdowns
+      Promise.all([
+        fetch('/api/suppliers').then(r => r.json()),
+        fetch('/api/warehouses').then(r => r.json()),
+        fetch('/api/products').then(r => r.json()),
+      ]).then(([supps, whs, prods]) => {
+        setSuppliers(Array.isArray(supps) ? supps : (supps.suppliers || []));
+        setWarehouses(Array.isArray(whs) ? whs : (whs.warehouses || []));
+        setProducts(Array.isArray(prods) ? prods : (prods.products || []));
+      }).catch(error => {
+        console.error('Failed to load auxiliary data:', error);
+      });
+    } else {
+      Promise.all([
+        fetch('/api/supply-receipts').then(r => r.json()),
+        fetch('/api/suppliers').then(r => r.json()),
+        fetch('/api/warehouses').then(r => r.json()),
+        fetch('/api/products').then(r => r.json()),
+      ]).then(([rcpts, supps, whs, prods]) => {
+        const list = Array.isArray(rcpts) ? rcpts : [];
+        setReceipts(list);
+        writeCache(list);
+        setSuppliers(Array.isArray(supps) ? supps : (supps.suppliers || []));
+        setWarehouses(Array.isArray(whs) ? whs : (whs.warehouses || []));
+        setProducts(Array.isArray(prods) ? prods : (prods.products || []));
+      }).catch(error => {
+        console.error('Failed to load data:', error);
+      }).finally(() => setLoading(false));
+    }
   }, []);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this supply receipt?')) return;
+    setError(null);
+    setDeletingId(id);
+    const previous = receipts;
+    const updated = receipts.filter(r => r.id !== id);
+    setReceipts(updated);
+    writeCache(updated);
     try {
       const res = await fetch(`/api/supply-receipts/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        setReceipts(prev => prev.filter(r => r.id !== id));
-      }
-    } catch (error) {
-      console.error('Failed to delete receipt:', error);
+      if (!res.ok) throw new Error(`${res.status}`);
+    } catch {
+      setReceipts(previous);
+      writeCache(previous);
+      setError('Failed to delete receipt. Please try again.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -97,6 +140,15 @@ export default function SupplyReceiptsPage() {
         </button>
         )}
       </div>
+
+      {error && (
+        <div className="flex items-center justify-between gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg px-4 py-3 text-sm">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="shrink-0 text-red-500 hover:text-red-700">
+            <FiX className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
         <div className="relative">
@@ -154,8 +206,8 @@ export default function SupplyReceiptsPage() {
                     </button>
                     )}
                     {canDo('supply-receipts', 'delete') && (
-                    <button onClick={() => handleDelete(r.id)} className="text-red-600 hover:text-red-800 inline-block">
-                      <FiTrash2 className="w-4 h-4" />
+                    <button onClick={() => handleDelete(r.id)} disabled={deletingId === r.id} className="text-red-600 hover:text-red-800 inline-block disabled:opacity-50">
+                      {deletingId === r.id ? <FiLoader className="w-4 h-4 animate-spin" /> : <FiTrash2 className="w-4 h-4" />}
                     </button>
                     )}
                   </td>
@@ -174,8 +226,15 @@ export default function SupplyReceiptsPage() {
           products={products}
           onClose={() => { setShowModal(false); setEditing(null); }}
           onSave={saved => {
-            setReceipts(prev => editing ? prev.map(r => r.id === saved.id ? saved : r) : [...prev, saved]);
+            setReceipts(prev => {
+              const updated = editing
+                ? prev.map(r => r.id === saved.id ? saved : r)
+                : [...prev, saved];
+              writeCache(updated);
+              return updated;
+            });
             setShowModal(false);
+            setEditing(null);
           }}
         />
       )}

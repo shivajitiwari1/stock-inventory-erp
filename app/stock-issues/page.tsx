@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FiPlus, FiEdit, FiTrash2, FiSearch, FiFilter, FiX } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiSearch, FiFilter, FiX, FiLoader } from 'react-icons/fi';
 import { useAuth } from '@/components/AuthContext';
 
 interface StockIssue {
@@ -33,6 +33,19 @@ const statusBadge = (status: string) => {
   return map[status] || 'bg-gray-100 text-gray-600';
 };
 
+const CACHE_KEY = 'erp-stock-issues';
+
+function readCache<T>(): T[] | null {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function writeCache<T>(list: T[]) {
+  try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(list)); } catch {}
+}
+
 export default function StockIssuesPage() {
   const [issues, setIssues] = useState<StockIssue[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -42,15 +55,35 @@ export default function StockIssuesPage() {
   const [editing, setEditing] = useState<StockIssue | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { canDo } = useAuth();
 
   useEffect(() => {
+    const cached = readCache<StockIssue>();
+    if (cached) {
+      setIssues(cached);
+      setLoading(false);
+      // Still fetch auxiliary data for modal dropdowns
+      Promise.all([
+        fetch('/api/products').then(r => r.json()),
+        fetch('/api/contractors').then(r => r.json()),
+      ]).then(([prods, cons]) => {
+        setProducts(Array.isArray(prods) ? prods : (prods.products || []));
+        setContractors(Array.isArray(cons) ? cons : []);
+      }).catch(error => {
+        console.error('Failed to load auxiliary data:', error);
+      });
+      return;
+    }
     Promise.all([
       fetch('/api/stock-issues').then(r => r.json()),
       fetch('/api/products').then(r => r.json()),
       fetch('/api/contractors').then(r => r.json()),
     ]).then(([iss, prods, cons]) => {
-      setIssues(Array.isArray(iss) ? iss : []);
+      const list = Array.isArray(iss) ? iss : [];
+      setIssues(list);
+      writeCache(list);
       setProducts(Array.isArray(prods) ? prods : (prods.products || []));
       setContractors(Array.isArray(cons) ? cons : []);
     }).catch(error => {
@@ -60,13 +93,21 @@ export default function StockIssuesPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this stock issue record?')) return;
+    setError(null);
+    setDeletingId(id);
+    const previous = issues;
+    const updated = issues.filter(i => i.id !== id);
+    setIssues(updated);
+    writeCache(updated);
     try {
       const res = await fetch(`/api/stock-issues/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        setIssues(prev => prev.filter(i => i.id !== id));
-      }
-    } catch (error) {
-      console.error('Failed to delete stock issue:', error);
+      if (!res.ok) throw new Error(`${res.status}`);
+    } catch {
+      setIssues(previous);
+      writeCache(previous);
+      setError('Failed to delete. Please try again.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -100,6 +141,15 @@ export default function StockIssuesPage() {
         </button>
         )}
       </div>
+
+      {error && (
+        <div className="flex items-center justify-between gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg px-4 py-3 text-sm">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="shrink-0 text-red-500 hover:text-red-700">
+            <FiX className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
         <div className="flex flex-col sm:flex-row gap-3">
@@ -162,8 +212,14 @@ export default function StockIssuesPage() {
                     </button>
                     )}
                     {canDo('stock-issues', 'delete') && (
-                    <button onClick={() => handleDelete(issue.id)} className="text-red-600 hover:text-red-800 inline-block">
-                      <FiTrash2 className="w-4 h-4" />
+                    <button
+                      onClick={() => handleDelete(issue.id)}
+                      disabled={!!deletingId}
+                      className="text-red-600 hover:text-red-800 disabled:opacity-40 disabled:cursor-not-allowed inline-block"
+                    >
+                      {deletingId === issue.id
+                        ? <FiLoader className="w-4 h-4 animate-spin" />
+                        : <FiTrash2 className="w-4 h-4" />}
                     </button>
                     )}
                   </td>
@@ -181,8 +237,15 @@ export default function StockIssuesPage() {
           contractors={contractors}
           onClose={() => { setShowModal(false); setEditing(null); }}
           onSave={saved => {
-            setIssues(prev => editing ? prev.map(i => i.id === saved.id ? saved : i) : [...prev, saved]);
+            setIssues(prev => {
+              const updated = editing
+                ? prev.map(i => i.id === saved.id ? saved : i)
+                : [...prev, saved];
+              writeCache(updated);
+              return updated;
+            });
             setShowModal(false);
+            setEditing(null);
           }}
         />
       )}

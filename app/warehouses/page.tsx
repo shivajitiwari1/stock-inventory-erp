@@ -4,6 +4,19 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/AuthContext';
 import { FiPlus, FiEdit, FiTrash2, FiSearch, FiX, FiRefreshCw } from 'react-icons/fi';
 
+const CACHE_KEY = 'erp-warehouses';
+
+function readCache<T>(): T[] | null {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function writeCache<T>(list: T[]) {
+  try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(list)); } catch {}
+}
+
 interface Warehouse {
   id: string;
   name: string;
@@ -26,17 +39,26 @@ export default function WarehousesPage() {
   const [showArchived, setShowArchived] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState<string | null>(null);
   const [archiving, setArchiving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { canDo } = useAuth();
 
   useEffect(() => {
-    fetchWarehouses();
+    const cached = readCache<Warehouse>();
+    if (cached) {
+      setWarehouses(cached);
+      setLoading(false);
+    } else {
+      fetchWarehouses();
+    }
   }, []);
 
   const fetchWarehouses = async () => {
     try {
       const response = await fetch('/api/warehouses');
       const data = await response.json();
-      setWarehouses(data.warehouses || data || []);
+      const list = data.warehouses || data || [];
+      setWarehouses(list);
+      writeCache(list);
     } catch (error) {
       console.error('Failed to fetch warehouses:', error);
     } finally {
@@ -50,7 +72,11 @@ export default function WarehousesPage() {
       const res = await fetch(`/api/warehouses/${id}`, { method: 'DELETE' });
       if (res.ok) {
         const updated = await res.json();
-        setWarehouses(warehouses.map(w => w.id === id ? updated : w));
+        setWarehouses(prev => {
+          const newList = prev.map(w => w.id === id ? updated : w);
+          writeCache(newList);
+          return newList;
+        });
       }
     } catch (error) {
       console.error('Failed to archive warehouse:', error);
@@ -69,7 +95,11 @@ export default function WarehousesPage() {
       });
       if (res.ok) {
         const updated = await res.json();
-        setWarehouses(warehouses.map(w => w.id === id ? updated : w));
+        setWarehouses(prev => {
+          const newList = prev.map(w => w.id === id ? updated : w);
+          writeCache(newList);
+          return newList;
+        });
       }
     } catch (error) {
       console.error('Failed to restore warehouse:', error);
@@ -122,6 +152,15 @@ export default function WarehousesPage() {
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="flex items-center justify-between gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg px-4 py-3 text-sm">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="shrink-0 text-red-500 hover:text-red-700">
+            <FiX className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Search */}
       <div className="bg-white rounded-lg shadow-md p-6">
@@ -229,12 +268,15 @@ export default function WarehousesPage() {
           warehouse={editingWarehouse}
           onClose={() => { setShowModal(false); setEditingWarehouse(null); }}
           onSave={(warehouse: Warehouse) => {
-            if (editingWarehouse) {
-              setWarehouses(warehouses.map(w => w.id === warehouse.id ? warehouse : w));
-            } else {
-              setWarehouses([...warehouses, warehouse]);
-            }
+            setWarehouses(prev => {
+              const updated = editingWarehouse
+                ? prev.map(w => w.id === warehouse.id ? warehouse : w)
+                : [...prev, warehouse];
+              writeCache(updated);
+              return updated;
+            });
             setShowModal(false);
+            setEditingWarehouse(null);
           }}
         />
       )}

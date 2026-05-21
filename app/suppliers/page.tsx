@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/AuthContext';
-import { FiPlus, FiEdit, FiTrash2, FiSearch, FiFilter, FiX } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiSearch, FiFilter, FiX, FiLoader } from 'react-icons/fi';
 
 interface Supplier {
   id: string;
@@ -16,6 +16,19 @@ interface Supplier {
   postalCode?: string;
 }
 
+const CACHE_KEY = 'erp-suppliers';
+
+function readCache<T>(): T[] | null {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function writeCache<T>(list: T[]) {
+  try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(list)); } catch {}
+}
+
 export default function SuppliersPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const { canDo } = useAuth();
@@ -23,16 +36,26 @@ export default function SuppliersPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchSuppliers();
+    const cached = readCache<Supplier>();
+    if (cached) {
+      setSuppliers(cached);
+      setLoading(false);
+    } else {
+      fetchSuppliers();
+    }
   }, []);
 
   const fetchSuppliers = async () => {
     try {
       const response = await fetch('/api/suppliers');
       const data = await response.json();
-      setSuppliers(data.suppliers || data || []);
+      const list = data.suppliers || data || [];
+      setSuppliers(list);
+      writeCache(list);
     } catch (error) {
       console.error('Failed to fetch suppliers:', error);
     } finally {
@@ -42,11 +65,21 @@ export default function SuppliersPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this supplier?')) return;
+    setError(null);
+    setDeletingId(id);
+    const previous = suppliers;
+    const updated = suppliers.filter(s => s.id !== id);
+    setSuppliers(updated);
+    writeCache(updated);
     try {
-      await fetch(`/api/suppliers/${id}`, { method: 'DELETE' });
-      setSuppliers(suppliers.filter(s => s.id !== id));
-    } catch (error) {
-      console.error('Failed to delete supplier:', error);
+      const res = await fetch(`/api/suppliers/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(`${res.status}`);
+    } catch {
+      setSuppliers(previous);
+      writeCache(previous);
+      setError('Failed to delete. Please try again.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -78,6 +111,15 @@ export default function SuppliersPage() {
           <span>Add Supplier</span>
         </button>
       </div>
+
+      {error && (
+        <div className="flex items-center justify-between gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg px-4 py-3 text-sm">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="shrink-0 text-red-500 hover:text-red-700">
+            <FiX className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Search */}
       <div className="bg-white rounded-lg shadow-md p-6">
@@ -132,9 +174,12 @@ export default function SuppliersPage() {
                     {canDo('suppliers', 'delete') && (
                       <button
                         onClick={() => handleDelete(supplier.id)}
-                        className="text-red-600 hover:text-red-800 inline-block"
+                        disabled={!!deletingId}
+                        className="text-red-600 hover:text-red-800 disabled:opacity-40 disabled:cursor-not-allowed inline-block"
                       >
-                        <FiTrash2 className="w-4 h-4" />
+                        {deletingId === supplier.id
+                          ? <FiLoader className="w-4 h-4 animate-spin" />
+                          : <FiTrash2 className="w-4 h-4" />}
                       </button>
                     )}
                   </td>
@@ -149,13 +194,16 @@ export default function SuppliersPage() {
         <SupplierModal
           supplier={editingSupplier}
           onClose={() => { setShowModal(false); setEditingSupplier(null); }}
-          onSave={(supplier: Supplier) => {
-            if (editingSupplier) {
-              setSuppliers(suppliers.map(s => s.id === supplier.id ? supplier : s));
-            } else {
-              setSuppliers([...suppliers, supplier]);
-            }
+          onSave={(saved: Supplier) => {
+            setSuppliers(prev => {
+              const updated = editingSupplier
+                ? prev.map(i => i.id === saved.id ? saved : i)
+                : [...prev, saved];
+              writeCache(updated);
+              return updated;
+            });
             setShowModal(false);
+            setEditingSupplier(null);
           }}
         />
       )}
@@ -174,9 +222,11 @@ function SupplierModal({ supplier, onClose, onSave }: any) {
     country: '',
     status: 'ACTIVE',
   });
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaveError(null);
     try {
       const url = supplier ? `/api/suppliers/${supplier.id}` : '/api/suppliers';
       const method = supplier ? 'PUT' : 'POST';
@@ -188,9 +238,12 @@ function SupplierModal({ supplier, onClose, onSave }: any) {
       if (response.ok) {
         const saved = await response.json();
         onSave(saved);
+      } else {
+        throw new Error(`${response.status}`);
       }
     } catch (error) {
       console.error('Failed to save supplier:', error);
+      setSaveError('Failed to save supplier. Please try again.');
     }
   };
 
@@ -203,6 +256,16 @@ function SupplierModal({ supplier, onClose, onSave }: any) {
             <FiX className="w-5 h-5" />
           </button>
         </div>
+
+        {saveError && (
+          <div className="flex items-center justify-between gap-3 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm mb-4">
+            <span>{saveError}</span>
+            <button onClick={() => setSaveError(null)} className="shrink-0 text-red-500 hover:text-red-700">
+              <FiX className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input type="text" placeholder="Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required />

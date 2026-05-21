@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/AuthContext';
-import { FiPlus, FiEdit, FiTrash2, FiX } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiX, FiLoader } from 'react-icons/fi';
 
 interface Transfer {
   id: string;
@@ -20,6 +20,19 @@ interface Warehouse {
   status?: string;
 }
 
+const CACHE_KEY = 'erp-stock-transfers';
+
+function readCache<T>(): T[] | null {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function writeCache<T>(list: T[]) {
+  try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(list)); } catch {}
+}
+
 export default function StockTransfersPage() {
   const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -27,8 +40,21 @@ export default function StockTransfersPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingTransfer, setEditingTransfer] = useState<Transfer | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const cached = readCache<Transfer>();
+    if (cached) {
+      setTransfers(cached);
+      setLoading(false);
+      // Still fetch warehouses — needed for warehouseName() lookup and modal dropdowns
+      fetch('/api/warehouses')
+        .then(r => r.json())
+        .then(whData => setWarehouses(whData || []))
+        .catch(error => console.error('Failed to fetch warehouses:', error));
+      return;
+    }
     const fetchData = async () => {
       try {
         const [trRes, whRes] = await Promise.all([
@@ -36,7 +62,9 @@ export default function StockTransfersPage() {
           fetch('/api/warehouses'),
         ]);
         const [trData, whData] = await Promise.all([trRes.json(), whRes.json()]);
-        setTransfers(trData || []);
+        const list = trData || [];
+        setTransfers(list);
+        writeCache(list);
         setWarehouses(whData || []);
       } catch (error) {
         console.error('Failed to fetch transfers:', error);
@@ -52,11 +80,21 @@ export default function StockTransfersPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this transfer?')) return;
+    setError(null);
+    setDeletingId(id);
+    const previous = transfers;
+    const updated = transfers.filter((t) => t.id !== id);
+    setTransfers(updated);
+    writeCache(updated);
     try {
-      await fetch(`/api/stock-transfers/${id}`, { method: 'DELETE' });
-      setTransfers(transfers.filter((t) => t.id !== id));
-    } catch (error) {
-      console.error('Failed to delete transfer:', error);
+      const res = await fetch(`/api/stock-transfers/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(`${res.status}`);
+    } catch {
+      setTransfers(previous);
+      writeCache(previous);
+      setError('Failed to delete. Please try again.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -83,6 +121,15 @@ export default function StockTransfersPage() {
           <span>New Transfer</span>
         </button>
       </div>
+
+      {error && (
+        <div className="flex items-center justify-between gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg px-4 py-3 text-sm">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="shrink-0 text-red-500 hover:text-red-700">
+            <FiX className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -155,9 +202,12 @@ export default function StockTransfersPage() {
                     {canDo('stock-transfers', 'delete') && (
                       <button
                         onClick={() => handleDelete(transfer.id)}
-                        className="text-red-600 hover:text-red-800 inline-block"
+                        disabled={!!deletingId}
+                        className="text-red-600 hover:text-red-800 disabled:opacity-40 disabled:cursor-not-allowed inline-block"
                       >
-                        <FiTrash2 className="w-4 h-4" />
+                        {deletingId === transfer.id
+                          ? <FiLoader className="w-4 h-4 animate-spin" />
+                          : <FiTrash2 className="w-4 h-4" />}
                       </button>
                     )}
                   </td>
@@ -174,12 +224,15 @@ export default function StockTransfersPage() {
           warehouses={warehouses}
           onClose={() => { setShowModal(false); setEditingTransfer(null); }}
           onSave={(saved: Transfer) => {
-            if (editingTransfer) {
-              setTransfers(transfers.map((t) => (t.id === saved.id ? saved : t)));
-            } else {
-              setTransfers([...transfers, saved]);
-            }
+            setTransfers(prev => {
+              const updated = editingTransfer
+                ? prev.map((t) => (t.id === saved.id ? saved : t))
+                : [...prev, saved];
+              writeCache(updated);
+              return updated;
+            });
             setShowModal(false);
+            setEditingTransfer(null);
           }}
         />
       )}

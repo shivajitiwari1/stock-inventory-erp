@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FiPlus, FiEdit, FiTrash2, FiSearch, FiX } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiSearch, FiX, FiLoader } from 'react-icons/fi';
 import { useAuth } from '@/components/AuthContext';
 
 interface Contractor {
@@ -20,37 +20,66 @@ const roleBadge = (role: string) =>
     ? 'bg-green-100 text-green-700'
     : 'bg-blue-100 text-blue-700';
 
+const CACHE_KEY = 'erp-contractors';
+
+function readCache<T>(): T[] | null {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function writeCache<T>(list: T[]) {
+  try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(list)); } catch {}
+}
+
 export default function ContractorsPage() {
   const [contractors, setContractors] = useState<Contractor[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Contractor | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { canDo } = useAuth();
 
-  useEffect(() => { fetchContractors(); }, []);
-
-  const fetchContractors = async () => {
-    try {
-      const res = await fetch('/api/contractors');
-      const data = await res.json();
-      setContractors(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Failed to fetch contractors:', error);
-    } finally {
+  useEffect(() => {
+    const cached = readCache<Contractor>();
+    if (cached) {
+      setContractors(cached);
       setLoading(false);
+      return;
     }
-  };
+    fetch('/api/contractors')
+      .then(r => r.json())
+      .then(data => {
+        const list = Array.isArray(data) ? data : [];
+        setContractors(list);
+        writeCache(list);
+      })
+      .catch(error => {
+        console.error('Failed to fetch contractors:', error);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this contractor?')) return;
+    setError(null);
+    setDeletingId(id);
+    const previous = contractors;
+    const updated = contractors.filter(c => c.id !== id);
+    setContractors(updated);
+    writeCache(updated);
     try {
       const res = await fetch(`/api/contractors/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        setContractors(prev => prev.filter(c => c.id !== id));
-      }
-    } catch (error) {
-      console.error('Failed to delete contractor:', error);
+      if (!res.ok) throw new Error(`${res.status}`);
+    } catch {
+      setContractors(previous);
+      writeCache(previous);
+      setError('Failed to delete. Please try again.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -82,6 +111,15 @@ export default function ContractorsPage() {
         </button>
         )}
       </div>
+
+      {error && (
+        <div className="flex items-center justify-between gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg px-4 py-3 text-sm">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="shrink-0 text-red-500 hover:text-red-700">
+            <FiX className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
         <div className="relative">
@@ -127,8 +165,14 @@ export default function ContractorsPage() {
                     </button>
                     )}
                     {canDo('contractors', 'delete') && (
-                    <button onClick={() => handleDelete(c.id)} className="text-red-600 hover:text-red-800 inline-block">
-                      <FiTrash2 className="w-4 h-4" />
+                    <button
+                      onClick={() => handleDelete(c.id)}
+                      disabled={!!deletingId}
+                      className="text-red-600 hover:text-red-800 disabled:opacity-40 disabled:cursor-not-allowed inline-block"
+                    >
+                      {deletingId === c.id
+                        ? <FiLoader className="w-4 h-4 animate-spin" />
+                        : <FiTrash2 className="w-4 h-4" />}
                     </button>
                     )}
                   </td>
@@ -144,8 +188,15 @@ export default function ContractorsPage() {
           contractor={editing}
           onClose={() => { setShowModal(false); setEditing(null); }}
           onSave={saved => {
-            setContractors(prev => editing ? prev.map(c => c.id === saved.id ? saved : c) : [...prev, saved]);
+            setContractors(prev => {
+              const updated = editing
+                ? prev.map(c => c.id === saved.id ? saved : c)
+                : [...prev, saved];
+              writeCache(updated);
+              return updated;
+            });
             setShowModal(false);
+            setEditing(null);
           }}
         />
       )}

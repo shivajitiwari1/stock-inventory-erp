@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FiPlus, FiEdit, FiTrash2, FiSearch, FiX } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiSearch, FiX, FiLoader } from 'react-icons/fi';
 import { useAuth } from '@/components/AuthContext';
 
 interface Product {
@@ -19,6 +19,19 @@ interface Product {
   updatedAt: string;
 }
 
+const CACHE_KEY = 'erp-products';
+
+function readCache<T>(): T[] | null {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function writeCache<T>(list: T[]) {
+  try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(list)); } catch {}
+}
+
 export default function ProductsPage() {
   const { canDo } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
@@ -28,8 +41,23 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    const cached = readCache<Product>();
+    if (cached) {
+      setProducts(cached);
+      setLoading(false);
+      // Still fetch inventory even on cache hit
+      fetch('/api/inventory')
+        .then(r => r.json())
+        .then(data => setInventory(data || []))
+        .catch(err => console.error('Failed to fetch inventory:', err));
+    } else {
+      fetchData();
+    }
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -38,7 +66,9 @@ export default function ProductsPage() {
         fetch('/api/inventory'),
       ]);
       const [prodData, invData] = await Promise.all([prodRes.json(), invRes.json()]);
-      setProducts(prodData || []);
+      const list = prodData || [];
+      setProducts(list);
+      writeCache(list);
       setInventory(invData || []);
     } catch (error) {
       console.error('Failed to fetch data:', error);
@@ -64,11 +94,21 @@ export default function ProductsPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this product?')) return;
+    setError(null);
+    setDeletingId(id);
+    const previous = products;
+    const updated = products.filter(p => p.id !== id);
+    setProducts(updated);
+    writeCache(updated);
     try {
-      const response = await fetch(`/api/products/${id}`, { method: 'DELETE' });
-      if (response.ok) setProducts(products.filter(p => p.id !== id));
-    } catch (error) {
-      console.error('Failed to delete product:', error);
+      const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(`${res.status}`);
+    } catch {
+      setProducts(previous);
+      writeCache(previous);
+      setError('Failed to delete. Please try again.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -94,6 +134,15 @@ export default function ProductsPage() {
           </button>
         )}
       </div>
+
+      {error && (
+        <div className="flex items-center justify-between gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg px-4 py-3 text-sm">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="shrink-0 text-red-500 hover:text-red-700">
+            <FiX className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
@@ -171,8 +220,14 @@ export default function ProductsPage() {
                       </button>
                     )}
                     {canDo('products', 'delete') && (
-                      <button onClick={() => handleDelete(product.id)} className="text-red-600 hover:text-red-800">
-                        <FiTrash2 className="w-4 h-4" />
+                      <button
+                        onClick={() => handleDelete(product.id)}
+                        disabled={!!deletingId}
+                        className="text-red-600 hover:text-red-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        {deletingId === product.id
+                          ? <FiLoader className="w-4 h-4 animate-spin" />
+                          : <FiTrash2 className="w-4 h-4" />}
                       </button>
                     )}
                   </td>
@@ -187,12 +242,14 @@ export default function ProductsPage() {
         <ProductModal
           product={editingProduct}
           onClose={() => { setShowAddModal(false); setEditingProduct(null); }}
-          onSave={(product) => {
-            if (editingProduct) {
-              setProducts(products.map(p => p.id === product.id ? product : p));
-            } else {
-              setProducts([...products, product]);
-            }
+          onSave={saved => {
+            setProducts(prev => {
+              const updated = editingProduct
+                ? prev.map(i => i.id === saved.id ? saved : i)
+                : [...prev, saved];
+              writeCache(updated);
+              return updated;
+            });
             setShowAddModal(false);
             setEditingProduct(null);
           }}

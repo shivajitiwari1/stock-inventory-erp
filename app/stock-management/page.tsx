@@ -28,6 +28,19 @@ interface InventoryItem {
   attributeQuantityRules: AttributeQuantityRule[];
 }
 
+const CACHE_KEY = 'erp-stock-management';
+
+function readCache(): InventoryItem[] | null {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function writeCache(list: InventoryItem[]) {
+  try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(list)); } catch {}
+}
+
 export default function StockManagementPage() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const { canDo } = useAuth();
@@ -35,7 +48,15 @@ export default function StockManagementPage() {
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [showArchivedWh, setShowArchivedWh] = useState(false);
 
-  useEffect(() => { fetchInventory(); }, []);
+  useEffect(() => {
+    const cached = readCache();
+    if (cached) {
+      setInventory(cached);
+      setLoading(false);
+      return;
+    }
+    fetchInventory();
+  }, []);
 
   const enrich = (raw: any[], products: any[], warehouses: any[]): InventoryItem[] =>
     raw.map((item) => {
@@ -70,7 +91,9 @@ export default function StockManagementPage() {
       const [invData, products, warehouses] = await Promise.all([
         invRes.json(), prodRes.json(), whRes.json(),
       ]);
-      setInventory(enrich(invData || [], products || [], warehouses || []));
+      const enrichedList = enrich(invData || [], products || [], warehouses || []);
+      writeCache(enrichedList);
+      setInventory(enrichedList);
     } catch (error) {
       console.error('Failed to fetch inventory:', error);
     } finally {
@@ -207,9 +230,11 @@ export default function StockManagementPage() {
           item={editingItem}
           onClose={() => setEditingItem(null)}
           onSave={(updated) => {
-            setInventory(prev => prev.map(i =>
-              i.id === updated.id ? updated : i
-            ));
+            setInventory(prev => {
+              const newList = prev.map(i => i.id === updated.id ? updated : i);
+              writeCache(newList);
+              return newList;
+            });
             setEditingItem(null);
           }}
         />
