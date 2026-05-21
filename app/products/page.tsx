@@ -272,7 +272,6 @@ function ProductModal({ product, onClose, onSave }: { product?: Product | null; 
     description: product?.description || '',
     unitType: product?.unitType || 'PCS',
     price: product?.price || 0,
-    quantity: product?.quantity || 0,
     minQuantity: product?.minQuantity || 0,
   });
   const [saving, setSaving] = useState(false);
@@ -343,12 +342,6 @@ function ProductModal({ product, onClose, onSave }: { product?: Product | null; 
               <input type="number" step="0.01" min="0" value={formData.price}
                 onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
                 className={inputCls} required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Stock Quantity</label>
-              <input type="number" min="0" value={formData.quantity}
-                onChange={e => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
-                className={inputCls} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Min Quantity *</label>
