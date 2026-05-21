@@ -77,14 +77,12 @@ export default function ProductsPage() {
     }
   };
 
-  const getAvailableStock = (productId: string) => {
-    const rows = inventory.filter((i: any) => i.productId === productId);
-    return rows.reduce((s: number, i: any) => s + (i.availableQuantity || 0), 0);
-  };
-
-  const getStock = (productId: string) => {
-    const rows = inventory.filter((i: any) => i.productId === productId);
-    return rows.reduce((s: number, i: any) => s + (i.totalQuantity || 0), 0);
+  const getStockStatus = (product: Product) => {
+    const rows = inventory.filter((i: any) => i.productId === product.id);
+    const available = rows.reduce((s: number, i: any) => s + (i.availableQuantity || 0), 0);
+    if (available === 0) return 'out';
+    if (available <= product.minQuantity) return 'low';
+    return 'healthy';
   };
 
   const filteredProducts = products.filter(product => {
@@ -182,16 +180,15 @@ export default function ProductsPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Product</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden sm:table-cell">SKU</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden sm:table-cell">Category</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden md:table-cell">Available</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Total</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden md:table-cell">Price</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden md:table-cell">Min Qty</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Stock</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
               {filteredProducts.length === 0 && (
-                <tr><td colSpan={8} className="px-6 py-10 text-center text-gray-400">No products found.</td></tr>
+                <tr><td colSpan={7} className="px-6 py-10 text-center text-gray-400">No products found.</td></tr>
               )}
               {filteredProducts.map((product) => (
                 <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-slate-700">
@@ -210,14 +207,22 @@ export default function ProductsPage() {
                   <td className="px-6 py-4 text-sm hidden sm:table-cell w-36">
                     <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium whitespace-nowrap">{product.category}</span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900 dark:text-slate-100 hidden md:table-cell">
-                    {getAvailableStock(product.id)}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900 dark:text-slate-100">
-                    {getStock(product.id)}
-                  </td>
                   <td className="px-6 py-4 text-sm text-right text-gray-900 dark:text-slate-100 hidden md:table-cell">₹{product.price.toFixed(2)}</td>
                   <td className="px-6 py-4 text-sm text-right text-gray-900 dark:text-slate-100 hidden md:table-cell">{product.minQuantity}</td>
+                  <td className="px-6 py-4 text-center">
+                    {(() => {
+                      const s = getStockStatus(product);
+                      return (
+                        <span className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                          s === 'out' ? 'bg-red-100 text-red-700' :
+                          s === 'low' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-green-100 text-green-700'
+                        }`}>
+                          {s === 'out' ? 'Out of Stock' : s === 'low' ? 'Low Stock' : 'In Stock'}
+                        </span>
+                      );
+                    })()}
+                  </td>
                   <td className="px-6 py-4 text-sm space-x-2">
                     {canDo('products', 'edit') && (
                       <button onClick={() => setEditingProduct(product)} className="text-blue-600 hover:text-blue-800">
