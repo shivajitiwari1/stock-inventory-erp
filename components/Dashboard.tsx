@@ -234,7 +234,7 @@ const Dashboard: React.FC<{ data: DashboardData }> = ({ data }) => {
                   <td className="px-3 sm:px-6 py-3 text-sm text-gray-900 font-medium">{movement.quantity}</td>
                   <td className="hidden sm:table-cell px-3 sm:px-6 py-3 text-sm text-gray-600 dark:text-slate-400">{movement.warehouseName || 'Main Warehouse'}</td>
                   <td className="hidden sm:table-cell px-3 sm:px-6 py-3 text-sm text-gray-500 dark:text-slate-400">
-                    {new Date(movement.timestamp).toLocaleDateString()}
+                    {new Date(movement.createdAt).toLocaleDateString()}
                   </td>
                 </tr>
               ))}

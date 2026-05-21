@@ -56,7 +56,7 @@ export const getDashboardData = async (): Promise<DashboardData> => {
     .slice(-6);
 
   const recentMovements = movements
-    .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 8)
     .map((movement: any) => {
       const product = products.find((p: any) => p.id === movement.productId);
