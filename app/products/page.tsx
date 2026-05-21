@@ -77,6 +77,11 @@ export default function ProductsPage() {
     }
   };
 
+  const getAvailableStock = (productId: string) => {
+    const rows = inventory.filter((i: any) => i.productId === productId);
+    return rows.reduce((s: number, i: any) => s + (i.availableQuantity || 0), 0);
+  };
+
   const getStock = (productId: string) => {
     const rows = inventory.filter((i: any) => i.productId === productId);
     return rows.reduce((s: number, i: any) => s + (i.totalQuantity || 0), 0);
@@ -177,8 +182,8 @@ export default function ProductsPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Product</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden sm:table-cell">SKU</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden sm:table-cell">Category</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden md:table-cell">Stock Qty</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Total Stock</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden md:table-cell">Available</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Total</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden md:table-cell">Price</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden md:table-cell">Min Qty</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Actions</th>
@@ -206,7 +211,7 @@ export default function ProductsPage() {
                     <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium whitespace-nowrap">{product.category}</span>
                   </td>
                   <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900 dark:text-slate-100 hidden md:table-cell">
-                    {product.quantity ?? 0}
+                    {getAvailableStock(product.id)}
                   </td>
                   <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900 dark:text-slate-100">
                     {getStock(product.id)}
