@@ -65,15 +65,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const response = await fetch('/api/users');
-      const data = await response.json();
-      const foundUser = data.users.find((u: User) => u.email === email);
-      if (foundUser && foundUser.status === 'ACTIVE') {
-        setUser(foundUser);
-        localStorage.setItem('currentUser', JSON.stringify(foundUser));
-        return true;
-      }
-      return false;
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!response.ok) return false;
+      const foundUser = await response.json();
+      setUser(foundUser);
+      localStorage.setItem('currentUser', JSON.stringify(foundUser));
+      return true;
     } catch (error) {
       console.error('Login failed:', error);
       return false;
