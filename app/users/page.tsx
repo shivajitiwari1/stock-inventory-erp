@@ -477,6 +477,9 @@ function UserModal({ user, roles, onClose, onSave }: { user: User | null; roles:
     status: user?.status || 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
     permissions: user?.permissions || (defaultRole ? { ...defaultRole.permissions } : emptyPermissions()),
   });
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [pwError, setPwError] = useState('');
   const [saving, setSaving] = useState(false);
 
   const handleRoleChange = (key: string) => {
@@ -496,12 +499,32 @@ function UserModal({ user, roles, onClose, onSave }: { user: User | null; roles:
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPwError('');
+
+    // Validate password fields
+    if (!user) {
+      // New user — password required
+      if (password.length < 6) { setPwError('Password must be at least 6 characters.'); return; }
+      if (password !== confirmPassword) { setPwError('Passwords do not match.'); return; }
+    } else if (password) {
+      // Edit user — password optional, but if provided must be valid
+      if (password.length < 6) { setPwError('New password must be at least 6 characters.'); return; }
+      if (password !== confirmPassword) { setPwError('Passwords do not match.'); return; }
+    }
+
     setSaving(true);
     try {
       const url = user ? `/api/users/${user.id}` : '/api/users';
       const method = user ? 'PUT' : 'POST';
-      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      const payload = user
+        ? { ...form, ...(password ? { newPassword: password } : {}) }
+        : { ...form, password };
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (res.ok) onSave(await res.json());
+      else {
+        const err = await res.json();
+        setPwError(err.error || 'Failed to save user.');
+      }
     } catch (error) {
       console.error('Failed to save user:', error);
     } finally {
@@ -545,7 +568,40 @@ function UserModal({ user, roles, onClose, onSave }: { user: User | null; roles:
                 <option value="INACTIVE">Inactive</option>
               </select>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                {user ? 'New Password' : 'Password *'}
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={e => { setPassword(e.target.value); setPwError(''); }}
+                required={!user}
+                minLength={6}
+                placeholder={user ? 'Leave blank to keep current password' : 'Min. 6 characters'}
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                {user ? 'Confirm New Password' : 'Confirm Password *'}
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={e => { setConfirmPassword(e.target.value); setPwError(''); }}
+                required={!user || !!password}
+                placeholder="Repeat password"
+                className={inputCls}
+              />
+            </div>
           </div>
+
+          {pwError && (
+            <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+              {pwError}
+            </p>
+          )}
 
           <div>
             <div className="flex items-center gap-2 mb-2">

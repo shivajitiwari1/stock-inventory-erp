@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { d1Query, d1Run } from '@/lib/d1';
+import { hashPassword } from '@/lib/auth';
 
 function parseUser(row: any) {
   return {
@@ -30,23 +31,31 @@ export async function PUT(request: NextRequest, context: any) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    // If a new password is provided, validate and hash it; otherwise keep the existing hash
+    let passwordHash = existing.password;
+    if (body.newPassword) {
+      if (body.newPassword.length < 6) {
+        return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
+      }
+      passwordHash = await hashPassword(body.newPassword);
+    }
+
     const now = new Date().toISOString();
-    const merged = { ...existing, ...body, updatedAt: now };
 
     await d1Run(
       `UPDATE users SET name = ?, email = ?, password = ?, role = ?, status = ?,
        lastLogin = ?, updatedAt = ?, permissions = ? WHERE id = ?`,
       [
-        merged.name,
-        merged.email,
-        merged.password,
-        merged.role,
-        merged.status,
-        merged.lastLogin,
+        body.name ?? existing.name,
+        body.email ?? existing.email,
+        passwordHash,
+        body.role ?? existing.role,
+        body.status ?? existing.status,
+        existing.lastLogin,
         now,
-        typeof merged.permissions === 'string'
-          ? merged.permissions
-          : JSON.stringify(merged.permissions || {}),
+        typeof body.permissions === 'string'
+          ? body.permissions
+          : JSON.stringify(body.permissions ?? (existing.permissions ? JSON.parse(existing.permissions) : {})),
         id,
       ]
     );
