@@ -7,7 +7,7 @@ import {
   FiMenu, FiX, FiHome, FiPackage, FiBox, FiTrendingUp,
   FiUsers, FiActivity, FiBarChart, FiAlertCircle,
   FiLogOut, FiLogIn, FiSun, FiMoon, FiRepeat,
-  FiFileText, FiArrowUpRight, FiBriefcase, FiBell,
+  FiFileText, FiArrowUpRight, FiBriefcase, FiBell, FiKey,
 } from 'react-icons/fi';
 import { useAuth } from './AuthContext';
 import { useTheme } from './ThemeContext';
@@ -16,6 +16,13 @@ import { useSidebar } from './SidebarContext';
 
 export const Sidebar: React.FC = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [cpCurrentPassword, setCpCurrentPassword] = useState('');
+  const [cpNewPassword, setCpNewPassword] = useState('');
+  const [cpConfirm, setCpConfirm] = useState('');
+  const [cpError, setCpError] = useState('');
+  const [cpSuccess, setCpSuccess] = useState('');
+  const [cpLoading, setCpLoading] = useState(false);
   const pathname = usePathname();
   const { user, logout, hasPermission, canView } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -40,6 +47,42 @@ export const Sidebar: React.FC = () => {
   ];
 
   const showLabel = !isMobile && isOpen || isMobile;
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCpError('');
+    setCpSuccess('');
+    if (cpNewPassword.length < 6) {
+      setCpError('New password must be at least 6 characters.');
+      return;
+    }
+    if (cpNewPassword !== cpConfirm) {
+      setCpError('New passwords do not match.');
+      return;
+    }
+    setCpLoading(true);
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user!.id, currentPassword: cpCurrentPassword, newPassword: cpNewPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCpError(data.error || 'Failed to update password.');
+      } else {
+        setCpSuccess('Password updated successfully!');
+        setCpCurrentPassword('');
+        setCpNewPassword('');
+        setCpConfirm('');
+        setTimeout(() => { setShowChangePassword(false); setCpSuccess(''); }, 1500);
+      }
+    } catch {
+      setCpError('Something went wrong. Please try again.');
+    } finally {
+      setCpLoading(false);
+    }
+  };
 
   const NavItem = ({ href, label, icon: Icon }: any) => {
     const isActive = pathname === href;
@@ -139,6 +182,13 @@ export const Sidebar: React.FC = () => {
                 </div>
               )}
               <button
+                onClick={() => { setShowChangePassword(true); setCpError(''); setCpSuccess(''); }}
+                className="flex items-center gap-3 px-4 py-2.5 w-full text-left text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              >
+                <FiKey className="w-5 h-5 shrink-0" />
+                {showLabel && <span className="text-sm">Change Password</span>}
+              </button>
+              <button
                 onClick={logout}
                 className="flex items-center gap-3 px-4 py-2.5 w-full text-left text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
               >
@@ -159,6 +209,80 @@ export const Sidebar: React.FC = () => {
 
         <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
       </aside>
+
+      {showChangePassword && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">Change Password</h2>
+              <button
+                onClick={() => setShowChangePassword(false)}
+                className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+              >
+                <FiX className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Current Password</label>
+                <input
+                  type="password"
+                  value={cpCurrentPassword}
+                  onChange={e => setCpCurrentPassword(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter current password"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">New Password</label>
+                <input
+                  type="password"
+                  value={cpNewPassword}
+                  onChange={e => setCpNewPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Min. 6 characters"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Confirm New Password</label>
+                <input
+                  type="password"
+                  value={cpConfirm}
+                  onChange={e => setCpConfirm(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Repeat new password"
+                />
+              </div>
+              {cpError && (
+                <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">{cpError}</p>
+              )}
+              {cpSuccess && (
+                <p className="text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg px-3 py-2">{cpSuccess}</p>
+              )}
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="submit"
+                  disabled={cpLoading}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2 rounded-lg transition-colors"
+                >
+                  {cpLoading ? 'Updating...' : 'Update Password'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowChangePassword(false)}
+                  className="flex-1 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-300 font-semibold py-2 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 };
