@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readJSON, writeJSON } from '@/lib/db';
+import { d1Query, d1Run } from '@/lib/d1';
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,20 +7,23 @@ export async function GET(request: NextRequest) {
     const warehouseId = searchParams.get('warehouseId');
     const productId = searchParams.get('productId');
 
-    const data = readJSON('inventory.json');
-    if (!data) {
-      return NextResponse.json({ error: 'Failed to read inventory' }, { status: 500 });
-    }
-
-    let inventory = data.inventory || [];
+    const conditions: string[] = [];
+    const params: any[] = [];
 
     if (warehouseId) {
-      inventory = inventory.filter((i: any) => i.warehouseId === warehouseId);
+      conditions.push('warehouseId = ?');
+      params.push(warehouseId);
     }
 
     if (productId) {
-      inventory = inventory.filter((i: any) => i.productId === productId);
+      conditions.push('productId = ?');
+      params.push(productId);
     }
+
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const sql = `SELECT * FROM inventory ${where}`;
+
+    const inventory = await d1Query<any>(sql, params);
 
     return NextResponse.json(inventory);
   } catch (error) {
@@ -31,24 +34,39 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const data = readJSON('inventory.json');
 
-    if (!data || !Array.isArray(data.inventory)) {
-      return NextResponse.json({ error: 'Invalid data format' }, { status: 500 });
-    }
+    const id = Date.now().toString() + Math.random().toString(36).slice(2);
+    const now = new Date().toISOString();
 
-    const newInventory = {
-      id: `INV${Date.now()}`,
-      ...body,
-      lastUpdated: new Date().toISOString(),
-    };
+    const {
+      productId,
+      warehouseId,
+      totalQuantity,
+      availableQuantity,
+      reservedQuantity,
+      damagedQuantity,
+      lostQuantity,
+    } = body;
 
-    data.inventory.push(newInventory);
-    writeJSON('inventory.json', data);
+    await d1Run(
+      `INSERT INTO inventory (id, productId, warehouseId, totalQuantity, availableQuantity, reservedQuantity, damagedQuantity, lostQuantity, lastUpdated)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        productId,
+        warehouseId,
+        totalQuantity     ?? 0,
+        availableQuantity ?? 0,
+        reservedQuantity  ?? 0,
+        damagedQuantity   ?? 0,
+        lostQuantity      ?? 0,
+        now,
+      ]
+    );
 
-    return NextResponse.json(newInventory, { status: 201 });
+    const rows = await d1Query<any>('SELECT * FROM inventory WHERE id = ?', [id]);
+    return NextResponse.json(rows[0], { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to create inventory' }, { status: 500 });
   }
 }
-

@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readJSON, writeJSON, generateId } from '@/lib/db';
+import { d1Query, d1Run } from '@/lib/d1';
 
 export async function GET() {
   try {
-    const data = readJSON('supplyReceipts.json');
-    if (!data) return NextResponse.json({ error: 'Failed to read supply receipts' }, { status: 500 });
-    return NextResponse.json(data.supplyReceipts || []);
+    const rows = await d1Query('SELECT * FROM supply_receipts ORDER BY createdAt DESC');
+    const supplyReceipts = rows.map((r: any) => ({
+      ...r,
+      items: JSON.parse(r.items || '[]'),
+    }));
+    return NextResponse.json(supplyReceipts);
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -14,12 +17,31 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const data = readJSON('supplyReceipts.json');
-    if (!data || !Array.isArray(data.supplyReceipts)) {
-      return NextResponse.json({ error: 'Invalid data format' }, { status: 500 });
-    }
+    const id = `${Date.now()}${Math.random().toString(36).slice(2)}`;
+    const createdAt = new Date().toISOString();
+
+    await d1Run(
+      `INSERT INTO supply_receipts
+        (id, supplierId, supplierName, warehouseId, warehouseName, dateTime, verifiedBy, totalAmount, gatePassNumber, items, receiptFile, createdAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        body.supplierId,
+        body.supplierName,
+        body.warehouseId,
+        body.warehouseName,
+        body.dateTime,
+        body.verifiedBy,
+        Number(body.totalAmount),
+        body.gatePassNumber || '',
+        JSON.stringify(body.items || []),
+        '',
+        createdAt,
+      ]
+    );
+
     const newReceipt = {
-      id: generateId('SR'),
+      id,
       supplierId: body.supplierId,
       supplierName: body.supplierName,
       warehouseId: body.warehouseId,
@@ -30,10 +52,9 @@ export async function POST(request: NextRequest) {
       gatePassNumber: body.gatePassNumber || '',
       items: body.items || [],
       receiptFile: '',
-      createdAt: new Date().toISOString(),
+      createdAt,
     };
-    data.supplyReceipts.push(newReceipt);
-    writeJSON('supplyReceipts.json', data);
+
     return NextResponse.json(newReceipt, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to create supply receipt' }, { status: 500 });

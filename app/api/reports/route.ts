@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readJSON } from '@/lib/db';
+import { d1Query } from '@/lib/d1';
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,28 +7,26 @@ export async function GET(request: NextRequest) {
     const reportType = searchParams.get('type') || 'stock';
     const warehouseId = searchParams.get('warehouseId');
 
-    const products = readJSON('products.json');
-    const inventory = readJSON('inventory.json');
-    const movements = readJSON('stockMovements.json');
-
-    if (!products || !inventory || !movements) {
-      return NextResponse.json({ error: 'Failed to read data' }, { status: 500 });
-    }
+    const [products, inventory, movements] = await Promise.all([
+      d1Query('SELECT * FROM products'),
+      d1Query('SELECT * FROM inventory'),
+      d1Query('SELECT * FROM stock_movements ORDER BY createdAt DESC'),
+    ]);
 
     let report: any = {};
 
     switch (reportType) {
       case 'stock':
-        report = generateStockReport(products.products, inventory.inventory, warehouseId);
+        report = generateStockReport(products, inventory, warehouseId);
         break;
       case 'low-stock':
-        report = generateLowStockReport(products.products, inventory.inventory, warehouseId);
+        report = generateLowStockReport(products, inventory, warehouseId);
         break;
       case 'valuation':
-        report = generateValuationReport(products.products, inventory.inventory, warehouseId);
+        report = generateValuationReport(products, inventory, warehouseId);
         break;
       case 'movement':
-        report = generateMovementReport(movements.stockMovements, warehouseId);
+        report = generateMovementReport(movements, warehouseId);
         break;
       default:
         return NextResponse.json({ error: 'Unknown report type' }, { status: 400 });

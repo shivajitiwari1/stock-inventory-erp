@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readJSON, writeJSON } from '@/lib/db';
+import { d1Query, d1Run } from '@/lib/d1';
+
+function parseLog(row: any) {
+  return {
+    ...row,
+    changes: row.changes ? JSON.parse(row.changes) : null,
+  };
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,27 +15,29 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get('userId');
     const limit = parseInt(searchParams.get('limit') || '100');
 
-    const data = readJSON('auditLogs.json');
-    if (!data) {
-      return NextResponse.json({ error: 'Failed to read audit logs' }, { status: 500 });
-    }
-
-    let logs = data.auditLogs || [];
+    let sql = 'SELECT * FROM audit_logs';
+    const params: any[] = [];
+    const conditions: string[] = [];
 
     if (action) {
-      logs = logs.filter((l: any) => l.action === action);
+      conditions.push('action = ?');
+      params.push(action);
     }
 
     if (userId) {
-      logs = logs.filter((l: any) => l.userId === userId);
+      conditions.push('userId = ?');
+      params.push(userId);
     }
 
-    // Sort by timestamp descending and limit results
-    logs = logs
-      .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .slice(0, limit);
+    if (conditions.length > 0) {
+      sql += ' WHERE ' + conditions.join(' AND ');
+    }
 
-    return NextResponse.json(logs);
+    sql += ' ORDER BY timestamp DESC LIMIT ?';
+    params.push(limit);
+
+    const rows = await d1Query(sql, params);
+    return NextResponse.json(rows.map(parseLog));
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -37,22 +46,29 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const data = readJSON('auditLogs.json');
+    const id = `${Date.now()}${Math.random().toString(36).slice(2)}`;
+    const now = new Date().toISOString();
 
-    if (!data || !Array.isArray(data.auditLogs)) {
-      return NextResponse.json({ error: 'Invalid data format' }, { status: 500 });
-    }
+    await d1Run(
+      `INSERT INTO audit_logs
+         (id, action, entityType, entityId, userId, userName, changes, timestamp, ipAddress, details)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        body.action,
+        body.entityType || null,
+        body.entityId || null,
+        body.userId || null,
+        body.userName || null,
+        body.changes !== undefined ? JSON.stringify(body.changes) : null,
+        body.timestamp || now,
+        body.ipAddress || null,
+        body.details || null,
+      ]
+    );
 
-    const newLog = {
-      id: `LOG${Date.now()}`,
-      ...body,
-      timestamp: new Date().toISOString(),
-    };
-
-    data.auditLogs.push(newLog);
-    writeJSON('auditLogs.json', data);
-
-    return NextResponse.json(newLog, { status: 201 });
+    const [row] = await d1Query('SELECT * FROM audit_logs WHERE id = ?', [id]);
+    return NextResponse.json(parseLog(row), { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to create audit log' }, { status: 500 });
   }

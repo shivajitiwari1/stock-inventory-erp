@@ -1,4 +1,4 @@
-import { readJSON } from '@/lib/db';
+import { d1Query } from '@/lib/d1';
 
 export interface DashboardStats {
   totalStock: number;
@@ -17,15 +17,10 @@ export interface DashboardData {
 }
 
 export const getDashboardData = async (): Promise<DashboardData> => {
-  const productsData = readJSON('products.json');
-  const inventoryData = readJSON('inventory.json');
-  const movementsData = readJSON('stockMovements.json');
-  const warehousesData = readJSON('warehouses.json');
-
-  const products = productsData?.products || [];
-  const inventory = inventoryData?.inventory || [];
-  const movements = movementsData?.stockMovements || [];
-  const warehouses = warehousesData?.warehouses || [];
+  const products = await d1Query('SELECT * FROM products');
+  const inventory = await d1Query('SELECT * FROM inventory');
+  const movements = await d1Query('SELECT * FROM stock_movements ORDER BY createdAt DESC LIMIT 100');
+  const warehouses = await d1Query('SELECT * FROM warehouses');
 
   const totalStock = inventory.reduce((sum: number, item: any) => sum + (item.totalQuantity || 0), 0);
   const availableStock = inventory.reduce((sum: number, item: any) => sum + (item.availableQuantity || 0), 0);

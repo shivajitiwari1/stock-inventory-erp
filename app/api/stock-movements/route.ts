@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readJSON, writeJSON } from '@/lib/db';
+import { d1Query, d1Run } from '@/lib/d1';
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,27 +8,29 @@ export async function GET(request: NextRequest) {
     const productId = searchParams.get('productId');
     const limit = parseInt(searchParams.get('limit') || '50');
 
-    const data = readJSON('stockMovements.json');
-    if (!data) {
-      return NextResponse.json({ error: 'Failed to read stock movements' }, { status: 500 });
-    }
-
-    let movements = data.stockMovements || [];
+    let sql = 'SELECT * FROM stock_movements';
+    const params: any[] = [];
+    const conditions: string[] = [];
 
     if (type) {
-      movements = movements.filter((m: any) => m.type === type);
+      conditions.push('type = ?');
+      params.push(type);
     }
 
     if (productId) {
-      movements = movements.filter((m: any) => m.productId === productId);
+      conditions.push('productId = ?');
+      params.push(productId);
     }
 
-    // Sort by timestamp descending and limit results
-    movements = movements
-      .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .slice(0, limit);
+    if (conditions.length > 0) {
+      sql += ' WHERE ' + conditions.join(' AND ');
+    }
 
-    return NextResponse.json(movements);
+    sql += ' ORDER BY createdAt DESC LIMIT ?';
+    params.push(limit);
+
+    const rows = await d1Query(sql, params);
+    return NextResponse.json(rows);
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -37,22 +39,29 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const data = readJSON('stockMovements.json');
+    const id = `${Date.now()}${Math.random().toString(36).slice(2)}`;
+    const now = new Date().toISOString();
 
-    if (!data || !Array.isArray(data.stockMovements)) {
-      return NextResponse.json({ error: 'Invalid data format' }, { status: 500 });
-    }
+    await d1Run(
+      `INSERT INTO stock_movements
+         (id, productId, warehouseId, type, quantity, reason, reference, performedBy, notes, createdAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        body.productId,
+        body.warehouseId || null,
+        body.type,
+        Number(body.quantity),
+        body.reason || null,
+        body.reference || null,
+        body.performedBy || null,
+        body.notes || null,
+        now,
+      ]
+    );
 
-    const newMovement = {
-      id: `SM${Date.now()}`,
-      ...body,
-      timestamp: new Date().toISOString(),
-    };
-
-    data.stockMovements.push(newMovement);
-    writeJSON('stockMovements.json', data);
-
-    return NextResponse.json(newMovement, { status: 201 });
+    const [row] = await d1Query('SELECT * FROM stock_movements WHERE id = ?', [id]);
+    return NextResponse.json(row, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to create stock movement' }, { status: 500 });
   }

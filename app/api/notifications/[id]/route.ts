@@ -1,21 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readJSON, writeJSON } from '@/lib/db';
+import { d1Query, d1Run } from '@/lib/d1';
 
 // PUT — dismiss a notification (adds userId to dismissedBy)
 export async function PUT(request: NextRequest, context: any) {
   const { id } = await context.params;
   try {
     const body = await request.json();
-    const data = readJSON('notifications.json');
-    const index = data.notifications.findIndex((n: any) => n.id === id);
-    if (index === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-    const userId = body.dismissUserId;
-    if (userId && !data.notifications[index].dismissedBy.includes(userId)) {
-      data.notifications[index].dismissedBy.push(userId);
+    const [existing] = await d1Query('SELECT * FROM notifications WHERE id = ?', [id]);
+    if (!existing) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
-    writeJSON('notifications.json', data);
-    return NextResponse.json(data.notifications[index]);
+
+    const dismissedBy: string[] = JSON.parse(existing.dismissedBy ?? '[]');
+    const userId = body.dismissUserId;
+    if (userId && !dismissedBy.includes(userId)) {
+      dismissedBy.push(userId);
+    }
+
+    await d1Run('UPDATE notifications SET dismissedBy = ? WHERE id = ?', [
+      JSON.stringify(dismissedBy),
+      id,
+    ]);
+
+    const [updated] = await d1Query('SELECT * FROM notifications WHERE id = ?', [id]);
+    return NextResponse.json({ ...updated, dismissedBy: JSON.parse(updated.dismissedBy ?? '[]') });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to update notification' }, { status: 500 });
   }
@@ -25,11 +34,12 @@ export async function PUT(request: NextRequest, context: any) {
 export async function DELETE(_request: NextRequest, context: any) {
   const { id } = await context.params;
   try {
-    const data = readJSON('notifications.json');
-    const index = data.notifications.findIndex((n: any) => n.id === id);
-    if (index === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    data.notifications.splice(index, 1);
-    writeJSON('notifications.json', data);
+    const [existing] = await d1Query('SELECT * FROM notifications WHERE id = ?', [id]);
+    if (!existing) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+
+    await d1Run('DELETE FROM notifications WHERE id = ?', [id]);
     return NextResponse.json({ message: 'Deleted successfully' });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to delete notification' }, { status: 500 });

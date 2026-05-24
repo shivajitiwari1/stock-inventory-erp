@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readJSON, writeJSON, generateId } from '@/lib/db';
+import { d1Query, d1Run } from '@/lib/d1';
+
+function parseRole(row: any) {
+  return {
+    ...row,
+    permissions: row.permissions ? JSON.parse(row.permissions) : {},
+    isSystem: row.isSystem === 1,
+    isAdmin: row.isAdmin === 1,
+  };
+}
 
 export async function GET() {
   try {
-    const data = readJSON('roles.json');
-    if (!data) return NextResponse.json({ error: 'Failed to read roles' }, { status: 500 });
-    return NextResponse.json(data.roles || []);
+    const rows = await d1Query('SELECT * FROM roles ORDER BY createdAt ASC');
+    return NextResponse.json(rows.map(parseRole));
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -14,31 +22,28 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const data = readJSON('roles.json');
-    if (!data || !Array.isArray(data.roles)) {
-      return NextResponse.json({ error: 'Invalid data format' }, { status: 500 });
-    }
+    const key = body.name
+      .toUpperCase()
+      .replace(/\s+/g, '_')
+      .replace(/[^A-Z0-9_]/g, '');
 
-    // Generate key from name: "Site Manager" -> "SITE_MANAGER"
-    const key = body.name.toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, '');
-
-    if (data.roles.some((r: any) => r.key === key)) {
+    const existing = await d1Query('SELECT id FROM roles WHERE key = ?', [key]);
+    if (existing.length > 0) {
       return NextResponse.json({ error: 'A role with this name already exists' }, { status: 409 });
     }
 
-    const newRole = {
-      id: generateId('ROLE'),
-      name: body.name,
-      key,
-      description: body.description || '',
-      isSystem: false,
-      isAdmin: false,
-      permissions: body.permissions || {},
-    };
+    const id = `${Date.now()}${Math.random().toString(36).slice(2)}`;
+    const now = new Date().toISOString();
+    const permissions = JSON.stringify(body.permissions || {});
 
-    data.roles.push(newRole);
-    writeJSON('roles.json', data);
-    return NextResponse.json(newRole, { status: 201 });
+    await d1Run(
+      `INSERT INTO roles (id, name, key, description, isSystem, isAdmin, permissions, createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, body.name, key, body.description || '', 0, 0, permissions, now, now]
+    );
+
+    const [row] = await d1Query('SELECT * FROM roles WHERE id = ?', [id]);
+    return NextResponse.json(parseRole(row), { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to create role' }, { status: 500 });
   }

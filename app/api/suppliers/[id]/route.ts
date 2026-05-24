@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readJSON, writeJSON } from '@/lib/db';
+import { d1Query, d1Run } from '@/lib/d1';
 
 export async function GET(_request: NextRequest, context: any) {
   const { id } = await context.params;
   try {
-    const data = readJSON('suppliers.json');
-    const supplier = data.suppliers.find((s: any) => s.id === id);
+    const [supplier] = await d1Query('SELECT * FROM suppliers WHERE id = ?', [id]);
     if (!supplier) {
       return NextResponse.json({ error: 'Supplier not found' }, { status: 404 });
     }
@@ -19,16 +18,28 @@ export async function PUT(request: NextRequest, context: any) {
   const { id } = await context.params;
   try {
     const body = await request.json();
-    const data = readJSON('suppliers.json');
-    const index = data.suppliers.findIndex((s: any) => s.id === id);
 
-    if (index === -1) {
+    const [existing] = await d1Query('SELECT * FROM suppliers WHERE id = ?', [id]);
+    if (!existing) {
       return NextResponse.json({ error: 'Supplier not found' }, { status: 404 });
     }
 
-    data.suppliers[index] = { ...data.suppliers[index], ...body, updatedAt: new Date().toISOString() };
-    writeJSON('suppliers.json', data);
-    return NextResponse.json(data.suppliers[index]);
+    await d1Run(
+      `UPDATE suppliers SET name = ?, email = ?, phone = ?, address = ?, city = ?, country = ?, status = ? WHERE id = ?`,
+      [
+        body.name ?? existing.name,
+        body.email ?? existing.email,
+        body.phone ?? existing.phone,
+        body.address ?? existing.address,
+        body.city ?? existing.city,
+        body.country ?? existing.country,
+        body.status ?? existing.status,
+        id,
+      ]
+    );
+
+    const [updated] = await d1Query('SELECT * FROM suppliers WHERE id = ?', [id]);
+    return NextResponse.json(updated);
   } catch (error) {
     return NextResponse.json({ error: 'Failed to update supplier' }, { status: 500 });
   }
@@ -37,15 +48,12 @@ export async function PUT(request: NextRequest, context: any) {
 export async function DELETE(_request: NextRequest, context: any) {
   const { id } = await context.params;
   try {
-    const data = readJSON('suppliers.json');
-    const index = data.suppliers.findIndex((s: any) => s.id === id);
-
-    if (index === -1) {
+    const [existing] = await d1Query('SELECT * FROM suppliers WHERE id = ?', [id]);
+    if (!existing) {
       return NextResponse.json({ error: 'Supplier not found' }, { status: 404 });
     }
 
-    data.suppliers.splice(index, 1);
-    writeJSON('suppliers.json', data);
+    await d1Run('DELETE FROM suppliers WHERE id = ?', [id]);
     return NextResponse.json({ message: 'Supplier deleted successfully' });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to delete supplier' }, { status: 500 });

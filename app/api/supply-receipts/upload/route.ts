@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { writeFile } from 'fs/promises';
-import { readJSON, writeJSON } from '@/lib/db';
+import { d1Run } from '@/lib/d1';
 import path from 'path';
 
 const ALLOWED_EXTENSIONS = new Set(['.pdf', '.jpg', '.jpeg', '.png']);
@@ -47,14 +47,10 @@ export async function POST(request: NextRequest) {
     const filePath = `/uploads/receipts/${filename}`;
 
     // Update receipt record with file path
-    const data = readJSON('supplyReceipts.json');
-    if (data && Array.isArray(data.supplyReceipts)) {
-      const index = data.supplyReceipts.findIndex((r: any) => r.id === receiptId);
-      if (index !== -1) {
-        data.supplyReceipts[index].receiptFile = filePath;
-        writeJSON('supplyReceipts.json', data);
-      }
-    }
+    await d1Run(
+      'UPDATE supply_receipts SET receiptFile = ? WHERE id = ?',
+      [filePath, receiptId]
+    );
 
     return NextResponse.json({ filePath });
   } catch (error) {

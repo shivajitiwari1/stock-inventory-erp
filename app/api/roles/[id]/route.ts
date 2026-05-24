@@ -1,23 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readJSON, writeJSON } from '@/lib/db';
+import { d1Query, d1Run } from '@/lib/d1';
+
+function parseRole(row: any) {
+  return {
+    ...row,
+    permissions: row.permissions ? JSON.parse(row.permissions) : {},
+    isSystem: row.isSystem === 1,
+    isAdmin: row.isAdmin === 1,
+  };
+}
+
+export async function GET(_request: NextRequest, context: any) {
+  const { id } = await context.params;
+  try {
+    const [row] = await d1Query('SELECT * FROM roles WHERE id = ?', [id]);
+    if (!row) {
+      return NextResponse.json({ error: 'Role not found' }, { status: 404 });
+    }
+    return NextResponse.json(parseRole(row));
+  } catch (error) {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
 
 export async function PUT(request: NextRequest, context: any) {
   const { id } = await context.params;
   try {
     const body = await request.json();
-    const data = readJSON('roles.json');
-    const index = data.roles.findIndex((r: any) => r.id === id);
-    if (index === -1) return NextResponse.json({ error: 'Role not found' }, { status: 404 });
+    const [existing] = await d1Query('SELECT * FROM roles WHERE id = ?', [id]);
+    if (!existing) {
+      return NextResponse.json({ error: 'Role not found' }, { status: 404 });
+    }
 
-    data.roles[index] = {
-      ...data.roles[index],
-      name: body.name ?? data.roles[index].name,
-      description: body.description ?? data.roles[index].description,
-      permissions: body.permissions ?? data.roles[index].permissions,
-      updatedAt: new Date().toISOString(),
-    };
-    writeJSON('roles.json', data);
-    return NextResponse.json(data.roles[index]);
+    const now = new Date().toISOString();
+    const name = body.name ?? existing.name;
+    const description = body.description ?? existing.description;
+    const permissions =
+      body.permissions !== undefined
+        ? JSON.stringify(body.permissions)
+        : existing.permissions;
+
+    await d1Run(
+      `UPDATE roles SET name = ?, description = ?, permissions = ?, updatedAt = ? WHERE id = ?`,
+      [name, description, permissions, now, id]
+    );
+
+    const [updated] = await d1Query('SELECT * FROM roles WHERE id = ?', [id]);
+    return NextResponse.json(parseRole(updated));
   } catch (error) {
     return NextResponse.json({ error: 'Failed to update role' }, { status: 500 });
   }
@@ -26,13 +55,14 @@ export async function PUT(request: NextRequest, context: any) {
 export async function DELETE(_request: NextRequest, context: any) {
   const { id } = await context.params;
   try {
-    const data = readJSON('roles.json');
-    const role = data.roles.find((r: any) => r.id === id);
-    if (!role) return NextResponse.json({ error: 'Role not found' }, { status: 404 });
-    if (role.isSystem) return NextResponse.json({ error: 'System roles cannot be deleted' }, { status: 403 });
-
-    data.roles = data.roles.filter((r: any) => r.id !== id);
-    writeJSON('roles.json', data);
+    const [role] = await d1Query('SELECT * FROM roles WHERE id = ?', [id]);
+    if (!role) {
+      return NextResponse.json({ error: 'Role not found' }, { status: 404 });
+    }
+    if (role.isSystem === 1) {
+      return NextResponse.json({ error: 'System roles cannot be deleted' }, { status: 403 });
+    }
+    await d1Run('DELETE FROM roles WHERE id = ?', [id]);
     return NextResponse.json({ message: 'Role deleted successfully' });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to delete role' }, { status: 500 });

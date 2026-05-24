@@ -1,23 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readJSON, writeJSON } from '@/lib/db';
+import { d1Query, d1Run } from '@/lib/d1';
+
+export async function GET(_request: NextRequest, context: any) {
+  const { id } = await context.params;
+  try {
+    const [contractor] = await d1Query('SELECT * FROM contractors WHERE id = ?', [id]);
+    if (!contractor) {
+      return NextResponse.json({ error: 'Contractor not found' }, { status: 404 });
+    }
+    return NextResponse.json(contractor);
+  } catch (error) {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
 
 export async function PUT(request: NextRequest, context: any) {
   const { id } = await context.params;
   try {
     const body = await request.json();
-    const data = readJSON('contractors.json');
-    const index = data.contractors.findIndex((c: any) => c.id === id);
-    if (index === -1) return NextResponse.json({ error: 'Contractor not found' }, { status: 404 });
-    data.contractors[index] = {
-      ...data.contractors[index],
-      name: body.name,
-      phone: body.phone,
-      role: body.role,
-      company: body.company || '',
-      updatedAt: new Date().toISOString(),
-    };
-    writeJSON('contractors.json', data);
-    return NextResponse.json(data.contractors[index]);
+
+    const [existing] = await d1Query('SELECT * FROM contractors WHERE id = ?', [id]);
+    if (!existing) {
+      return NextResponse.json({ error: 'Contractor not found' }, { status: 404 });
+    }
+
+    await d1Run(
+      `UPDATE contractors SET name = ?, phone = ?, role = ?, company = ?, updatedAt = ? WHERE id = ?`,
+      [
+        body.name ?? existing.name,
+        body.phone ?? existing.phone,
+        body.role ?? existing.role,
+        body.company ?? existing.company,
+        new Date().toISOString(),
+        id,
+      ]
+    );
+
+    const [updated] = await d1Query('SELECT * FROM contractors WHERE id = ?', [id]);
+    return NextResponse.json(updated);
   } catch (error) {
     return NextResponse.json({ error: 'Failed to update contractor' }, { status: 500 });
   }
@@ -26,11 +46,12 @@ export async function PUT(request: NextRequest, context: any) {
 export async function DELETE(_request: NextRequest, context: any) {
   const { id } = await context.params;
   try {
-    const data = readJSON('contractors.json');
-    const index = data.contractors.findIndex((c: any) => c.id === id);
-    if (index === -1) return NextResponse.json({ error: 'Contractor not found' }, { status: 404 });
-    data.contractors.splice(index, 1);
-    writeJSON('contractors.json', data);
+    const [existing] = await d1Query('SELECT * FROM contractors WHERE id = ?', [id]);
+    if (!existing) {
+      return NextResponse.json({ error: 'Contractor not found' }, { status: 404 });
+    }
+
+    await d1Run('DELETE FROM contractors WHERE id = ?', [id]);
     return NextResponse.json({ message: 'Contractor deleted successfully' });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to delete contractor' }, { status: 500 });
