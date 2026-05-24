@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="topFace" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.85"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect width="100" height="100" rx="22" fill="url(#bg)"/>
+
+  <!-- 3D isometric box (inventory crate) -->
+  <!-- Top face -->
+  <polygon points="50,16 80,32 50,48 20,32" fill="url(#topFace)"/>
+  <!-- Left face -->
+  <polygon points="20,32 20,64 50,80 50,48" fill="white" fill-opacity="0.55"/>
+  <!-- Right face -->
+  <polygon points="80,32 80,64 50,80 50,48" fill="white" fill-opacity="0.78"/>
+
+  <!-- Center divider on top face -->
+  <line x1="50" y1="16" x2="50" y2="48" stroke="rgba(100,120,200,0.25)" stroke-width="1.2"/>
+  <!-- Horizontal divider on top face -->
+  <line x1="20" y1="32" x2="80" y2="32" stroke="rgba(100,120,200,0.2)" stroke-width="1"/>
+
+  <!-- Bottom edge highlight -->
+  <line x1="20" y1="64" x2="50" y2="80" stroke="white" stroke-opacity="0.3" stroke-width="1"/>
+  <line x1="80" y1="64" x2="50" y2="80" stroke="white" stroke-opacity="0.2" stroke-width="1"/>
+</svg>
