@@ -60,7 +60,10 @@ export async function DELETE(_request: NextRequest, context: any) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
-    // ON DELETE CASCADE in the schema handles inventory, stock_movements, stock_transfers, stock_issues
+    // Delete related records without CASCADE first
+    await d1Run('DELETE FROM stock_issues WHERE productId = ?', [id]);
+    await d1Run('DELETE FROM stock_movements WHERE productId = ?', [id]);
+    await d1Run('DELETE FROM inventory WHERE productId = ?', [id]);
     await d1Run('DELETE FROM products WHERE id = ?', [id]);
 
     return NextResponse.json({ message: 'Product deleted successfully' });
