@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { d1Query } from '@/lib/d1';
 import { verifyPassword } from '@/lib/auth';
+import { createSessionToken, COOKIE_NAME, MAX_AGE_SECONDS } from '@/lib/session';
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,9 +32,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
+    // Issue a signed session cookie (httpOnly — inaccessible to JS)
+    const token = await createSessionToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    const cookieStore = await cookies();
+    cookieStore.set(COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: MAX_AGE_SECONDS,
+      path: '/',
+    });
+
     // Never return the password hash to the client
     const { password: _pw, ...safeUser } = user;
-    // Parse permissions if stored as JSON string
     if (typeof safeUser.permissions === 'string') {
       try { safeUser.permissions = JSON.parse(safeUser.permissions); } catch { safeUser.permissions = null; }
     }

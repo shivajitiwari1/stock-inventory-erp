@@ -29,7 +29,7 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
   hasPermission: (requiredRole: UserRole) => boolean;
   canView: (page: string) => boolean;
   canDo: (page: string, action: UserAction) => boolean;
@@ -51,16 +51,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Failed to parse stored user:', error);
-        localStorage.removeItem('currentUser');
-      }
-    }
-    setIsLoading(false);
+    // Verify the session cookie is still valid on every page load
+    fetch('/api/auth/me')
+      .then(res => res.ok ? res.json() : null)
+      .then(userData => {
+        if (userData && !userData.error) {
+          setUser(userData);
+          localStorage.setItem('currentUser', JSON.stringify(userData));
+        } else {
+          setUser(null);
+          localStorage.removeItem('currentUser');
+        }
+      })
+      .catch(() => {
+        // Network error — fall back to cached user so UI doesn't break
+        const stored = localStorage.getItem('currentUser');
+        if (stored) {
+          try { setUser(JSON.parse(stored)); } catch { /* ignore */ }
+        }
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -81,7 +91,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const logout = () => {
+  const logout = async (): Promise<void> => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch { /* ignore network errors on logout */ }
     setUser(null);
     localStorage.removeItem('currentUser');
     window.location.replace('/login');
