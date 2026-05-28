@@ -49,12 +49,6 @@ export default function StockManagementPage() {
   const [showArchivedWh, setShowArchivedWh] = useState(false);
 
   useEffect(() => {
-    const cached = readCache();
-    if (cached) {
-      setInventory(cached);
-      setLoading(false);
-      return;
-    }
     fetchInventory();
   }, []);
 
