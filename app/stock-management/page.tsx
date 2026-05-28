@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/AuthContext';
-import { FiEdit, FiX } from 'react-icons/fi';
+import { FiEdit, FiX, FiLoader } from 'react-icons/fi';
 
 interface AttributeQuantityRule {
   key: string;
@@ -250,6 +250,7 @@ function StockAdjustmentModal({ item, onClose, onSave }: {
 }) {
   const [availableQuantity, setAvailable] = useState(item.availableQuantity);
   const [reservedQuantity, setReserved] = useState(item.reservedQuantity);
+  const [saving, setSaving] = useState(false);
   const [variantQtys, setVariantQtys] = useState<AttributeQuantityRule[]>(
     item.attributeQuantityRules.map(r => ({ ...r }))
   );
@@ -281,6 +282,7 @@ function StockAdjustmentModal({ item, onClose, onSave }: {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaving(true);
     try {
       const invRes = await fetch(`/api/inventory/${item.id}`, {
         method: 'PUT',
@@ -319,6 +321,8 @@ function StockAdjustmentModal({ item, onClose, onSave }: {
       });
     } catch (error) {
       console.error('Failed to update inventory:', error);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -395,9 +399,9 @@ function StockAdjustmentModal({ item, onClose, onSave }: {
           )}
 
           <div className="flex gap-3 pt-1">
-            <button type="submit" disabled={hasVariants && variantMismatch}
-              className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 font-medium disabled:opacity-40 disabled:cursor-not-allowed">
-              Update Stock
+            <button type="submit" disabled={saving || (hasVariants && variantMismatch)}
+              className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 font-medium disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+              {saving ? <><FiLoader className="w-4 h-4 animate-spin" />Saving...</> : 'Update Stock'}
             </button>
             <button type="button" onClick={onClose}
               className="flex-1 bg-gray-200 text-gray-700 py-2.5 rounded-lg hover:bg-gray-300 font-medium">

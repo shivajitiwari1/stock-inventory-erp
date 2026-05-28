@@ -258,6 +258,7 @@ function TransferModal({ transfer, warehouses, products, onClose, onSave }: any)
   });
   const [inventory, setInventory] = useState<any[]>([]);
   const [loadingInventory, setLoadingInventory] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!formData.fromWarehouseId) { setInventory([]); return; }
@@ -301,6 +302,7 @@ function TransferModal({ transfer, warehouses, products, onClose, onSave }: any)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitDisabled) return;
+    setSaving(true);
     try {
       const url = transfer ? `/api/stock-transfers/${transfer.id}` : '/api/stock-transfers';
       const method = transfer ? 'PUT' : 'POST';
@@ -315,6 +317,8 @@ function TransferModal({ transfer, warehouses, products, onClose, onSave }: any)
       }
     } catch (error) {
       console.error('Failed to save transfer:', error);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -440,9 +444,9 @@ function TransferModal({ transfer, warehouses, products, onClose, onSave }: any)
           </div>
 
           <div className="flex space-x-2">
-            <button type="submit" disabled={isSubmitDisabled}
-              className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed">
-              {transfer ? 'Update' : 'Create'} Transfer
+            <button type="submit" disabled={isSubmitDisabled || saving}
+              className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+              {saving ? <><FiLoader className="w-4 h-4 animate-spin" />Saving...</> : <>{transfer ? 'Update' : 'Create'} Transfer</>}
             </button>
             <button type="button" onClick={onClose} className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">
               Cancel

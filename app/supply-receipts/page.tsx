@@ -57,39 +57,22 @@ export default function SupplyReceiptsPage() {
   const { canDo } = useAuth();
 
   useEffect(() => {
-    const cached = readCache<SupplyReceipt>();
-    if (cached) {
-      setReceipts(cached);
-      setLoading(false);
-      // Still fetch auxiliary data for modal dropdowns
-      Promise.all([
-        fetch('/api/suppliers').then(r => r.json()),
-        fetch('/api/warehouses').then(r => r.json()),
-        fetch('/api/products').then(r => r.json()),
-      ]).then(([supps, whs, prods]) => {
-        setSuppliers(Array.isArray(supps) ? supps : (supps.suppliers || []));
-        setWarehouses(Array.isArray(whs) ? whs : (whs.warehouses || []));
-        setProducts(Array.isArray(prods) ? prods : (prods.products || []));
-      }).catch(error => {
-        console.error('Failed to load auxiliary data:', error);
-      });
-    } else {
-      Promise.all([
-        fetch('/api/supply-receipts').then(r => r.json()),
-        fetch('/api/suppliers').then(r => r.json()),
-        fetch('/api/warehouses').then(r => r.json()),
-        fetch('/api/products').then(r => r.json()),
-      ]).then(([rcpts, supps, whs, prods]) => {
-        const list = Array.isArray(rcpts) ? rcpts : [];
-        setReceipts(list);
-        writeCache(list);
-        setSuppliers(Array.isArray(supps) ? supps : (supps.suppliers || []));
-        setWarehouses(Array.isArray(whs) ? whs : (whs.warehouses || []));
-        setProducts(Array.isArray(prods) ? prods : (prods.products || []));
-      }).catch(error => {
-        console.error('Failed to load data:', error);
-      }).finally(() => setLoading(false));
-    }
+    // Always fetch receipts fresh — stale cache causes "not found" errors on edit/delete
+    Promise.all([
+      fetch('/api/supply-receipts').then(r => r.json()),
+      fetch('/api/suppliers').then(r => r.json()),
+      fetch('/api/warehouses').then(r => r.json()),
+      fetch('/api/products').then(r => r.json()),
+    ]).then(([rcpts, supps, whs, prods]) => {
+      const list = Array.isArray(rcpts) ? rcpts : [];
+      setReceipts(list);
+      writeCache(list);
+      setSuppliers(Array.isArray(supps) ? supps : (supps.suppliers || []));
+      setWarehouses(Array.isArray(whs) ? whs : (whs.warehouses || []));
+      setProducts(Array.isArray(prods) ? prods : (prods.products || []));
+    }).catch(error => {
+      console.error('Failed to load data:', error);
+    }).finally(() => setLoading(false));
   }, []);
 
   const handleDelete = async (id: string) => {
@@ -305,7 +288,15 @@ function ReceiptModal({ receipt, suppliers, warehouses, products, onClose, onSav
       const method = receipt ? 'PUT' : 'POST';
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (!res.ok) {
-        setUploadError('Failed to save receipt. Please try again.');
+        const errData = await res.json().catch(() => ({}));
+        if (res.status === 404) {
+          // Receipt no longer exists in DB — clear stale cache and close modal
+          try { sessionStorage.removeItem('erp-supply-receipts'); } catch {}
+          setUploadError('This receipt no longer exists. The list will refresh.');
+          setTimeout(() => { onClose(); window.location.reload(); }, 1500);
+          return;
+        }
+        setUploadError(errData.detail || errData.error || 'Failed to save receipt. Please try again.');
         return;
       }
       const saved: SupplyReceipt = await res.json();

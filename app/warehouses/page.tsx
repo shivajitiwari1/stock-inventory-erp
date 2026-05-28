@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/AuthContext';
-import { FiPlus, FiEdit, FiTrash2, FiSearch, FiX, FiRefreshCw } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiSearch, FiX, FiRefreshCw, FiLoader } from 'react-icons/fi';
 
 const CACHE_KEY = 'erp-warehouses';
 
@@ -335,9 +335,11 @@ function WarehouseModal({ warehouse, onClose, onSave }: any) {
     currentUsage: 0,
     status: 'ACTIVE',
   });
+  const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaving(true);
     try {
       const url = warehouse ? `/api/warehouses/${warehouse.id}` : '/api/warehouses';
       const method = warehouse ? 'PUT' : 'POST';
@@ -352,6 +354,8 @@ function WarehouseModal({ warehouse, onClose, onSave }: any) {
       }
     } catch (error) {
       console.error('Failed to save warehouse:', error);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -379,7 +383,10 @@ function WarehouseModal({ warehouse, onClose, onSave }: any) {
             <option value="INACTIVE">Inactive</option>
           </select>
           <div className="flex space-x-2">
-            <button type="submit" className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">{warehouse ? 'Update' : 'Add'} Warehouse</button>
+            <button type="submit" disabled={saving}
+              className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2">
+              {saving ? <><FiLoader className="w-4 h-4 animate-spin" />Saving...</> : <>{warehouse ? 'Update' : 'Add'} Warehouse</>}
+            </button>
             <button type="button" onClick={onClose} className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Cancel</button>
           </div>
         </form>

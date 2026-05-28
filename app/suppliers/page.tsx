@@ -223,10 +223,12 @@ function SupplierModal({ supplier, onClose, onSave }: any) {
     status: 'ACTIVE',
   });
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaveError(null);
+    setSaving(true);
     try {
       const url = supplier ? `/api/suppliers/${supplier.id}` : '/api/suppliers';
       const method = supplier ? 'PUT' : 'POST';
@@ -244,6 +246,8 @@ function SupplierModal({ supplier, onClose, onSave }: any) {
     } catch (error) {
       console.error('Failed to save supplier:', error);
       setSaveError('Failed to save supplier. Please try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -281,7 +285,9 @@ function SupplierModal({ supplier, onClose, onSave }: any) {
             <option value="INACTIVE">Inactive</option>
           </select>
           <div className="flex space-x-2">
-            <button type="submit" className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">{supplier ? 'Update' : 'Add'} Supplier</button>
+            <button type="submit" disabled={saving} className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+              {saving ? <><FiLoader className="w-4 h-4 animate-spin" />Saving...</> : <>{supplier ? 'Update' : 'Add'} Supplier</>}
+            </button>
             <button type="button" onClick={onClose} className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">Cancel</button>
           </div>
         </form>

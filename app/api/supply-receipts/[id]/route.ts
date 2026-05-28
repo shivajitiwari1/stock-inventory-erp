@@ -21,7 +21,10 @@ export async function PUT(request: NextRequest, context: any) {
     const existing = await d1Query('SELECT * FROM supply_receipts WHERE id = ?', [id]);
     if (existing.length === 0) return NextResponse.json({ error: 'Receipt not found' }, { status: 404 });
 
-    const receiptFile = body.receiptFile ?? existing[0].receiptFile;
+    const receiptFile = body.receiptFile ?? existing[0].receiptFile ?? '';
+
+    // Ensure dateTime is stored as a plain ISO string (no trailing ':00' duplication)
+    const dateTime = (body.dateTime || '').replace(/T(\d{2}:\d{2})$/, 'T$1:00');
 
     await d1Run(
       `UPDATE supply_receipts SET
@@ -30,14 +33,14 @@ export async function PUT(request: NextRequest, context: any) {
         items = ?, receiptFile = ?
        WHERE id = ?`,
       [
-        body.supplierId,
-        body.supplierName,
-        body.warehouseId,
-        body.warehouseName,
-        body.dateTime,
-        body.verifiedBy,
-        Number(body.totalAmount),
-        body.gatePassNumber || '',
+        body.supplierId || existing[0].supplierId,
+        body.supplierName || existing[0].supplierName,
+        body.warehouseId || existing[0].warehouseId,
+        body.warehouseName || existing[0].warehouseName,
+        dateTime || existing[0].dateTime,
+        body.verifiedBy ?? existing[0].verifiedBy ?? '',
+        Number(body.totalAmount) || 0,
+        body.gatePassNumber ?? existing[0].gatePassNumber ?? '',
         JSON.stringify(body.items || []),
         receiptFile,
         id,
@@ -50,7 +53,7 @@ export async function PUT(request: NextRequest, context: any) {
       supplierName: body.supplierName,
       warehouseId: body.warehouseId,
       warehouseName: body.warehouseName,
-      dateTime: body.dateTime,
+      dateTime: dateTime,
       verifiedBy: body.verifiedBy,
       totalAmount: Number(body.totalAmount),
       gatePassNumber: body.gatePassNumber || '',
@@ -59,8 +62,12 @@ export async function PUT(request: NextRequest, context: any) {
     };
 
     return NextResponse.json(updated);
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to update receipt' }, { status: 500 });
+  } catch (error: any) {
+    console.error('PUT supply-receipts error:', error?.message, error);
+    return NextResponse.json(
+      { error: 'Failed to update receipt', detail: error?.message || String(error) },
+      { status: 500 }
+    );
   }
 }
 
