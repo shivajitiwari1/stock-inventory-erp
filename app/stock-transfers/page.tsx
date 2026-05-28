@@ -256,17 +256,51 @@ function TransferModal({ transfer, warehouses, products, onClose, onSave }: any)
     quantity: '',
     status: 'PENDING',
   });
+  const [inventory, setInventory] = useState<any[]>([]);
+  const [loadingInventory, setLoadingInventory] = useState(false);
 
-  const sameWarehouse = formData.fromWarehouseId && formData.toWarehouseId &&
-    formData.fromWarehouseId === formData.toWarehouseId;
+  useEffect(() => {
+    if (!formData.fromWarehouseId) { setInventory([]); return; }
+    setLoadingInventory(true);
+    fetch(`/api/inventory?warehouseId=${formData.fromWarehouseId}`)
+      .then(r => r.json())
+      .then(data => setInventory(Array.isArray(data) ? data : []))
+      .catch(() => setInventory([]))
+      .finally(() => setLoadingInventory(false));
+  }, [formData.fromWarehouseId]);
+
+  const activeWarehouses = warehouses.filter((w: any) => w.status !== 'ARCHIVED');
+
+  // Products with available stock in selected From Warehouse
+  const availableProducts = formData.fromWarehouseId
+    ? products.filter((p: any) => {
+        const inv = inventory.find((i: any) => i.productId === p.id);
+        return inv && inv.availableQuantity > 0;
+      })
+    : products;
 
   const selectedProduct = products.find((p: any) => p.name === formData.productName);
+  const selectedInventory = selectedProduct
+    ? inventory.find((i: any) => i.productId === selectedProduct.id)
+    : null;
+  const maxQty = selectedInventory?.availableQuantity ?? null;
+
   const unitPrice = selectedProduct?.price || 0;
   const totalPrice = unitPrice > 0 && formData.quantity ? unitPrice * Number(formData.quantity) : 0;
 
+  const sameWarehouse = formData.fromWarehouseId && formData.toWarehouseId &&
+    formData.fromWarehouseId === formData.toWarehouseId;
+  const qtyExceedsStock = maxQty !== null && formData.quantity !== '' && Number(formData.quantity) > maxQty;
+  const isSubmitDisabled = !!sameWarehouse || !!qtyExceedsStock;
+
+  const handleFromWarehouseChange = (warehouseId: string) => {
+    // Reset product when warehouse changes so stale selection doesn't carry over
+    setFormData((prev: any) => ({ ...prev, fromWarehouseId: warehouseId, productName: '', quantity: '' }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (sameWarehouse) return;
+    if (isSubmitDisabled) return;
     try {
       const url = transfer ? `/api/stock-transfers/${transfer.id}` : '/api/stock-transfers';
       const method = transfer ? 'PUT' : 'POST';
@@ -299,12 +333,12 @@ function TransferModal({ transfer, warehouses, products, onClose, onSave }: any)
               <label className="block text-sm font-medium text-gray-700 mb-1">From Warehouse</label>
               <select
                 value={formData.fromWarehouseId}
-                onChange={(e) => setFormData({ ...formData, fromWarehouseId: e.target.value })}
+                onChange={(e) => handleFromWarehouseChange(e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                 required
               >
                 <option value="">Select warehouse...</option>
-                {warehouses.filter((w: any) => w.status !== 'ARCHIVED').map((w: any) => (
+                {activeWarehouses.map((w: any) => (
                   <option key={w.id} value={w.id}>{w.name}</option>
                 ))}
               </select>
@@ -314,40 +348,70 @@ function TransferModal({ transfer, warehouses, products, onClose, onSave }: any)
               <select
                 value={formData.toWarehouseId}
                 onChange={(e) => setFormData({ ...formData, toWarehouseId: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${sameWarehouse ? 'border-red-400' : ''}`}
                 required
               >
                 <option value="">Select warehouse...</option>
-                {warehouses.filter((w: any) => w.status !== 'ARCHIVED').map((w: any) => (
-                  <option key={w.id} value={w.id}>{w.name}</option>
-                ))}
+                {activeWarehouses
+                  .filter((w: any) => w.id !== formData.fromWarehouseId)
+                  .map((w: any) => (
+                    <option key={w.id} value={w.id}>{w.name}</option>
+                  ))}
               </select>
+              {sameWarehouse && (
+                <p className="mt-1 text-xs text-red-600">Cannot transfer to the same warehouse.</p>
+              )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Product</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Product
+                {formData.fromWarehouseId && !loadingInventory && availableProducts.length === 0 && (
+                  <span className="ml-2 text-xs text-yellow-600 font-normal">No stock available</span>
+                )}
+              </label>
               <select
                 value={formData.productName}
-                onChange={(e) => setFormData({ ...formData, productName: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, productName: e.target.value, quantity: '' })}
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                 required
+                disabled={loadingInventory || (formData.fromWarehouseId !== '' && availableProducts.length === 0)}
               >
-                <option value="">Select product...</option>
-                {products.map((p: any) => (
-                  <option key={p.id} value={p.name}>{p.name}</option>
-                ))}
+                <option value="">
+                  {loadingInventory ? 'Loading...' : 'Select product...'}
+                </option>
+                {availableProducts.map((p: any) => {
+                  const inv = inventory.find((i: any) => i.productId === p.id);
+                  const qty = inv?.availableQuantity ?? '';
+                  return (
+                    <option key={p.id} value={p.name}>
+                      {p.name}{qty !== '' ? ` (Stock: ${qty})` : ''}
+                    </option>
+                  );
+                })}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Quantity
+                {maxQty !== null && (
+                  <span className="ml-2 text-xs text-gray-500 font-normal">Available: {maxQty}</span>
+                )}
+              </label>
               <input
                 type="number"
                 placeholder="Enter quantity"
                 value={formData.quantity}
                 onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || '' })}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${qtyExceedsStock ? 'border-red-400' : ''}`}
                 required
                 min="1"
+                max={maxQty ?? undefined}
               />
+              {qtyExceedsStock && (
+                <p className="mt-1 text-xs text-red-600">
+                  Cannot exceed available stock ({maxQty}).
+                </p>
+              )}
             </div>
           </div>
 
@@ -374,13 +438,9 @@ function TransferModal({ transfer, warehouses, products, onClose, onSave }: any)
               <option value="CANCELLED">Cancelled</option>
             </select>
           </div>
-          {sameWarehouse && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-              Source and destination warehouse cannot be the same.
-            </p>
-          )}
+
           <div className="flex space-x-2">
-            <button type="submit" disabled={!!sameWarehouse}
+            <button type="submit" disabled={isSubmitDisabled}
               className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed">
               {transfer ? 'Update' : 'Create'} Transfer
             </button>
