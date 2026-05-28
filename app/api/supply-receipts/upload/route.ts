@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile } from 'fs/promises';
+import { writeFile, mkdir } from 'fs/promises';
 import { d1Run } from '@/lib/d1';
 import path from 'path';
 
 const ALLOWED_EXTENSIONS = new Set(['.pdf', '.jpg', '.jpeg', '.png']);
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'receipts');
-const RECEIPT_ID_PATTERN = /^SR\d+$/;
+// IDs are alphanumeric (timestamp + random suffix) — no slashes or dots allowed
+const RECEIPT_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,10 +18,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing file or receiptId' }, { status: 400 });
     }
 
-    // Validate receiptId format to prevent path traversal
+    // Validate receiptId to prevent path traversal (only alphanumeric, dash, underscore)
     if (!RECEIPT_ID_PATTERN.test(receiptId)) {
       return NextResponse.json({ error: 'Invalid receiptId' }, { status: 400 });
     }
+
+    // Ensure upload directory exists
+    await mkdir(UPLOAD_DIR, { recursive: true });
 
     // Validate file extension server-side (not relying on client-supplied MIME type)
     const ext = path.extname(file.name).toLowerCase();

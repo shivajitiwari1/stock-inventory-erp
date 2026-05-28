@@ -16,9 +16,9 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      conditions.push('(name LIKE ? OR sku LIKE ? OR description LIKE ?)');
+      conditions.push('(name LIKE ? OR description LIKE ?)');
       const pattern = `%${search}%`;
-      params.push(pattern, pattern, pattern);
+      params.push(pattern, pattern);
     }
 
     const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -41,23 +41,42 @@ export async function POST(request: NextRequest) {
 
     const {
       name,
-      sku,
-      category,
       description,
       unitType,
       price,
       image,
       minQuantity,
+      warehouseId,
     } = body;
+
+    // Auto-generate a unique SKU since we no longer collect it from the user
+    const sku = 'SKU-' + id.slice(-8).toUpperCase();
 
     await d1Run(
       `INSERT INTO products (id, name, sku, category, description, unitType, price, image, minQuantity, createdAt, updatedAt)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, name, sku, category, description ?? null, unitType ?? null, price ?? null, image ?? null, minQuantity ?? null, now, now]
+      [id, name, sku, '', description ?? null, unitType ?? null, price ?? null, image ?? null, minQuantity ?? null, now, now]
     );
 
     const rows = await d1Query<any>('SELECT * FROM products WHERE id = ?', [id]);
     const newProduct = rows[0];
+
+    // Create inventory records: for selected warehouse only, or all active warehouses
+    let warehouseIds: string[];
+    if (warehouseId) {
+      warehouseIds = [warehouseId];
+    } else {
+      const whs = await d1Query<any>(`SELECT id FROM warehouses WHERE status = 'ACTIVE'`);
+      warehouseIds = whs.map((w: any) => w.id);
+    }
+    for (const whId of warehouseIds) {
+      const invId = Date.now().toString() + Math.random().toString(36).slice(2);
+      await d1Run(
+        `INSERT OR IGNORE INTO inventory (id, productId, warehouseId, totalQuantity, availableQuantity, reservedQuantity, damagedQuantity, lostQuantity, lastUpdated)
+         VALUES (?, ?, ?, 0, 0, 0, 0, 0, ?)`,
+        [invId, id, whId, now]
+      );
+    }
 
     return NextResponse.json(newProduct, { status: 201 });
   } catch (error) {

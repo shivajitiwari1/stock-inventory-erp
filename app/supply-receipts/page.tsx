@@ -266,6 +266,7 @@ function ReceiptModal({ receipt, suppliers, warehouses, products, onClose, onSav
   });
   const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [showItems, setShowItems] = useState((receipt?.items?.length || 0) > 0);
 
   const setSupplier = (id: string) => {
@@ -297,31 +298,35 @@ function ReceiptModal({ receipt, suppliers, warehouses, products, onClose, onSav
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setUploadError(null);
     try {
       const payload = { ...form, dateTime: form.dateTime + ':00', totalAmount: Number(form.totalAmount) };
       const url = receipt ? `/api/supply-receipts/${receipt.id}` : '/api/supply-receipts';
       const method = receipt ? 'PUT' : 'POST';
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      if (!res.ok) return;
+      if (!res.ok) {
+        setUploadError('Failed to save receipt. Please try again.');
+        return;
+      }
       const saved: SupplyReceipt = await res.json();
 
       if (file) {
-        try {
-          const fd = new FormData();
-          fd.append('file', file);
-          fd.append('receiptId', saved.id);
-          const upRes = await fetch('/api/supply-receipts/upload', { method: 'POST', body: fd });
-          if (upRes.ok) {
-            const { filePath } = await upRes.json();
-            saved.receiptFile = filePath;
-          }
-        } catch (uploadError) {
-          console.error('File upload failed:', uploadError);
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('receiptId', saved.id);
+        const upRes = await fetch('/api/supply-receipts/upload', { method: 'POST', body: fd });
+        if (upRes.ok) {
+          const { filePath } = await upRes.json();
+          saved.receiptFile = filePath;
+        } else {
+          const err = await upRes.json().catch(() => ({}));
+          setUploadError(`Document upload failed: ${err.error || upRes.status}. Receipt was saved without the file.`);
         }
       }
       onSave(saved);
     } catch (error) {
       console.error('Failed to save receipt:', error);
+      setUploadError('An error occurred. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -445,6 +450,13 @@ function ReceiptModal({ receipt, suppliers, warehouses, products, onClose, onSav
             <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setFile(e.target.files?.[0] || null)}
               className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
           </div>
+
+          {uploadError && (
+            <div className="flex items-start gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg px-3 py-2 text-sm">
+              <FiX className="w-4 h-4 mt-0.5 shrink-0 cursor-pointer" onClick={() => setUploadError(null)} />
+              <span>{uploadError}</span>
+            </div>
+          )}
 
           <div className="flex space-x-3 pt-2">
             <button type="submit" disabled={saving}

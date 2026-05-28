@@ -40,7 +40,7 @@ export async function PUT(request: NextRequest, context: any) {
         body.warehouseId || null,
         body.contractorId,
         body.contractorName,
-        body.purpose || null,
+        body.gatePass ?? body.purpose ?? null,
         body.issuedBy || null,
         body.status,
         body.notes || null,

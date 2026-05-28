@@ -1,14 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FiPlus, FiEdit, FiTrash2, FiSearch, FiX, FiLoader, FiInfo } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiSearch, FiX, FiLoader } from 'react-icons/fi';
 import { useAuth } from '@/components/AuthContext';
 
 interface Product {
   id: string;
   name: string;
-  sku: string;
-  category: string;
   description: string;
   unitType: string;
   price: number;
@@ -36,9 +34,9 @@ export default function ProductsPage() {
   const { canDo } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [inventory, setInventory] = useState<any[]>([]);
+  const [warehouses, setWarehouses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -49,11 +47,10 @@ export default function ProductsPage() {
     if (cached) {
       setProducts(cached);
       setLoading(false);
-      // Still fetch inventory even on cache hit
-      fetch('/api/inventory')
-        .then(r => r.json())
-        .then(data => setInventory(data || []))
-        .catch(err => console.error('Failed to fetch inventory:', err));
+      Promise.all([fetch('/api/inventory'), fetch('/api/warehouses')])
+        .then(([invRes, whRes]) => Promise.all([invRes.json(), whRes.json()]))
+        .then(([invData, whData]) => { setInventory(invData || []); setWarehouses(whData || []); })
+        .catch(err => console.error('Failed to fetch data:', err));
     } else {
       fetchData();
     }
@@ -61,15 +58,17 @@ export default function ProductsPage() {
 
   const fetchData = async () => {
     try {
-      const [prodRes, invRes] = await Promise.all([
+      const [prodRes, invRes, whRes] = await Promise.all([
         fetch('/api/products'),
         fetch('/api/inventory'),
+        fetch('/api/warehouses'),
       ]);
-      const [prodData, invData] = await Promise.all([prodRes.json(), invRes.json()]);
+      const [prodData, invData, whData] = await Promise.all([prodRes.json(), invRes.json(), whRes.json()]);
       const list = prodData || [];
       setProducts(list);
       writeCache(list);
       setInventory(invData || []);
+      setWarehouses(whData || []);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     } finally {
@@ -81,19 +80,13 @@ export default function ProductsPage() {
     const rows = inventory.filter((i: any) => i.productId === product.id);
     const available = rows.reduce((s: number, i: any) => s + (i.availableQuantity || 0), 0);
     if (available === 0) return 'out';
-    if (available <= product.minQuantity) return 'low';
+    if (product.minQuantity > 0 && available <= product.minQuantity) return 'low';
     return 'healthy';
   };
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.sku.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !selectedCategory || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  const categories = [...new Set(products.map(p => p.category))];
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this product?')) return;
@@ -147,27 +140,17 @@ export default function ProductsPage() {
         </div>
       )}
 
-      {/* Filters */}
+      {/* Search */}
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <FiSearch className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100"
-            />
-          </div>
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full md:w-48 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100"
-          >
-            <option value="">All Categories</option>
-            {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-          </select>
+        <div className="relative">
+          <FiSearch className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Search products..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100"
+          />
         </div>
       </div>
 
@@ -178,8 +161,6 @@ export default function ProductsPage() {
             <thead className="bg-gray-50 dark:bg-slate-700">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Product</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden sm:table-cell">SKU</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden sm:table-cell">Category</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden md:table-cell">Price</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden md:table-cell">Min Qty</th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Stock</th>
@@ -188,7 +169,7 @@ export default function ProductsPage() {
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
               {filteredProducts.length === 0 && (
-                <tr><td colSpan={7} className="px-6 py-10 text-center text-gray-400">No products found.</td></tr>
+                <tr><td colSpan={5} className="px-6 py-10 text-center text-gray-400">No products found.</td></tr>
               )}
               {filteredProducts.map((product) => (
                 <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-slate-700">
@@ -199,16 +180,14 @@ export default function ProductsPage() {
                       </div>
                       <div>
                         <div className="font-medium text-gray-900 dark:text-slate-100">{product.name}</div>
-                        <div className="text-sm text-gray-500 dark:text-slate-400">{product.description}</div>
+                        {product.description && (
+                          <div className="text-sm text-gray-500 dark:text-slate-400">{product.description}</div>
+                        )}
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-slate-100 font-mono hidden sm:table-cell">{product.sku}</td>
-                  <td className="px-6 py-4 text-sm hidden sm:table-cell w-36">
-                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium whitespace-nowrap">{product.category}</span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-right text-gray-900 dark:text-slate-100 hidden md:table-cell">₹{product.price.toFixed(2)}</td>
-                  <td className="px-6 py-4 text-sm text-right text-gray-900 dark:text-slate-100 hidden md:table-cell">{product.minQuantity}</td>
+                  <td className="px-6 py-4 text-sm text-right text-gray-900 dark:text-slate-100 hidden md:table-cell">₹{(product.price || 0).toFixed(2)}</td>
+                  <td className="px-6 py-4 text-sm text-right text-gray-900 dark:text-slate-100 hidden md:table-cell">{product.minQuantity || '—'}</td>
                   <td className="px-6 py-4 text-center">
                     {(() => {
                       const s = getStockStatus(product);
@@ -251,15 +230,24 @@ export default function ProductsPage() {
       {(showAddModal || editingProduct) && (
         <ProductModal
           product={editingProduct}
+          warehouses={warehouses.filter((w: any) => w.status !== 'ARCHIVED')}
           onClose={() => { setShowAddModal(false); setEditingProduct(null); }}
           onSave={saved => {
+            const isNew = !editingProduct;
             setProducts(prev => {
-              const updated = editingProduct
-                ? prev.map(i => i.id === saved.id ? saved : i)
-                : [...prev, saved];
+              const updated = isNew
+                ? [...prev, saved]
+                : prev.map(i => i.id === saved.id ? saved : i);
               writeCache(updated);
               return updated;
             });
+            if (isNew) {
+              // Bust stock management and inventory caches so new product appears immediately
+              try {
+                sessionStorage.removeItem('erp-stock-management');
+                sessionStorage.removeItem('erp-inventory');
+              } catch {}
+            }
             setShowAddModal(false);
             setEditingProduct(null);
           }}
@@ -269,16 +257,15 @@ export default function ProductsPage() {
   );
 }
 
-function ProductModal({ product, onClose, onSave }: { product?: Product | null; onClose: () => void; onSave: (p: Product) => void }) {
+function ProductModal({ product, warehouses, onClose, onSave }: { product?: Product | null; warehouses: any[]; onClose: () => void; onSave: (p: Product) => void }) {
   const [formData, setFormData] = useState({
     name: product?.name || '',
-    sku: product?.sku || '',
-    category: product?.category || '',
     description: product?.description || '',
     unitType: product?.unitType || 'PCS',
-    price: product?.price || 0,
-    minQuantity: product?.minQuantity || 0,
+    price: product ? product.price.toString() : '',
+    minQuantity: product?.minQuantity ? product.minQuantity.toString() : '',
   });
+  const [warehouseId, setWarehouseId] = useState('');
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -290,7 +277,12 @@ function ProductModal({ product, onClose, onSave }: { product?: Product | null; 
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          price: parseFloat(formData.price) || 0,
+          minQuantity: parseInt(formData.minQuantity) || 0,
+          warehouseId: warehouseId || undefined,
+        }),
       });
       if (response.ok) onSave(await response.json());
     } catch (error) {
@@ -304,7 +296,7 @@ function ProductModal({ product, onClose, onSave }: { product?: Product | null; 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 sm:p-8">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 sm:p-8">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">{product ? 'Edit Product' : 'Add Product'}</h2>
           <button type="button" onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-slate-300 dark:hover:bg-slate-700 transition-colors">
@@ -312,31 +304,14 @@ function ProductModal({ product, onClose, onSave }: { product?: Product | null; 
           </button>
         </div>
 
-        <div className="flex items-start gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3 mb-4 text-sm text-blue-700 dark:text-blue-300">
-          <FiInfo className="w-4 h-4 mt-0.5 shrink-0" />
-          <p>
-            This form defines the <strong>product details</strong> (name, SKU, price, etc.).
-            To manage <strong>stock quantities</strong>, go to <strong>Stock Management</strong> after adding the product.
-          </p>
-        </div>
-
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Name *</label>
+            <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })}
+              className={inputCls} required placeholder="Product name" />
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Name *</label>
-              <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })}
-                className={inputCls} required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">SKU *</label>
-              <input type="text" value={formData.sku} onChange={e => setFormData({ ...formData, sku: e.target.value })}
-                className={inputCls} required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Category *</label>
-              <input type="text" value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })}
-                className={inputCls} required />
-            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Unit Type</label>
               <select value={formData.unitType} onChange={e => setFormData({ ...formData, unitType: e.target.value })}
@@ -351,23 +326,34 @@ function ProductModal({ product, onClose, onSave }: { product?: Product | null; 
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Price (₹) *</label>
-              <input type="number" step="0.01" min="0" value={formData.price}
-                onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
-                className={inputCls} required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Min Quantity *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Min Quantity</label>
               <input type="number" min="0" value={formData.minQuantity}
-                onChange={e => setFormData({ ...formData, minQuantity: parseInt(e.target.value) || 0 })}
-                className={inputCls} required />
+                onChange={e => setFormData({ ...formData, minQuantity: e.target.value })}
+                className={inputCls} placeholder="e.g. 10" />
             </div>
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Price (₹)</label>
+            <input type="number" step="0.01" min="0" value={formData.price}
+              onChange={e => setFormData({ ...formData, price: e.target.value })}
+              className={inputCls} placeholder="e.g. 500.00" />
+          </div>
+
+          {!product && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Warehouse</label>
+              <select value={warehouseId} onChange={e => setWarehouseId(e.target.value)} className={inputCls}>
+                <option value="">All Warehouses</option>
+                {warehouses.map((w: any) => <option key={w.id} value={w.id}>{w.name}</option>)}
+              </select>
+            </div>
+          )}
+
+          <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Description</label>
             <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}
-              className={inputCls} rows={3} />
+              className={inputCls} rows={3} placeholder="Optional description" />
           </div>
 
           <div className="flex space-x-3 pt-2">

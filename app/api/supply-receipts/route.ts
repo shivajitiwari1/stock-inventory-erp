@@ -55,6 +55,20 @@ export async function POST(request: NextRequest) {
       createdAt,
     };
 
+    // Record stock movement for each item received
+    const items: any[] = body.items || [];
+    for (const item of items) {
+      if (item.productId && body.warehouseId) {
+        const movId = Date.now().toString() + Math.random().toString(36).slice(2);
+        await d1Run(
+          `INSERT INTO stock_movements (id, productId, warehouseId, type, quantity, reason, reference, performedBy, notes, createdAt)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [movId, item.productId, body.warehouseId, 'STOCK_IN', Number(item.quantity),
+           'Supply Receipt', id, body.verifiedBy || null, body.supplierName || null, createdAt]
+        );
+      }
+    }
+
     return NextResponse.json(newReceipt, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to create supply receipt' }, { status: 500 });

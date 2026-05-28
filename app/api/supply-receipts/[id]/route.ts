@@ -21,14 +21,13 @@ export async function PUT(request: NextRequest, context: any) {
     const existing = await d1Query('SELECT * FROM supply_receipts WHERE id = ?', [id]);
     if (existing.length === 0) return NextResponse.json({ error: 'Receipt not found' }, { status: 404 });
 
-    const updatedAt = new Date().toISOString();
     const receiptFile = body.receiptFile ?? existing[0].receiptFile;
 
     await d1Run(
       `UPDATE supply_receipts SET
         supplierId = ?, supplierName = ?, warehouseId = ?, warehouseName = ?,
         dateTime = ?, verifiedBy = ?, totalAmount = ?, gatePassNumber = ?,
-        items = ?, receiptFile = ?, updatedAt = ?
+        items = ?, receiptFile = ?
        WHERE id = ?`,
       [
         body.supplierId,
@@ -41,7 +40,6 @@ export async function PUT(request: NextRequest, context: any) {
         body.gatePassNumber || '',
         JSON.stringify(body.items || []),
         receiptFile,
-        updatedAt,
         id,
       ]
     );
@@ -58,7 +56,6 @@ export async function PUT(request: NextRequest, context: any) {
       gatePassNumber: body.gatePassNumber || '',
       items: body.items || [],
       receiptFile,
-      updatedAt,
     };
 
     return NextResponse.json(updated);

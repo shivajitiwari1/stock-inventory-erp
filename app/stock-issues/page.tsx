@@ -10,15 +10,19 @@ interface StockIssue {
   productName: string;
   quantity: number;
   unit: string;
+  warehouseId: string;
   contractorId: string;
   contractorName: string;
   issueDate: string;
   status: string;
+  purpose: string | null;
+  notes: string | null;
   createdAt: string;
 }
 
-interface Product { id: string; name: string; }
+interface Product { id: string; name: string; unitType?: string; price?: number; }
 interface Contractor { id: string; name: string; role: string; }
+interface Warehouse { id: string; name: string; status?: string; }
 
 const STATUSES = ['Issued', 'Partially Returned', 'Fully Returned', 'Damaged', 'Lost'] as const;
 
@@ -33,7 +37,7 @@ const statusBadge = (status: string) => {
   return map[status] || 'bg-gray-100 text-gray-600';
 };
 
-const CACHE_KEY = 'erp-stock-issues';
+const CACHE_KEY = 'erp-stock-issues-v2';
 
 function readCache<T>(): T[] | null {
   try {
@@ -50,6 +54,7 @@ export default function StockIssuesPage() {
   const [issues, setIssues] = useState<StockIssue[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [contractors, setContractors] = useState<Contractor[]>([]);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<StockIssue | null>(null);
@@ -64,31 +69,31 @@ export default function StockIssuesPage() {
     if (cached) {
       setIssues(cached);
       setLoading(false);
-      // Still fetch auxiliary data for modal dropdowns
       Promise.all([
         fetch('/api/products').then(r => r.json()),
         fetch('/api/contractors').then(r => r.json()),
-      ]).then(([prods, cons]) => {
-        setProducts(Array.isArray(prods) ? prods : (prods.products || []));
+        fetch('/api/warehouses').then(r => r.json()),
+      ]).then(([prods, cons, whs]) => {
+        setProducts(Array.isArray(prods) ? prods : []);
         setContractors(Array.isArray(cons) ? cons : []);
-      }).catch(error => {
-        console.error('Failed to load auxiliary data:', error);
-      });
+        setWarehouses(Array.isArray(whs) ? whs : []);
+      }).catch(err => console.error('Failed to load auxiliary data:', err));
       return;
     }
     Promise.all([
       fetch('/api/stock-issues').then(r => r.json()),
       fetch('/api/products').then(r => r.json()),
       fetch('/api/contractors').then(r => r.json()),
-    ]).then(([iss, prods, cons]) => {
+      fetch('/api/warehouses').then(r => r.json()),
+    ]).then(([iss, prods, cons, whs]) => {
       const list = Array.isArray(iss) ? iss : [];
       setIssues(list);
       writeCache(list);
-      setProducts(Array.isArray(prods) ? prods : (prods.products || []));
+      setProducts(Array.isArray(prods) ? prods : []);
       setContractors(Array.isArray(cons) ? cons : []);
-    }).catch(error => {
-      console.error('Failed to load data:', error);
-    }).finally(() => setLoading(false));
+      setWarehouses(Array.isArray(whs) ? whs : []);
+    }).catch(err => console.error('Failed to load data:', err))
+      .finally(() => setLoading(false));
   }, []);
 
   const handleDelete = async (id: string) => {
@@ -132,13 +137,13 @@ export default function StockIssuesPage() {
           <p className="mt-2 text-gray-600 dark:text-slate-400">Track materials issued to contractors and workers on site.</p>
         </div>
         {canDo('stock-issues', 'add') && (
-        <button
-          onClick={() => { setEditing(null); setShowModal(true); }}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2 shrink-0"
-        >
-          <FiPlus className="w-4 h-4" />
-          <span>Issue Stock</span>
-        </button>
+          <button
+            onClick={() => { setEditing(null); setShowModal(true); }}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2 shrink-0"
+          >
+            <FiPlus className="w-4 h-4" />
+            <span>Issue Stock</span>
+          </button>
         )}
       </div>
 
@@ -182,9 +187,11 @@ export default function StockIssuesPage() {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
             <thead className="bg-gray-50 dark:bg-slate-700">
               <tr>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden sm:table-cell">MI No.</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Item</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Qty</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden sm:table-cell">Contractor / Worker</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden md:table-cell">Gate Pass</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden md:table-cell">Issue Date</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Actions</th>
@@ -192,13 +199,20 @@ export default function StockIssuesPage() {
             </thead>
             <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
               {filtered.length === 0 && (
-                <tr><td colSpan={6} className="px-6 py-10 text-center text-gray-400">No stock issues found.</td></tr>
+                <tr><td colSpan={8} className="px-6 py-10 text-center text-gray-400">No stock issues found.</td></tr>
               )}
               {filtered.map(issue => (
                 <tr key={issue.id} className="hover:bg-gray-50 dark:hover:bg-slate-700">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-slate-100">{issue.productName}</td>
+                  <td className="px-6 py-4 text-xs font-mono text-gray-500 dark:text-slate-400 hidden sm:table-cell">{issue.id}</td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm font-medium text-gray-900 dark:text-slate-100">{issue.productName}</div>
+                    {issue.notes && (
+                      <div className="text-xs text-gray-400 mt-0.5">GST: {issue.notes}</div>
+                    )}
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">{issue.quantity} {issue.unit}</td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400 hidden sm:table-cell">{issue.contractorName}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400 hidden md:table-cell">{issue.purpose || '—'}</td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400 hidden md:table-cell">
                     {new Date(issue.issueDate).toLocaleDateString('en-IN')}
                   </td>
@@ -207,20 +221,20 @@ export default function StockIssuesPage() {
                   </td>
                   <td className="px-6 py-4 text-sm space-x-2">
                     {canDo('stock-issues', 'edit') && (
-                    <button onClick={() => { setEditing(issue); setShowModal(true); }} className="text-blue-600 hover:text-blue-800 inline-block">
-                      <FiEdit className="w-4 h-4" />
-                    </button>
+                      <button onClick={() => { setEditing(issue); setShowModal(true); }} className="text-blue-600 hover:text-blue-800 inline-block">
+                        <FiEdit className="w-4 h-4" />
+                      </button>
                     )}
                     {canDo('stock-issues', 'delete') && (
-                    <button
-                      onClick={() => handleDelete(issue.id)}
-                      disabled={!!deletingId}
-                      className="text-red-600 hover:text-red-800 disabled:opacity-40 disabled:cursor-not-allowed inline-block"
-                    >
-                      {deletingId === issue.id
-                        ? <FiLoader className="w-4 h-4 animate-spin" />
-                        : <FiTrash2 className="w-4 h-4" />}
-                    </button>
+                      <button
+                        onClick={() => handleDelete(issue.id)}
+                        disabled={!!deletingId}
+                        className="text-red-600 hover:text-red-800 disabled:opacity-40 disabled:cursor-not-allowed inline-block"
+                      >
+                        {deletingId === issue.id
+                          ? <FiLoader className="w-4 h-4 animate-spin" />
+                          : <FiTrash2 className="w-4 h-4" />}
+                      </button>
                     )}
                   </td>
                 </tr>
@@ -235,6 +249,7 @@ export default function StockIssuesPage() {
           issue={editing}
           products={products}
           contractors={contractors}
+          warehouses={warehouses}
           onClose={() => { setShowModal(false); setEditing(null); }}
           onSave={saved => {
             setIssues(prev => {
@@ -253,10 +268,11 @@ export default function StockIssuesPage() {
   );
 }
 
-function StockIssueModal({ issue, products, contractors, onClose, onSave }: {
+function StockIssueModal({ issue, products, contractors, warehouses, onClose, onSave }: {
   issue: StockIssue | null;
   products: Product[];
   contractors: Contractor[];
+  warehouses: Warehouse[];
   onClose: () => void;
   onSave: (i: StockIssue) => void;
 }) {
@@ -266,16 +282,24 @@ function StockIssueModal({ issue, products, contractors, onClose, onSave }: {
     productName: issue?.productName || '',
     quantity: issue?.quantity?.toString() || '',
     unit: issue?.unit || '',
+    warehouseId: issue?.warehouseId || '',
     contractorId: issue?.contractorId || '',
     contractorName: issue?.contractorName || '',
-    issueDate: issue?.issueDate || today,
+    issueDate: issue?.issueDate?.slice(0, 10) || today,
     status: issue?.status || 'Issued',
+    gstNumber: issue?.notes || '',
+    gatePass: issue?.purpose || '',
   });
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [unitPrice, setUnitPrice] = useState<number>(0);
+
+  const totalPrice = unitPrice > 0 && form.quantity ? unitPrice * Number(form.quantity) : 0;
 
   const setProduct = (id: string) => {
     const p = products.find(p => p.id === id);
-    setForm(f => ({ ...f, productId: id, productName: p?.name || '' }));
+    setUnitPrice(p?.price || 0);
+    setForm(f => ({ ...f, productId: id, productName: p?.name || '', unit: p?.unitType || f.unit }));
   };
 
   const setContractor = (id: string) => {
@@ -285,14 +309,29 @@ function StockIssueModal({ issue, products, contractors, onClose, onSave }: {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaveError('');
     setSaving(true);
     try {
       const url = issue ? `/api/stock-issues/${issue.id}` : '/api/stock-issues';
       const method = issue ? 'PUT' : 'POST';
-      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...form, quantity: Number(form.quantity) }) });
-      if (res.ok) onSave(await res.json());
-    } catch (error) {
-      console.error('Failed to save stock issue:', error);
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          quantity: Number(form.quantity),
+          notes: form.gstNumber || null,
+          gatePass: form.gatePass || null,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setSaveError(err.error || 'Failed to save. Please try again.');
+        return;
+      }
+      onSave(await res.json());
+    } catch {
+      setSaveError('Network error. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -309,7 +348,20 @@ function StockIssueModal({ issue, products, contractors, onClose, onSave }: {
             <FiX className="w-5 h-5" />
           </button>
         </div>
+
+        {saveError && (
+          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-lg px-3 py-2 text-sm">{saveError}</div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
+
+          {/* MI Number — read-only for edits, auto-generated label for new */}
+          <div className="bg-gray-50 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-600 rounded-lg px-4 py-2.5 flex items-center justify-between">
+            <span className="text-sm text-gray-500 dark:text-slate-400 font-medium">MI Number</span>
+            <span className="text-sm font-mono font-semibold text-gray-700 dark:text-slate-200">
+              {issue ? issue.id : 'Auto-generated on save'}
+            </span>
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Item *</label>
@@ -319,14 +371,33 @@ function StockIssueModal({ issue, products, contractors, onClose, onSave }: {
             </select>
           </div>
 
+          {totalPrice > 0 && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg px-4 py-2.5 flex items-center justify-between">
+              <span className="text-sm text-blue-700 dark:text-blue-300 font-medium">Total Price</span>
+              <span className="text-base font-bold text-blue-800 dark:text-blue-200">₹{totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Warehouse *</label>
+            <select value={form.warehouseId} onChange={e => setForm({ ...form, warehouseId: e.target.value })} required className={inputCls}>
+              <option value="">Select Warehouse</option>
+              {warehouses.filter(w => w.status !== 'ARCHIVED').map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+            </select>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Quantity *</label>
-              <input type="number" min="1" value={form.quantity} onChange={e => setForm({ ...form, quantity: e.target.value })} required className={inputCls} placeholder="e.g. 10" />
+              <input type="number" min="1" value={form.quantity}
+                onChange={e => setForm({ ...form, quantity: e.target.value })}
+                required className={inputCls} placeholder="e.g. 10" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Unit</label>
-              <input type="text" value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} className={inputCls} placeholder="e.g. Bags" />
+              <input type="text" value={form.unit}
+                onChange={e => setForm({ ...form, unit: e.target.value })}
+                className={inputCls} placeholder="e.g. Bags" />
             </div>
           </div>
 
@@ -340,7 +411,24 @@ function StockIssueModal({ issue, products, contractors, onClose, onSave }: {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Issue Date *</label>
-            <input type="date" value={form.issueDate} onChange={e => setForm({ ...form, issueDate: e.target.value })} required className={inputCls} />
+            <input type="date" value={form.issueDate}
+              onChange={e => setForm({ ...form, issueDate: e.target.value })}
+              required className={inputCls} />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">GST Number <span className="text-gray-400 text-xs font-normal">(optional)</span></label>
+              <input type="text" value={form.gstNumber}
+                onChange={e => setForm({ ...form, gstNumber: e.target.value.toUpperCase() })}
+                className={inputCls} placeholder="e.g. 27AAPFU0939F1ZV" maxLength={15} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Gate Pass <span className="text-gray-400 text-xs font-normal">(optional)</span></label>
+              <input type="text" value={form.gatePass}
+                onChange={e => setForm({ ...form, gatePass: e.target.value })}
+                className={inputCls} placeholder="e.g. GP-2026-001" />
+            </div>
           </div>
 
           <div>

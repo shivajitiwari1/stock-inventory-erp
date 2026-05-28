@@ -20,6 +20,11 @@ interface Warehouse {
   status?: string;
 }
 
+interface Product {
+  id: string;
+  name: string;
+}
+
 const CACHE_KEY = 'erp-stock-transfers';
 
 function readCache<T>(): T[] | null {
@@ -36,6 +41,7 @@ function writeCache<T>(list: T[]) {
 export default function StockTransfersPage() {
   const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const { canDo } = useAuth();
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -48,24 +54,25 @@ export default function StockTransfersPage() {
     if (cached) {
       setTransfers(cached);
       setLoading(false);
-      // Still fetch warehouses — needed for warehouseName() lookup and modal dropdowns
-      fetch('/api/warehouses')
-        .then(r => r.json())
-        .then(whData => setWarehouses(whData || []))
-        .catch(error => console.error('Failed to fetch warehouses:', error));
+      Promise.all([fetch('/api/warehouses'), fetch('/api/products')])
+        .then(([whRes, prRes]) => Promise.all([whRes.json(), prRes.json()]))
+        .then(([whData, prData]) => { setWarehouses(whData || []); setProducts(prData || []); })
+        .catch(error => console.error('Failed to fetch data:', error));
       return;
     }
     const fetchData = async () => {
       try {
-        const [trRes, whRes] = await Promise.all([
+        const [trRes, whRes, prRes] = await Promise.all([
           fetch('/api/stock-transfers'),
           fetch('/api/warehouses'),
+          fetch('/api/products'),
         ]);
-        const [trData, whData] = await Promise.all([trRes.json(), whRes.json()]);
+        const [trData, whData, prData] = await Promise.all([trRes.json(), whRes.json(), prRes.json()]);
         const list = trData || [];
         setTransfers(list);
         writeCache(list);
         setWarehouses(whData || []);
+        setProducts(prData || []);
       } catch (error) {
         console.error('Failed to fetch transfers:', error);
       } finally {
@@ -222,6 +229,7 @@ export default function StockTransfersPage() {
         <TransferModal
           transfer={editingTransfer}
           warehouses={warehouses}
+          products={products}
           onClose={() => { setShowModal(false); setEditingTransfer(null); }}
           onSave={(saved: Transfer) => {
             setTransfers(prev => {
@@ -240,17 +248,21 @@ export default function StockTransfersPage() {
   );
 }
 
-function TransferModal({ transfer, warehouses, onClose, onSave }: any) {
+function TransferModal({ transfer, warehouses, products, onClose, onSave }: any) {
   const [formData, setFormData] = useState(transfer || {
     fromWarehouseId: '',
     toWarehouseId: '',
     productName: '',
-    quantity: 0,
+    quantity: '',
     status: 'PENDING',
   });
 
   const sameWarehouse = formData.fromWarehouseId && formData.toWarehouseId &&
     formData.fromWarehouseId === formData.toWarehouseId;
+
+  const selectedProduct = products.find((p: any) => p.name === formData.productName);
+  const unitPrice = selectedProduct?.price || 0;
+  const totalPrice = unitPrice > 0 && formData.quantity ? unitPrice * Number(formData.quantity) : 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -312,29 +324,44 @@ function TransferModal({ transfer, warehouses, onClose, onSave }: any) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
-              <input
-                type="text"
-                placeholder="Product Name"
+              <label className="block text-sm font-medium text-gray-700 mb-1">Product</label>
+              <select
                 value={formData.productName}
                 onChange={(e) => setFormData({ ...formData, productName: e.target.value })}
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                 required
-              />
+              >
+                <option value="">Select product...</option>
+                {products.map((p: any) => (
+                  <option key={p.id} value={p.name}>{p.name}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
               <input
                 type="number"
-                placeholder="Quantity"
+                placeholder="Enter quantity"
                 value={formData.quantity}
-                onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
+                onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || '' })}
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                 required
                 min="1"
               />
             </div>
           </div>
+
+          {totalPrice > 0 && (
+            <div className="flex items-center justify-between bg-blue-600 rounded-lg px-4 py-3">
+              <span className="text-sm font-medium text-white">
+                Unit Price: ₹{unitPrice.toFixed(2)} × {formData.quantity}
+              </span>
+              <span className="text-lg font-bold text-white">
+                Total: ₹{totalPrice.toFixed(2)}
+              </span>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
             <select

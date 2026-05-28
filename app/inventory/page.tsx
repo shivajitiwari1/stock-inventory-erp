@@ -9,8 +9,6 @@ interface InventoryItem {
   productId: string;
   warehouseId: string;
   productName: string;
-  sku: string;
-  category: string;
   warehouseName: string;
   warehouseArchived: boolean;
   availableQuantity: number;
@@ -25,7 +23,6 @@ export default function InventoryPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [warehouseFilter, setWarehouseFilter] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showArchivedWh, setShowArchivedWh] = useState(false);
 
@@ -47,8 +44,6 @@ export default function InventoryPage() {
           return {
             ...item,
             productName: product.name || 'Unknown Product',
-            sku: product.sku || '-',
-            category: product.category || 'Unknown',
             warehouseName: warehouse.name || 'Unknown Warehouse',
             warehouseArchived: warehouse.status === 'ARCHIVED',
             minQuantity: product.minQuantity || 0,
@@ -67,23 +62,20 @@ export default function InventoryPage() {
 
   // Derived filter options
   const warehouses = useMemo(() => [...new Set(inventory.map(i => i.warehouseName))], [inventory]);
-  const categories = useMemo(() => [...new Set(inventory.map(i => i.category))], [inventory]);
 
   // Filtered list
   const filtered = useMemo(() => {
     return inventory.filter(item => {
       if (!showArchivedWh && item.warehouseArchived) return false;
       const matchSearch = !search ||
-        item.productName.toLowerCase().includes(search.toLowerCase()) ||
-        item.sku.toLowerCase().includes(search.toLowerCase());
+        item.productName.toLowerCase().includes(search.toLowerCase());
       const matchWarehouse = !warehouseFilter || item.warehouseName === warehouseFilter;
-      const matchCategory = !categoryFilter || item.category === categoryFilter;
       const status = item.availableQuantity === 0 ? 'out'
         : item.availableQuantity <= item.minQuantity ? 'low' : 'good';
       const matchStatus = !statusFilter || status === statusFilter;
-      return matchSearch && matchWarehouse && matchCategory && matchStatus;
+      return matchSearch && matchWarehouse && matchStatus;
     });
-  }, [inventory, search, warehouseFilter, categoryFilter, statusFilter, showArchivedWh]);
+  }, [inventory, search, warehouseFilter, statusFilter, showArchivedWh]);
 
   const exportXLS = async () => {
     const wb = new ExcelJS.Workbook();
@@ -96,8 +88,6 @@ export default function InventoryPage() {
 
     const columns = [
       { header: 'Product Name',  key: 'productName',        width: 28 },
-      { header: 'SKU',           key: 'sku',                width: 14 },
-      { header: 'Category',      key: 'category',           width: 16 },
       { header: 'Warehouse',     key: 'warehouseName',      width: 22 },
       { header: 'Available Qty', key: 'availableQuantity',  width: 14 },
       { header: 'Reserved Qty',  key: 'reservedQuantity',   width: 14 },
@@ -129,8 +119,6 @@ export default function InventoryPage() {
         : item.availableQuantity <= item.minQuantity ? 'Low Stock' : 'In Stock';
       const row = ws.addRow({
         productName:       item.productName,
-        sku:               item.sku,
-        category:          item.category,
         warehouseName:     item.warehouseName,
         availableQuantity: item.availableQuantity,
         reservedQuantity:  item.reservedQuantity || 0,
@@ -241,7 +229,7 @@ export default function InventoryPage() {
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
-              placeholder="Search by product name or SKU..."
+              placeholder="Search by product name..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -259,15 +247,6 @@ export default function InventoryPage() {
               {warehouses.map(w => <option key={w} value={w}>{w}</option>)}
             </select>
           </div>
-          {/* Category filter */}
-          <select
-            value={categoryFilter}
-            onChange={e => setCategoryFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">All Categories</option>
-            {categories.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
           {/* Status filter */}
           <select
             value={statusFilter}
@@ -280,9 +259,9 @@ export default function InventoryPage() {
             <option value="out">Out of Stock</option>
           </select>
           {/* Clear filters */}
-          {(search || warehouseFilter || categoryFilter || statusFilter) && (
+          {(search || warehouseFilter || statusFilter) && (
             <button
-              onClick={() => { setSearch(''); setWarehouseFilter(''); setCategoryFilter(''); setStatusFilter(''); }}
+              onClick={() => { setSearch(''); setWarehouseFilter(''); setStatusFilter(''); }}
               className="px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg border border-red-200 whitespace-nowrap"
             >
               Clear
@@ -317,8 +296,6 @@ export default function InventoryPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Product</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide hidden sm:table-cell">SKU</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide hidden md:table-cell">Category</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide hidden sm:table-cell">Warehouse</th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide">Available</th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide hidden md:table-cell">Reserved</th>
@@ -331,8 +308,8 @@ export default function InventoryPage() {
             <tbody className="bg-white divide-y divide-gray-100">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-6 py-12 text-center text-gray-400">
-                    No inventory records found{search || warehouseFilter || categoryFilter || statusFilter ? ' for the selected filters' : ''}.
+                  <td colSpan={8} className="px-6 py-12 text-center text-gray-400">
+                    No inventory records found{search || warehouseFilter || statusFilter ? ' for the selected filters' : ''}.
                   </td>
                 </tr>
               ) : filtered.map((item) => {
@@ -341,10 +318,6 @@ export default function InventoryPage() {
                 return (
                   <tr key={item.id} className={`hover:bg-gray-50 transition-colors duration-150 ${item.warehouseArchived ? 'opacity-60' : ''}`}>
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.productName}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600 font-mono hidden sm:table-cell">{item.sku}</td>
-                    <td className="px-6 py-4 text-sm hidden md:table-cell">
-                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">{item.category}</span>
-                    </td>
                     <td className="px-6 py-4 text-sm text-gray-600 hidden sm:table-cell">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span>{item.warehouseName}</span>
