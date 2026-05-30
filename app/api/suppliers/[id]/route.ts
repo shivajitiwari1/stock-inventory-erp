@@ -39,11 +39,11 @@ export async function PUT(request: NextRequest, context: any) {
       ]
     );
 
-    const [updated] = await d1Query('SELECT * FROM suppliers WHERE id = ?', [id]);
     const changes = diffFields(existing, body, ['name', 'email', 'phone', 'address', 'city', 'country', 'status']);
     if (changes) {
       await writeAuditLog({ action: 'UPDATE', entityType: 'supplier', entityId: id, changes });
     }
+    const [updated] = await d1Query('SELECT * FROM suppliers WHERE id = ?', [id]);
     return NextResponse.json(updated);
   } catch (error) {
     return NextResponse.json({ error: 'Failed to update supplier' }, { status: 500 });
