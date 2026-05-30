@@ -158,7 +158,11 @@ export default function SuppliersPage() {
               )}
               {filteredSuppliers.map((supplier: any) => (
                 <tr key={supplier.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{supplier.name}</td>
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                    <button onClick={() => setViewingSupplier(supplier)} className="hover:text-blue-600 hover:underline text-left">
+                      {supplier.name}
+                    </button>
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-500 hidden sm:table-cell">{supplier.email}</td>
                   <td className="px-6 py-4 text-sm text-gray-500 hidden md:table-cell">{supplier.phone}</td>
                   <td className="px-6 py-4 text-sm text-gray-500 hidden md:table-cell">{supplier.city}, {supplier.country}</td>
