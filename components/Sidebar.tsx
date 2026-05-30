@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -27,6 +27,15 @@ export const Sidebar: React.FC = () => {
   const { user, logout, hasPermission, canView } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { isOpen, isMobile, toggle, close } = useSidebar();
+  const navRef = useRef<HTMLElement>(null);
+  const savedScrollTop = useRef<number>(0);
+
+  // Restore nav scroll position after Next.js navigation (browser auto-scrolls to active link)
+  useEffect(() => {
+    if (navRef.current) {
+      navRef.current.scrollTop = savedScrollTop.current;
+    }
+  }, [pathname]);
 
   const menuItems = [
     { href: '/',                  label: 'Dashboard',       icon: FiHome,         roles: ['ADMIN', 'INVENTORY_MANAGER', 'STAFF'] },
@@ -92,14 +101,9 @@ export const Sidebar: React.FC = () => {
     return (
       <Link
         href={href}
-        onClick={(e) => {
+        onClick={() => {
           if (isMobile) close();
-          // Prevent browser from scrolling the nav to show the focused link
-          const nav = e.currentTarget.closest('nav');
-          if (nav) {
-            const saved = nav.scrollTop;
-            requestAnimationFrame(() => { nav.scrollTop = saved; });
-          }
+          if (navRef.current) savedScrollTop.current = navRef.current.scrollTop;
         }}
         className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
           isActive
@@ -150,7 +154,7 @@ export const Sidebar: React.FC = () => {
         </div>
 
         {/* Navigation */}
-        <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
+        <nav ref={navRef} className="p-4 space-y-1 flex-1 overflow-y-auto">
           {menuItems.map((item) => (
             <NavItem key={item.href} {...item} />
           ))}
