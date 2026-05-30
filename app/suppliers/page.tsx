@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/AuthContext';
-import { FiPlus, FiEdit, FiTrash2, FiSearch, FiFilter, FiX, FiLoader, FiFileText } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiSearch, FiFilter, FiX, FiLoader, FiFileText, FiClock } from 'react-icons/fi';
+import HistoryPanel from '@/components/HistoryPanel';
 
 interface Supplier {
   id: string;
@@ -39,6 +40,7 @@ export default function SuppliersPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [viewingSupplier, setViewingSupplier] = useState<Supplier | null>(null);
+  const [historyTarget, setHistoryTarget] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     const cached = readCache<Supplier>();
@@ -190,6 +192,13 @@ export default function SuppliersPage() {
                           : <FiTrash2 className="w-4 h-4" />}
                       </button>
                     )}
+                    <button
+                      onClick={() => setHistoryTarget({ id: supplier.id, name: supplier.name })}
+                      className="text-purple-500 hover:text-purple-700 inline-block"
+                      title="View History"
+                    >
+                      <FiClock className="w-4 h-4" />
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -220,6 +229,15 @@ export default function SuppliersPage() {
         <SupplierTransactionsModal
           supplier={viewingSupplier}
           onClose={() => setViewingSupplier(null)}
+        />
+      )}
+
+      {historyTarget && (
+        <HistoryPanel
+          entityType="supplier"
+          entityId={historyTarget.id}
+          entityName={historyTarget.name}
+          onClose={() => setHistoryTarget(null)}
         />
       )}
     </div>
