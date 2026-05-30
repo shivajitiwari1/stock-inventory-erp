@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FiPlus, FiEdit, FiTrash2, FiSearch, FiX, FiLoader } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiSearch, FiX, FiLoader, FiClock } from 'react-icons/fi';
 import { useAuth } from '@/components/AuthContext';
+import HistoryPanel from '@/components/HistoryPanel';
 
 interface Contractor {
   id: string;
@@ -41,6 +42,7 @@ export default function ContractorsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [historyTarget, setHistoryTarget] = useState<{ id: string; name: string } | null>(null);
   const { canDo } = useAuth();
 
   useEffect(() => {
@@ -175,6 +177,13 @@ export default function ContractorsPage() {
                         : <FiTrash2 className="w-4 h-4" />}
                     </button>
                     )}
+                    <button
+                      onClick={() => setHistoryTarget({ id: c.id, name: c.name })}
+                      className="text-purple-500 hover:text-purple-700 inline-block"
+                      title="View History"
+                    >
+                      <FiClock className="w-4 h-4" />
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -198,6 +207,14 @@ export default function ContractorsPage() {
             setShowModal(false);
             setEditing(null);
           }}
+        />
+      )}
+      {historyTarget && (
+        <HistoryPanel
+          entityType="contractor"
+          entityId={historyTarget.id}
+          entityName={historyTarget.name}
+          onClose={() => setHistoryTarget(null)}
         />
       )}
     </div>
