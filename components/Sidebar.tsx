@@ -182,7 +182,7 @@ export const Sidebar: React.FC = () => {
         </div>
 
         {/* Navigation */}
-        <nav ref={navRef} className="p-4 space-y-1 flex-1 overflow-y-auto">
+        <nav ref={navRef} className="p-4 space-y-1 flex-1 min-h-0 overflow-y-auto">
           {menuItems.map((item) => (
             <NavItem
               key={item.href}
