@@ -5,7 +5,6 @@ import { verifySessionToken, COOKIE_NAME } from '@/lib/session';
 const PUBLIC_ROUTES = [
   '/login',
   '/api/auth/login',
-  '/api/migrate',
 ];
 
 export async function proxy(request: NextRequest) {
