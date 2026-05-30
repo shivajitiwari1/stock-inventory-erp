@@ -1,18 +1,1 @@
-{
-  "supplyReceipts": [
-    {
-      "id": "SR1778949308228",
-      "supplierId": "SUP001",
-      "supplierName": "Tech Supplies Inc",
-      "warehouseId": "WH001",
-      "warehouseName": "Main Warehouse",
-      "dateTime": "2026-05-16T22:04:00",
-      "verifiedBy": "Alok",
-      "totalAmount": 12000,
-      "gatePassNumber": "234234234234",
-      "items": [],
-      "receiptFile": "/uploads/receipts/SR1778949308228.pdf",
-      "createdAt": "2026-05-16T16:35:08.228Z"
-    }
-  ]
-}
+{"supplyReceipts":[]}
