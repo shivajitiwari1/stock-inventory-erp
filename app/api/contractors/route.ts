@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { d1Query, d1Run } from '@/lib/d1';
+import { writeAuditLog } from '@/lib/auditLog';
 
 export async function GET() {
   try {
@@ -29,6 +30,8 @@ export async function POST(request: NextRequest) {
         now,
       ]
     );
+
+    await writeAuditLog({ action: 'CREATE', entityType: 'contractor', entityId: id, details: body.name });
 
     const [newContractor] = await d1Query('SELECT * FROM contractors WHERE id = ?', [id]);
     return NextResponse.json(newContractor, { status: 201 });
