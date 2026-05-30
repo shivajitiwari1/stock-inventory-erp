@@ -262,7 +262,7 @@ function ReceiptModal({ receipt, suppliers, warehouses, products, onClose, onSav
     setForm(f => ({ ...f, warehouseId: id, warehouseName: w?.name || '' }));
   };
 
-  const UNIT_OPTIONS = ['Bags', 'Kg', 'Tonnes', 'Pieces', 'Nos', 'Meters', 'Liters', 'Cubic Meters', 'Cubic Feet', 'Bundles', 'Rolls', 'Sheets', 'Boxes'];
+  const UNIT_OPTIONS = ['PCS', 'KG', 'BOX', 'LTR', 'MTR', 'BAG', 'TON'];
 
   const addItem = () => setForm(f => ({ ...f, items: [...f.items, { productId: '', productName: '', quantity: 0, unit: '' }] }));
   const removeItem = (i: number) => setForm(f => ({ ...f, items: f.items.filter((_, idx) => idx !== i) }));
