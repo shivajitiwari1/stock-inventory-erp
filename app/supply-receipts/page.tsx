@@ -262,7 +262,9 @@ function ReceiptModal({ receipt, suppliers, warehouses, products, onClose, onSav
     setForm(f => ({ ...f, warehouseId: id, warehouseName: w?.name || '' }));
   };
 
-  const addItem = () => setForm(f => ({ ...f, items: [...f.items, { productId: '', productName: '', quantity: 1, unit: '' }] }));
+  const UNIT_OPTIONS = ['Bags', 'Kg', 'Tonnes', 'Pieces', 'Nos', 'Meters', 'Liters', 'Cubic Meters', 'Cubic Feet', 'Bundles', 'Rolls', 'Sheets', 'Boxes'];
+
+  const addItem = () => setForm(f => ({ ...f, items: [...f.items, { productId: '', productName: '', quantity: 0, unit: '' }] }));
   const removeItem = (i: number) => setForm(f => ({ ...f, items: f.items.filter((_, idx) => idx !== i) }));
 
   const updateItem = (i: number, field: keyof ReceiptItem, value: string | number) => {
@@ -406,14 +408,17 @@ function ReceiptModal({ receipt, suppliers, warehouses, products, onClose, onSav
                           </select>
                         </td>
                         <td className="px-1 py-1">
-                          <input type="number" min="1" value={item.quantity}
+                          <input type="number" min="1" value={item.quantity || ''}
                             onChange={e => updateItem(i, 'quantity', Number(e.target.value))}
+                            placeholder="0"
                             className="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded focus:ring-1 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 text-xs" />
                         </td>
                         <td className="px-1 py-1">
-                          <input type="text" value={item.unit} placeholder="e.g. Bags"
-                            onChange={e => updateItem(i, 'unit', e.target.value)}
-                            className="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded focus:ring-1 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 text-xs" />
+                          <select value={item.unit} onChange={e => updateItem(i, 'unit', e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-300 dark:border-slate-600 rounded focus:ring-1 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 text-xs">
+                            <option value="">Select Unit</option>
+                            {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
+                          </select>
                         </td>
                         <td className="px-1 py-1 text-center">
                           <button type="button" onClick={() => removeItem(i)} className="text-red-500 hover:text-red-700 text-xs">✕</button>

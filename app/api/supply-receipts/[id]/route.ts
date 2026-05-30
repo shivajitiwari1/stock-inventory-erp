@@ -22,9 +22,41 @@ export async function PUT(request: NextRequest, context: any) {
     if (existing.length === 0) return NextResponse.json({ error: 'Receipt not found' }, { status: 404 });
 
     const receiptFile = body.receiptFile ?? existing[0].receiptFile ?? '';
-
-    // Ensure dateTime is stored as a plain ISO string (no trailing ':00' duplication)
     const dateTime = (body.dateTime || '').replace(/T(\d{2}:\d{2})$/, 'T$1:00');
+    const oldWarehouseId: string = existing[0].warehouseId;
+    const oldItems: any[] = JSON.parse(existing[0].items || '[]');
+    const newItems: any[] = body.items || [];
+    const newWarehouseId: string = body.warehouseId || oldWarehouseId;
+    const now = new Date().toISOString();
+
+    // Reverse old inventory contributions
+    for (const item of oldItems) {
+      if (!item.productId || !oldWarehouseId || !(Number(item.quantity) > 0)) continue;
+      const qty = Number(item.quantity);
+      await d1Run(
+        'UPDATE inventory SET availableQuantity = MAX(0, availableQuantity - ?), totalQuantity = MAX(0, totalQuantity - ?), lastUpdated = ? WHERE productId = ? AND warehouseId = ?',
+        [qty, qty, now, item.productId, oldWarehouseId]
+      );
+    }
+
+    // Apply new inventory contributions
+    for (const item of newItems) {
+      if (!item.productId || !newWarehouseId || !(Number(item.quantity) > 0)) continue;
+      const qty = Number(item.quantity);
+      const [inv] = await d1Query('SELECT id FROM inventory WHERE productId = ? AND warehouseId = ?', [item.productId, newWarehouseId]);
+      if (inv) {
+        await d1Run(
+          'UPDATE inventory SET availableQuantity = availableQuantity + ?, totalQuantity = totalQuantity + ?, lastUpdated = ? WHERE productId = ? AND warehouseId = ?',
+          [qty, qty, now, item.productId, newWarehouseId]
+        );
+      } else {
+        const invId = Date.now().toString() + Math.random().toString(36).slice(2);
+        await d1Run(
+          'INSERT INTO inventory (id, productId, warehouseId, availableQuantity, reservedQuantity, totalQuantity, damagedQuantity, lostQuantity, lastUpdated) VALUES (?, ?, ?, ?, 0, ?, 0, 0, ?)',
+          [invId, item.productId, newWarehouseId, qty, qty, now]
+        );
+      }
+    }
 
     await d1Run(
       `UPDATE supply_receipts SET
@@ -35,13 +67,13 @@ export async function PUT(request: NextRequest, context: any) {
       [
         body.supplierId || existing[0].supplierId,
         body.supplierName || existing[0].supplierName,
-        body.warehouseId || existing[0].warehouseId,
+        newWarehouseId,
         body.warehouseName || existing[0].warehouseName,
         dateTime || existing[0].dateTime,
         body.verifiedBy ?? existing[0].verifiedBy ?? '',
         Number(body.totalAmount) || 0,
         body.gatePassNumber ?? existing[0].gatePassNumber ?? '',
-        JSON.stringify(body.items || []),
+        JSON.stringify(newItems),
         receiptFile,
         id,
       ]
@@ -51,13 +83,13 @@ export async function PUT(request: NextRequest, context: any) {
       ...existing[0],
       supplierId: body.supplierId,
       supplierName: body.supplierName,
-      warehouseId: body.warehouseId,
+      warehouseId: newWarehouseId,
       warehouseName: body.warehouseName,
-      dateTime: dateTime,
+      dateTime,
       verifiedBy: body.verifiedBy,
       totalAmount: Number(body.totalAmount),
       gatePassNumber: body.gatePassNumber || '',
-      items: body.items || [],
+      items: newItems,
       receiptFile,
     };
 
