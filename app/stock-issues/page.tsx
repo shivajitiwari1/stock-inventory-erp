@@ -174,7 +174,7 @@ export default function StockIssuesPage() {
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden md:table-cell">Gate Pass</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden md:table-cell">Issue Date</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide sticky right-0 bg-gray-50 dark:bg-slate-700 z-10">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
@@ -182,7 +182,7 @@ export default function StockIssuesPage() {
                 <tr><td colSpan={8} className="px-6 py-10 text-center text-gray-400">No stock issues found.</td></tr>
               )}
               {filtered.map(issue => (
-                <tr key={issue.id} className="hover:bg-gray-50 dark:hover:bg-slate-700">
+                <tr key={issue.id} className="group hover:bg-gray-50 dark:hover:bg-slate-700">
                   <td className="px-6 py-4 text-xs font-mono text-gray-500 dark:text-slate-400 hidden sm:table-cell">{issue.id}</td>
                   <td className="px-6 py-4">
                     <div className="text-sm font-medium text-gray-900 dark:text-slate-100">{issue.productName}</div>
@@ -199,7 +199,7 @@ export default function StockIssuesPage() {
                   <td className="px-6 py-4 text-sm">
                     <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusBadge(issue.status)}`}>{issue.status}</span>
                   </td>
-                  <td className="px-6 py-4 text-sm space-x-2">
+                  <td className="px-6 py-4 text-sm space-x-2 sticky right-0 bg-white dark:bg-slate-800 group-hover:bg-gray-50 dark:group-hover:bg-slate-700 z-10">
                     {canDo('stock-issues', 'edit') && (
                       <button onClick={() => { setEditing(issue); setShowModal(true); }} className="text-blue-600 hover:text-blue-800 inline-block">
                         <FiEdit className="w-4 h-4" />
