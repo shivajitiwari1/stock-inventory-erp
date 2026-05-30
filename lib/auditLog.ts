@@ -10,22 +10,26 @@ interface AuditEntry {
 
 export async function writeAuditLog(entry: AuditEntry): Promise<void> {
   const id = `${Date.now()}${Math.random().toString(36).slice(2)}`
-  await d1Run(
-    `INSERT INTO audit_logs (id, action, entityType, entityId, userId, userName, changes, timestamp, ipAddress, details)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      id,
-      entry.action,
-      entry.entityType,
-      entry.entityId,
-      null,
-      null,
-      entry.changes ? JSON.stringify(entry.changes) : null,
-      new Date().toISOString(),
-      null,
-      entry.details ?? null,
-    ]
-  )
+  try {
+    await d1Run(
+      `INSERT INTO audit_logs (id, action, entityType, entityId, userId, userName, changes, timestamp, ipAddress, details)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        entry.action,
+        entry.entityType,
+        entry.entityId,
+        null,
+        null,
+        entry.changes ? JSON.stringify(entry.changes) : null,
+        new Date().toISOString(),
+        null,
+        entry.details ?? null,
+      ]
+    )
+  } catch (err) {
+    console.error('[auditLog] Failed to write audit entry:', err)
+  }
 }
 
 export function diffFields(
