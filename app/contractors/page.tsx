@@ -50,7 +50,6 @@ export default function ContractorsPage() {
     if (cached) {
       setContractors(cached);
       setLoading(false);
-      return;
     }
     fetch('/api/contractors')
       .then(r => r.json())

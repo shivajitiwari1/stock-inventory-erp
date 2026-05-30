@@ -47,9 +47,8 @@ export default function SuppliersPage() {
     if (cached) {
       setSuppliers(cached);
       setLoading(false);
-    } else {
-      fetchSuppliers();
     }
+    fetchSuppliers();
   }, []);
 
   const fetchSuppliers = async () => {

@@ -94,9 +94,8 @@ const UsersPage: React.FC = () => {
       setUsers(cachedUsers);
       setRoles(cachedRoles);
       setLoading(false);
-      return;
     }
-    // fall back to API
+    // always fetch fresh
     Promise.all([fetch('/api/users'), fetch('/api/roles')])
       .then(([uRes, rRes]) => Promise.all([uRes.json(), rRes.json()]))
       .then(([uData, rData]) => {

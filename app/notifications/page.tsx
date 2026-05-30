@@ -69,9 +69,6 @@ export default function NotificationsPage() {
     if (cached) {
       setNotifications(cached);
       setLoading(false);
-      // Still fetch users (lightweight, no caching needed)
-      fetch('/api/users').then(r => r.json()).then(d => setUsers(d.users || []));
-      return;
     }
     Promise.all([
       fetch('/api/notifications').then(r => r.json()),

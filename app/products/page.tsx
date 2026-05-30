@@ -50,17 +50,8 @@ export default function ProductsPage() {
     if (cached) {
       setProducts(cached);
       setLoading(false);
-      Promise.all([fetch('/api/inventory'), fetch('/api/warehouses'), fetch('/api/suppliers')])
-        .then(([invRes, whRes, suppRes]) => Promise.all([invRes.json(), whRes.json(), suppRes.json()]))
-        .then(([invData, whData, suppData]) => {
-          setInventory(invData || []);
-          setWarehouses(whData || []);
-          setSuppliers(suppData.suppliers || suppData || []);
-        })
-        .catch(err => console.error('Failed to fetch data:', err));
-    } else {
-      fetchData();
     }
+    fetchData();
   }, []);
 
   const fetchData = async () => {

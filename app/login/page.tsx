@@ -21,6 +21,7 @@ export default function LoginPage() {
     try {
       const success = await login(email, password);
       if (success) {
+        try { sessionStorage.clear(); } catch {}
         router.replace('/');
       } else {
         setError('Invalid email or password.');

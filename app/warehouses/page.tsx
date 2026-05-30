@@ -48,9 +48,8 @@ export default function WarehousesPage() {
     if (cached) {
       setWarehouses(cached);
       setLoading(false);
-    } else {
-      fetchWarehouses();
     }
+    fetchWarehouses();
   }, []);
 
   const fetchWarehouses = async () => {
