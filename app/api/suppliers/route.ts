@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { d1Query, d1Run } from '@/lib/d1';
-import { writeAuditLog } from '@/lib/auditLog';
+import { writeAuditLog, getAuditUser } from '@/lib/auditLog';
 
 export async function GET() {
   try {
@@ -34,7 +34,8 @@ export async function POST(request: NextRequest) {
     );
 
     const [newSupplier] = await d1Query('SELECT * FROM suppliers WHERE id = ?', [id]);
-    await writeAuditLog({ action: 'CREATE', entityType: 'supplier', entityId: id, details: body.name });
+    const { userId, userName } = await getAuditUser(request);
+    await writeAuditLog({ action: 'CREATE', entityType: 'supplier', entityId: id, details: body.name, userId, userName });
     return NextResponse.json(newSupplier, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to create supplier' }, { status: 500 });

@@ -1,4 +1,5 @@
-import { d1Run } from '@/lib/d1'
+import { NextRequest } from 'next/server'
+import { d1Query, d1Run } from '@/lib/d1'
 
 interface AuditEntry {
   action: 'CREATE' | 'UPDATE' | 'DELETE'
@@ -6,6 +7,19 @@ interface AuditEntry {
   entityId: string
   details?: string | null
   changes?: Record<string, { from: string; to: string }> | null
+  userId?: string | null
+  userName?: string | null
+}
+
+export async function getAuditUser(request: NextRequest): Promise<{ userId: string | null; userName: string | null }> {
+  const userId = request.headers.get('x-user-id')
+  if (!userId) return { userId: null, userName: null }
+  try {
+    const [user] = await d1Query<{ name: string }>('SELECT name FROM users WHERE id = ?', [userId])
+    return { userId, userName: user?.name ?? null }
+  } catch {
+    return { userId, userName: null }
+  }
 }
 
 export async function writeAuditLog(entry: AuditEntry): Promise<void> {
@@ -19,8 +33,8 @@ export async function writeAuditLog(entry: AuditEntry): Promise<void> {
         entry.action,
         entry.entityType,
         entry.entityId,
-        null,
-        null,
+        entry.userId ?? null,
+        entry.userName ?? null,
         entry.changes ? JSON.stringify(entry.changes) : null,
         new Date().toISOString(),
         null,

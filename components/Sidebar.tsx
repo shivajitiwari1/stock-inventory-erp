@@ -160,7 +160,7 @@ export const Sidebar: React.FC = () => {
         />
       )}
 
-      <aside className={`${sidebarWidth} ${sidebarTranslate} bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 transition-all duration-300 fixed h-screen overflow-y-auto flex flex-col z-40`}>
+      <aside className={`${sidebarWidth} ${sidebarTranslate} bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 transition-all duration-300 fixed h-screen overflow-hidden flex flex-col z-40`}>
 
         {/* Header */}
         <div className={`border-b border-gray-200 dark:border-slate-700 shrink-0 ${showLabel ? 'p-4 flex items-center justify-between' : 'px-2 py-3 flex items-start justify-between gap-1'}`}>

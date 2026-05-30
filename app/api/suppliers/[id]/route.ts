@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { d1Query, d1Run } from '@/lib/d1';
-import { writeAuditLog, diffFields } from '@/lib/auditLog';
+import { writeAuditLog, diffFields, getAuditUser } from '@/lib/auditLog';
 
 export async function GET(_request: NextRequest, context: any) {
   const { id } = await context.params;
@@ -41,7 +41,8 @@ export async function PUT(request: NextRequest, context: any) {
 
     const changes = diffFields(existing, body, ['name', 'email', 'phone', 'address', 'city', 'country', 'status']);
     if (changes) {
-      await writeAuditLog({ action: 'UPDATE', entityType: 'supplier', entityId: id, changes });
+      const { userId, userName } = await getAuditUser(request);
+      await writeAuditLog({ action: 'UPDATE', entityType: 'supplier', entityId: id, changes, userId, userName });
     }
     const [updated] = await d1Query('SELECT * FROM suppliers WHERE id = ?', [id]);
     return NextResponse.json(updated);
@@ -50,7 +51,7 @@ export async function PUT(request: NextRequest, context: any) {
   }
 }
 
-export async function DELETE(_request: NextRequest, context: any) {
+export async function DELETE(request: NextRequest, context: any) {
   const { id } = await context.params;
   try {
     const [existing] = await d1Query('SELECT * FROM suppliers WHERE id = ?', [id]);
@@ -58,8 +59,9 @@ export async function DELETE(_request: NextRequest, context: any) {
       return NextResponse.json({ error: 'Supplier not found' }, { status: 404 });
     }
 
+    const { userId, userName } = await getAuditUser(request);
     await d1Run('DELETE FROM suppliers WHERE id = ?', [id]);
-    await writeAuditLog({ action: 'DELETE', entityType: 'supplier', entityId: id, details: existing.name });
+    await writeAuditLog({ action: 'DELETE', entityType: 'supplier', entityId: id, details: existing.name, userId, userName });
     return NextResponse.json({ message: 'Supplier deleted successfully' });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to delete supplier' }, { status: 500 });
