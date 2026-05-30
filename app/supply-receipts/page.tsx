@@ -251,6 +251,7 @@ function ReceiptModal({ receipt, suppliers, warehouses, products, onClose, onSav
   const [saving, setSaving] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [showItems, setShowItems] = useState((receipt?.items?.length || 0) > 0);
+  const [dupWarning, setDupWarning] = useState<string | null>(null);
 
   const setSupplier = (id: string) => {
     const s = suppliers.find(s => s.id === id);
@@ -268,6 +269,15 @@ function ReceiptModal({ receipt, suppliers, warehouses, products, onClose, onSav
   const removeItem = (i: number) => setForm(f => ({ ...f, items: f.items.filter((_, idx) => idx !== i) }));
 
   const updateItem = (i: number, field: keyof ReceiptItem, value: string | number) => {
+    if (field === 'productId' && value) {
+      const isDup = form.items.some((item, idx) => idx !== i && item.productId === value);
+      if (isDup) {
+        const name = products.find(p => p.id === value)?.name || 'This product';
+        setDupWarning(`${name} is already added. Remove the duplicate row or adjust its quantity.`);
+        return;
+      }
+    }
+    setDupWarning(null);
     setForm(f => {
       const items = [...f.items];
       if (field === 'productId') {
@@ -388,6 +398,12 @@ function ReceiptModal({ receipt, suppliers, warehouses, products, onClose, onSav
             </button>
             {showItems && (
               <div className="p-3">
+                {dupWarning && (
+                  <div className="flex items-start gap-2 mb-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-300 rounded-lg px-3 py-2 text-xs">
+                    <span>⚠ {dupWarning}</span>
+                    <button type="button" onClick={() => setDupWarning(null)} className="ml-auto shrink-0 text-yellow-600 hover:text-yellow-800">✕</button>
+                  </div>
+                )}
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-gray-50 dark:bg-slate-700">
