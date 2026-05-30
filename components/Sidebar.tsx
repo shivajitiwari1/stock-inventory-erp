@@ -92,7 +92,15 @@ export const Sidebar: React.FC = () => {
     return (
       <Link
         href={href}
-        onClick={() => isMobile && close()}
+        onClick={(e) => {
+          if (isMobile) close();
+          // Prevent browser from scrolling the nav to show the focused link
+          const nav = e.currentTarget.closest('nav');
+          if (nav) {
+            const saved = nav.scrollTop;
+            requestAnimationFrame(() => { nav.scrollTop = saved; });
+          }
+        }}
         className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
           isActive
             ? 'bg-blue-600 text-white'
