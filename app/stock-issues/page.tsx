@@ -32,21 +32,14 @@ const statusBadge = (status: string) => {
     'Issued': 'bg-green-100 text-green-700',
     'Partially Returned': 'bg-yellow-100 text-yellow-700',
     'Fully Returned': 'bg-blue-100 text-blue-700',
-    'Completed': 'bg-purple-100 text-purple-700',
+    'Completed': 'bg-purple-600 text-white',
     'Damaged': 'bg-red-100 text-red-700',
-    'Lost': 'bg-red-200 text-red-900',
+    'Lost': 'bg-red-600 text-white',
   };
   return map[status] || 'bg-gray-100 text-gray-600';
 };
 
 const CACHE_KEY = 'erp-stock-issues-v2';
-
-function readCache<T>(): T[] | null {
-  try {
-    const raw = sessionStorage.getItem(CACHE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
-}
 
 function writeCache<T>(list: T[]) {
   try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(list)); } catch {}
@@ -67,21 +60,6 @@ export default function StockIssuesPage() {
   const { canDo } = useAuth();
 
   useEffect(() => {
-    const cached = readCache<StockIssue>();
-    if (cached) {
-      setIssues(cached);
-      setLoading(false);
-      Promise.all([
-        fetch('/api/products').then(r => r.json()),
-        fetch('/api/contractors').then(r => r.json()),
-        fetch('/api/warehouses').then(r => r.json()),
-      ]).then(([prods, cons, whs]) => {
-        setProducts(Array.isArray(prods) ? prods : []);
-        setContractors(Array.isArray(cons) ? cons : []);
-        setWarehouses(Array.isArray(whs) ? whs : []);
-      }).catch(err => console.error('Failed to load auxiliary data:', err));
-      return;
-    }
     Promise.all([
       fetch('/api/stock-issues').then(r => r.json()),
       fetch('/api/products').then(r => r.json()),
@@ -108,7 +86,7 @@ export default function StockIssuesPage() {
     writeCache(updated);
     try {
       const res = await fetch(`/api/stock-issues/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error(`${res.status}`);
+      if (!res.ok && res.status !== 404) throw new Error(`${res.status}`);
     } catch {
       setIssues(previous);
       writeCache(previous);
