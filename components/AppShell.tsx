@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from './AuthContext';
 import Sidebar from './Sidebar';
@@ -14,12 +14,17 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLoginPage = pathname === '/login';
   const { isOpen, isMobile, toggle } = useSidebar();
+  const mainRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (isLoading) return;
     if (!user && !isLoginPage) router.replace('/login');
     if (user && isLoginPage) router.replace('/');
   }, [user, isLoading, isLoginPage, router]);
+
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0 });
+  }, [pathname]);
 
   if (isLoading) {
     return (
@@ -35,7 +40,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const mainMargin = isMobile ? 'ml-0' : isOpen ? 'ml-56' : 'ml-24';
 
   return (
-    <div className="min-h-screen flex w-full overflow-x-hidden">
+    <div className="h-screen flex w-full overflow-hidden">
       <Sidebar />
 
       {/* Mobile top bar */}
@@ -49,7 +54,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         <span className="text-lg font-bold text-gray-800 dark:text-slate-100">Stock ERP</span>
       </div>
 
-      <main className={`flex-1 ${mainMargin} pt-20 lg:pt-4 px-2 pb-4 lg:px-3 min-h-screen bg-gray-50 dark:bg-slate-900 transition-all duration-300 min-w-0`}>
+      <main ref={mainRef} className={`flex-1 ${mainMargin} pt-20 lg:pt-4 px-2 pb-4 lg:px-3 overflow-y-auto bg-gray-50 dark:bg-slate-900 transition-all duration-300 min-w-0`}>
         <NotificationBanner />
         {children}
       </main>
