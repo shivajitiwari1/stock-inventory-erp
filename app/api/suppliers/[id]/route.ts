@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { d1Query, d1Run } from '@/lib/d1';
-import { writeAuditLog, diffFields, getAuditUser } from '@/lib/auditLog';
+import { writeAuditLog, diffFields, getAuditUser, getClientIp } from '@/lib/auditLog';
 
 export async function GET(_request: NextRequest, context: any) {
   const { id } = await context.params;
@@ -42,7 +42,8 @@ export async function PUT(request: NextRequest, context: any) {
     const changes = diffFields(existing, body, ['name', 'email', 'phone', 'address', 'city', 'country', 'status']);
     if (changes) {
       const { userId, userName } = await getAuditUser(request);
-      await writeAuditLog({ action: 'UPDATE', entityType: 'supplier', entityId: id, changes, userId, userName });
+      const ipAddress = getClientIp(request);
+      await writeAuditLog({ action: 'UPDATE', entityType: 'supplier', entityId: id, changes, userId, userName, ipAddress });
     }
     const [updated] = await d1Query('SELECT * FROM suppliers WHERE id = ?', [id]);
     return NextResponse.json(updated);
@@ -60,8 +61,9 @@ export async function DELETE(request: NextRequest, context: any) {
     }
 
     const { userId, userName } = await getAuditUser(request);
+    const ipAddress = getClientIp(request);
     await d1Run('DELETE FROM suppliers WHERE id = ?', [id]);
-    await writeAuditLog({ action: 'DELETE', entityType: 'supplier', entityId: id, details: existing.name, userId, userName });
+    await writeAuditLog({ action: 'DELETE', entityType: 'supplier', entityId: id, details: existing.name, userId, userName, ipAddress });
     return NextResponse.json({ message: 'Supplier deleted successfully' });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to delete supplier' }, { status: 500 });

@@ -9,6 +9,13 @@ interface AuditEntry {
   changes?: Record<string, { from: string; to: string }> | null
   userId?: string | null
   userName?: string | null
+  ipAddress?: string | null
+}
+
+export function getClientIp(request: NextRequest): string | null {
+  return request.headers.get('x-forwarded-for')?.split(',')[0].trim()
+    ?? request.headers.get('x-real-ip')
+    ?? null
 }
 
 export async function getAuditUser(request: NextRequest): Promise<{ userId: string | null; userName: string | null }> {
@@ -37,7 +44,7 @@ export async function writeAuditLog(entry: AuditEntry): Promise<void> {
         entry.userName ?? null,
         entry.changes ? JSON.stringify(entry.changes) : null,
         new Date().toISOString(),
-        null,
+        entry.ipAddress ?? null,
         entry.details ?? null,
       ]
     )

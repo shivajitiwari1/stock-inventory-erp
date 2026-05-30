@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { d1Query, d1Run } from '@/lib/d1';
-import { writeAuditLog, getAuditUser } from '@/lib/auditLog';
+import { writeAuditLog, getAuditUser, getClientIp } from '@/lib/auditLog';
 
 export async function GET() {
   try {
@@ -32,7 +32,8 @@ export async function POST(request: NextRequest) {
     );
 
     const { userId, userName } = await getAuditUser(request);
-    await writeAuditLog({ action: 'CREATE', entityType: 'contractor', entityId: id, details: body.name, userId, userName });
+    const ipAddress = getClientIp(request);
+    await writeAuditLog({ action: 'CREATE', entityType: 'contractor', entityId: id, details: body.name, userId, userName, ipAddress });
 
     const [newContractor] = await d1Query('SELECT * FROM contractors WHERE id = ?', [id]);
     return NextResponse.json(newContractor, { status: 201 });

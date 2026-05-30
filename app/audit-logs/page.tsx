@@ -11,6 +11,7 @@ interface AuditLog {
   userName: string;
   details: string;
   timestamp: string;
+  ipAddress: string | null;
 }
 
 export default function AuditLogsPage() {
@@ -61,12 +62,13 @@ export default function AuditLogsPage() {
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Action</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Entity</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Details</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">IP Address</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {logs.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-gray-400">No audit logs found.</td>
+                  <td colSpan={6} className="px-6 py-10 text-center text-gray-400">No audit logs found.</td>
                 </tr>
               ) : logs.map((log) => (
                 <tr key={log.id} className="hover:bg-gray-50">
@@ -81,6 +83,7 @@ export default function AuditLogsPage() {
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500 hidden md:table-cell">{log.entityType} {log.entityId}</td>
                   <td className="px-6 py-4 text-sm text-gray-500 hidden md:table-cell">{log.details}</td>
+                  <td className="px-6 py-4 text-sm text-gray-400 font-mono hidden lg:table-cell">{log.ipAddress ?? '—'}</td>
                 </tr>
               ))}
             </tbody>
