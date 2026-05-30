@@ -14,6 +14,48 @@ import { useTheme } from './ThemeContext';
 import { LoginModal } from './LoginModal';
 import { useSidebar } from './SidebarContext';
 
+// NavItem is defined OUTSIDE Sidebar so its reference is stable across renders.
+// If defined inside, React sees a new component type on every render and
+// unmounts/remounts all nav items, which triggers browser auto-scroll to the active link.
+interface NavItemProps {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  showLabel: boolean;
+  isMobile: boolean;
+  close: () => void;
+  user: any;
+  canView: (page: string) => boolean;
+  onBeforeNavigate: () => void;
+}
+
+const NavItem = React.memo(function NavItem({
+  href, label, icon: Icon, showLabel, isMobile, close, user, canView, onBeforeNavigate,
+}: NavItemProps) {
+  const pathname = usePathname();
+  const isActive = pathname === href;
+  const pageKey = href === '/' ? 'dashboard' : href.slice(1);
+  const hasAccess = !user || canView(pageKey);
+  if (!hasAccess) return null;
+  return (
+    <Link
+      href={href}
+      onClick={() => {
+        onBeforeNavigate();
+        if (isMobile) close();
+      }}
+      className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+        isActive
+          ? 'bg-blue-600 text-white'
+          : 'text-gray-700 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-700'
+      }`}
+    >
+      <Icon className="w-5 h-5 shrink-0" />
+      {showLabel && <span className="truncate">{label}</span>}
+    </Link>
+  );
+});
+
 export const Sidebar: React.FC = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -30,11 +72,17 @@ export const Sidebar: React.FC = () => {
   const navRef = useRef<HTMLElement>(null);
   const savedScrollTop = useRef<number>(0);
 
-  // Restore nav scroll position after Next.js navigation (browser auto-scrolls to active link)
+  // After navigation, restore the scroll position and hold it for 300ms to
+  // prevent the browser from auto-scrolling to the newly-active focused link.
   useEffect(() => {
-    if (navRef.current) {
-      navRef.current.scrollTop = savedScrollTop.current;
-    }
+    if (!navRef.current) return;
+    const nav = navRef.current;
+    const target = savedScrollTop.current;
+    nav.scrollTop = target;
+    const lock = () => { nav.scrollTop = target; };
+    nav.addEventListener('scroll', lock);
+    const timer = setTimeout(() => nav.removeEventListener('scroll', lock), 300);
+    return () => { clearTimeout(timer); nav.removeEventListener('scroll', lock); };
   }, [pathname]);
 
   const menuItems = [
@@ -46,9 +94,9 @@ export const Sidebar: React.FC = () => {
     { href: '/alerts',            label: 'Low Stock Alerts',icon: FiAlertCircle,  roles: ['ADMIN', 'INVENTORY_MANAGER', 'STAFF'] },
     { href: '/reports',           label: 'Reports',         icon: FiBarChart,     roles: ['ADMIN', 'INVENTORY_MANAGER'] },
     { href: '/suppliers',         label: 'Suppliers',       icon: FiUsers,        roles: ['ADMIN', 'INVENTORY_MANAGER'] },
-    { href: '/supply-receipts',  label: 'Supply Receipts',  icon: FiFileText,      roles: ['ADMIN', 'INVENTORY_MANAGER'] },
-    { href: '/stock-issues',     label: 'Stock Issues',     icon: FiArrowUpRight,  roles: ['ADMIN', 'INVENTORY_MANAGER', 'STAFF'] },
-    { href: '/contractors',      label: 'Contractors',      icon: FiBriefcase,     roles: ['ADMIN', 'INVENTORY_MANAGER'] },
+    { href: '/supply-receipts',   label: 'Supply Receipts', icon: FiFileText,     roles: ['ADMIN', 'INVENTORY_MANAGER'] },
+    { href: '/stock-issues',      label: 'Stock Issues',    icon: FiArrowUpRight, roles: ['ADMIN', 'INVENTORY_MANAGER', 'STAFF'] },
+    { href: '/contractors',       label: 'Contractors',     icon: FiBriefcase,    roles: ['ADMIN', 'INVENTORY_MANAGER'] },
     { href: '/warehouses',        label: 'Warehouses',      icon: FiBox,          roles: ['ADMIN', 'INVENTORY_MANAGER'] },
     { href: '/users',             label: 'User Management', icon: FiUsers,        roles: ['ADMIN'] },
     { href: '/notifications',     label: 'Notifications',   icon: FiBell,         roles: ['ADMIN'] },
@@ -56,6 +104,10 @@ export const Sidebar: React.FC = () => {
   ];
 
   const showLabel = !isMobile && isOpen || isMobile;
+
+  const handleBeforeNavigate = () => {
+    if (navRef.current) savedScrollTop.current = navRef.current.scrollTop;
+  };
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,30 +143,6 @@ export const Sidebar: React.FC = () => {
     } finally {
       setCpLoading(false);
     }
-  };
-
-  const NavItem = ({ href, label, icon: Icon }: any) => {
-    const isActive = pathname === href;
-    const pageKey = href === '/' ? 'dashboard' : href.slice(1);
-    const hasAccess = !user || canView(pageKey);
-    if (!hasAccess) return null;
-    return (
-      <Link
-        href={href}
-        onClick={() => {
-          if (isMobile) close();
-          if (navRef.current) savedScrollTop.current = navRef.current.scrollTop;
-        }}
-        className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-          isActive
-            ? 'bg-blue-600 text-white'
-            : 'text-gray-700 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-700'
-        }`}
-      >
-        <Icon className="w-5 h-5 shrink-0" />
-        {showLabel && <span className="truncate">{label}</span>}
-      </Link>
-    );
   };
 
   const sidebarWidth = isMobile ? 'w-64' : isOpen ? 'w-56' : 'w-24';
@@ -156,7 +184,18 @@ export const Sidebar: React.FC = () => {
         {/* Navigation */}
         <nav ref={navRef} className="p-4 space-y-1 flex-1 overflow-y-auto">
           {menuItems.map((item) => (
-            <NavItem key={item.href} {...item} />
+            <NavItem
+              key={item.href}
+              href={item.href}
+              label={item.label}
+              icon={item.icon}
+              showLabel={showLabel}
+              isMobile={isMobile}
+              close={close}
+              user={user}
+              canView={canView}
+              onBeforeNavigate={handleBeforeNavigate}
+            />
           ))}
         </nav>
 
