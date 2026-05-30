@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/AuthContext';
-import { FiPlus, FiEdit, FiTrash2, FiSearch, FiFilter, FiX, FiLoader } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiSearch, FiFilter, FiX, FiLoader, FiFileText } from 'react-icons/fi';
 
 interface Supplier {
   id: string;
@@ -38,6 +38,7 @@ export default function SuppliersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [viewingSupplier, setViewingSupplier] = useState<Supplier | null>(null);
 
   useEffect(() => {
     const cached = readCache<Supplier>();
@@ -164,7 +165,14 @@ export default function SuppliersPage() {
                       {supplier.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm space-x-2">
+                  <td className="px-6 py-4 text-sm space-x-3">
+                    <button
+                      onClick={() => setViewingSupplier(supplier)}
+                      className="text-green-600 hover:text-green-800 inline-block"
+                      title="View Transactions"
+                    >
+                      <FiFileText className="w-4 h-4" />
+                    </button>
                     <button
                       onClick={() => { setEditingSupplier(supplier); setShowModal(true); }}
                       className="text-blue-600 hover:text-blue-800 inline-block"
@@ -207,6 +215,86 @@ export default function SuppliersPage() {
           }}
         />
       )}
+
+      {viewingSupplier && (
+        <SupplierTransactionsModal
+          supplier={viewingSupplier}
+          onClose={() => setViewingSupplier(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function SupplierTransactionsModal({ supplier, onClose }: { supplier: Supplier; onClose: () => void }) {
+  const [receipts, setReceipts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/supply-receipts')
+      .then(r => r.json())
+      .then(data => {
+        const all = Array.isArray(data) ? data : [];
+        setReceipts(all.filter((r: any) => r.supplierId === supplier.id || r.supplierName === supplier.name));
+      })
+      .catch(() => setReceipts([]))
+      .finally(() => setLoading(false));
+  }, [supplier.id, supplier.name]);
+
+  const total = receipts.reduce((s, r) => s + (r.totalAmount || 0), 0);
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-3xl p-6 max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">Transactions — {supplier.name}</h2>
+            <p className="text-sm text-gray-500 dark:text-slate-400">{supplier.email} · {supplier.phone}</p>
+          </div>
+          <button type="button" onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-slate-300 dark:hover:bg-slate-700">
+            <FiX className="w-5 h-5" />
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <FiLoader className="w-6 h-6 animate-spin text-blue-600" />
+          </div>
+        ) : receipts.length === 0 ? (
+          <div className="py-12 text-center text-gray-400">No supply receipts found for this supplier.</div>
+        ) : (
+          <div className="overflow-y-auto flex-1">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700 text-sm">
+              <thead className="bg-gray-50 dark:bg-slate-700 sticky top-0">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Receipt ID</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Warehouse</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Gate Pass</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
+                {receipts.map((r: any) => (
+                  <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-slate-700">
+                    <td className="px-4 py-3 font-mono text-xs text-gray-500">{r.id}</td>
+                    <td className="px-4 py-3 text-gray-700 dark:text-slate-300">{r.warehouseName || '—'}</td>
+                    <td className="px-4 py-3 text-gray-500">{r.dateTime ? new Date(r.dateTime).toLocaleDateString('en-IN') : '—'}</td>
+                    <td className="px-4 py-3 text-gray-500">{r.gatePassNumber || '—'}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-gray-900 dark:text-slate-100">₹{(r.totalAmount || 0).toLocaleString('en-IN')}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="bg-gray-50 dark:bg-slate-700">
+                  <td colSpan={4} className="px-4 py-3 text-sm font-semibold text-gray-700 dark:text-slate-300">Total ({receipts.length} receipts)</td>
+                  <td className="px-4 py-3 text-right text-sm font-bold text-blue-700 dark:text-blue-400">₹{total.toLocaleString('en-IN')}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

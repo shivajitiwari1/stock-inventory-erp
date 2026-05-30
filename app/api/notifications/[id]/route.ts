@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { d1Query, d1Run } from '@/lib/d1';
 
-// PUT — dismiss a notification (adds userId to dismissedBy)
+// PUT — dismiss a notification OR edit its content
 export async function PUT(request: NextRequest, context: any) {
   const { id } = await context.params;
   try {
@@ -12,16 +12,21 @@ export async function PUT(request: NextRequest, context: any) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
-    const dismissedBy: string[] = JSON.parse(existing.dismissedBy ?? '[]');
-    const userId = body.dismissUserId;
-    if (userId && !dismissedBy.includes(userId)) {
-      dismissedBy.push(userId);
+    if (body.edit) {
+      // Edit mode: update title, message, type
+      await d1Run(
+        'UPDATE notifications SET title = ?, message = ?, type = ? WHERE id = ?',
+        [body.title ?? existing.title, body.message ?? existing.message, body.type ?? existing.type, id]
+      );
+    } else {
+      // Dismiss mode: add userId to dismissedBy
+      const dismissedBy: string[] = JSON.parse(existing.dismissedBy ?? '[]');
+      const userId = body.dismissUserId;
+      if (userId && !dismissedBy.includes(userId)) {
+        dismissedBy.push(userId);
+      }
+      await d1Run('UPDATE notifications SET dismissedBy = ? WHERE id = ?', [JSON.stringify(dismissedBy), id]);
     }
-
-    await d1Run('UPDATE notifications SET dismissedBy = ? WHERE id = ?', [
-      JSON.stringify(dismissedBy),
-      id,
-    ]);
 
     const [updated] = await d1Query('SELECT * FROM notifications WHERE id = ?', [id]);
     return NextResponse.json({ ...updated, dismissedBy: JSON.parse(updated.dismissedBy ?? '[]') });

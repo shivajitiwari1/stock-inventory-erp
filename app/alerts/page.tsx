@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { FiEdit2, FiCheck, FiX } from 'react-icons/fi';
 
 interface AlertItem {
   id: string;
@@ -12,10 +13,67 @@ interface AlertItem {
   minQuantity: number;
 }
 
+function MinQtyEdit({ item, onUpdated }: { item: AlertItem; onUpdated: (productId: string, newMin: number) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(item.minQuantity.toString());
+  const [saving, setSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const save = async () => {
+    const newMin = parseInt(value) || 0;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/products/${item.productId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ minQuantity: newMin }),
+      });
+      if (res.ok) {
+        onUpdated(item.productId, newMin);
+        setEditing(false);
+      }
+    } catch {}
+    setSaving(false);
+  };
+
+  if (!editing) {
+    return (
+      <div className="flex items-center justify-end gap-1">
+        <span>{item.minQuantity}</span>
+        <button onClick={() => { setEditing(true); setTimeout(() => inputRef.current?.focus(), 50); }}
+          className="text-gray-400 hover:text-blue-600 ml-1">
+          <FiEdit2 className="w-3 h-3" />
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center justify-end gap-1">
+      <input ref={inputRef} type="number" min="0" value={value}
+        onChange={e => setValue(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false); }}
+        className="w-16 px-1 py-0.5 border border-blue-400 rounded text-right text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+      />
+      <button onClick={save} disabled={saving} className="text-green-600 hover:text-green-800 disabled:opacity-40">
+        <FiCheck className="w-3.5 h-3.5" />
+      </button>
+      <button onClick={() => { setEditing(false); setValue(item.minQuantity.toString()); }} className="text-gray-400 hover:text-red-600">
+        <FiX className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
+}
+
 export default function AlertsPage() {
   const [lowStock, setLowStock] = useState<AlertItem[]>([]);
   const [outOfStock, setOutOfStock] = useState<AlertItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const handleMinQtyUpdate = (productId: string, newMin: number) => {
+    const update = (list: AlertItem[]) => list.map(i => i.productId === productId ? { ...i, minQuantity: newMin } : i);
+    setLowStock(prev => update(prev));
+    setOutOfStock(prev => update(prev));
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -109,7 +167,9 @@ export default function AlertsPage() {
                     <td className="px-6 py-4 text-sm text-gray-900">{item.productName}</td>
                     <td className="px-6 py-4 text-sm text-gray-500 hidden sm:table-cell">{item.warehouseName}</td>
                     <td className="px-6 py-4 text-sm text-right text-yellow-600 font-semibold">{item.availableQuantity}</td>
-                    <td className="px-6 py-4 text-sm text-right text-gray-900">{item.minQuantity}</td>
+                    <td className="px-6 py-4 text-sm text-right text-gray-900">
+                      <MinQtyEdit item={item} onUpdated={handleMinQtyUpdate} />
+                    </td>
                   </tr>
                 ))}
               </tbody>

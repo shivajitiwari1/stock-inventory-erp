@@ -25,6 +25,7 @@ interface InventoryItem {
   damagedQuantity: number;
   lostQuantity: number;
   minQuantity: number;
+  supplierName: string;
   attributeQuantityRules: AttributeQuantityRule[];
 }
 
@@ -71,6 +72,7 @@ export default function StockManagementPage() {
         warehouseName: warehouse.name || item.warehouseId,
         warehouseArchived: warehouse.status === 'ARCHIVED',
         minQuantity: product.minQuantity || 0,
+        supplierName: product.supplierName || '',
         attributeQuantityRules: product.attributeQuantityRules || [],
       };
     });
@@ -158,6 +160,7 @@ export default function StockManagementPage() {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Product</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">Warehouse</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Supplier</th>
                 <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Available</th>
                 <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Reserved</th>
                 <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Total</th>
@@ -168,7 +171,7 @@ export default function StockManagementPage() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {displayInventory.length === 0 ? (
-                <tr><td colSpan={8} className="px-6 py-10 text-center text-gray-400">No inventory records found.</td></tr>
+                <tr><td colSpan={9} className="px-6 py-10 text-center text-gray-400">No inventory records found.</td></tr>
               ) : displayInventory.map((item) => {
                 const status = item.availableQuantity === 0 ? 'out'
                   : item.availableQuantity <= item.minQuantity ? 'low' : 'healthy';
@@ -188,6 +191,7 @@ export default function StockManagementPage() {
                         )}
                       </div>
                     </td>
+                    <td className="px-6 py-4 text-sm text-gray-500 hidden lg:table-cell">{item.supplierName || '—'}</td>
                     <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900">{item.availableQuantity}</td>
                     <td className="px-6 py-4 text-sm text-right text-gray-600 hidden md:table-cell">{item.reservedQuantity}</td>
                     <td className="px-6 py-4 text-sm text-right font-semibold text-gray-900">{item.totalQuantity}</td>

@@ -47,15 +47,17 @@ export async function POST(request: NextRequest) {
       image,
       minQuantity,
       warehouseId,
+      supplierId,
+      supplierName,
     } = body;
 
     // Auto-generate a unique SKU since we no longer collect it from the user
     const sku = 'SKU-' + id.slice(-8).toUpperCase();
 
     await d1Run(
-      `INSERT INTO products (id, name, sku, category, description, unitType, price, image, minQuantity, createdAt, updatedAt)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, name, sku, '', description ?? null, unitType ?? null, price ?? null, image ?? null, minQuantity ?? null, now, now]
+      `INSERT INTO products (id, name, sku, category, description, unitType, price, image, minQuantity, supplierId, supplierName, createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, name, sku, '', description ?? null, unitType ?? null, price ?? null, image ?? null, minQuantity ?? null, supplierId ?? '', supplierName ?? '', now, now]
     );
 
     const rows = await d1Query<any>('SELECT * FROM products WHERE id = ?', [id]);

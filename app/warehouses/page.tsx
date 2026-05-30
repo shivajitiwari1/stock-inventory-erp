@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/AuthContext';
-import { FiPlus, FiEdit, FiTrash2, FiSearch, FiX, FiRefreshCw, FiLoader } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiSearch, FiX, FiRefreshCw, FiLoader, FiPackage } from 'react-icons/fi';
 
 const CACHE_KEY = 'erp-warehouses';
 
@@ -40,6 +40,7 @@ export default function WarehousesPage() {
   const [archiveTarget, setArchiveTarget] = useState<string | null>(null);
   const [archiving, setArchiving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [viewingWarehouse, setViewingWarehouse] = useState<Warehouse | null>(null);
   const { canDo } = useAuth();
 
   useEffect(() => {
@@ -200,7 +201,14 @@ export default function WarehousesPage() {
                 const usagePercent = warehouse.capacity > 0 ? (warehouse.currentUsage / warehouse.capacity) * 100 : 0;
                 return (
                   <tr key={warehouse.id} className={`hover:bg-gray-50 ${isArchived ? 'opacity-50' : ''}`}>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{warehouse.name}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                      <button
+                        onClick={() => setViewingWarehouse(warehouse)}
+                        className="text-blue-700 hover:underline font-medium text-left"
+                      >
+                        {warehouse.name}
+                      </button>
+                    </td>
                     <td className="px-6 py-4 text-sm text-gray-500 hidden sm:table-cell">{warehouse.location}</td>
                     <td className="px-6 py-4 text-sm text-gray-500 hidden md:table-cell">{warehouse.manager}</td>
                     <td className="px-6 py-4 text-sm text-right text-gray-900 hidden md:table-cell">{warehouse.capacity}</td>
@@ -287,6 +295,104 @@ export default function WarehousesPage() {
           isLoading={archiving}
         />
       )}
+
+      {viewingWarehouse && (
+        <WarehouseInventoryModal
+          warehouse={viewingWarehouse}
+          onClose={() => setViewingWarehouse(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function WarehouseInventoryModal({ warehouse, onClose }: { warehouse: Warehouse; onClose: () => void }) {
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      fetch(`/api/inventory?warehouseId=${warehouse.id}`).then(r => r.json()),
+      fetch('/api/products').then(r => r.json()),
+    ]).then(([inv, prods]) => {
+      const invList = Array.isArray(inv) ? inv : [];
+      const enriched = invList.map((item: any) => {
+        const p = (prods || []).find((p: any) => p.id === item.productId) || {};
+        return {
+          ...item,
+          productName: p.name || item.productId,
+          sku: p.sku || '',
+          unitType: p.unitType || '',
+          price: p.price || 0,
+        };
+      });
+      setItems(enriched);
+    }).catch(() => setItems([]))
+      .finally(() => setLoading(false));
+  }, [warehouse.id]);
+
+  const totalValue = items.reduce((s, i) => s + (i.price * i.availableQuantity), 0);
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-3xl p-6 max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
+              <FiPackage className="w-5 h-5 text-blue-600" />
+              {warehouse.name}
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-slate-400">{warehouse.location} · {items.length} products</p>
+          </div>
+          <button type="button" onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-slate-300 dark:hover:bg-slate-700">
+            <FiX className="w-5 h-5" />
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <FiLoader className="w-6 h-6 animate-spin text-blue-600" />
+          </div>
+        ) : items.length === 0 ? (
+          <div className="py-12 text-center text-gray-400">No inventory records for this warehouse.</div>
+        ) : (
+          <div className="overflow-y-auto flex-1">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700 text-sm">
+              <thead className="bg-gray-50 dark:bg-slate-700 sticky top-0">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Product</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Available</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Reserved</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Total</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Value</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
+                {items.map((item: any) => (
+                  <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-slate-700">
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-gray-900 dark:text-slate-100">{item.productName}</div>
+                      {item.sku && <div className="text-xs text-gray-400">{item.sku} · {item.unitType}</div>}
+                    </td>
+                    <td className="px-4 py-3 text-right text-green-700 font-semibold">{item.availableQuantity}</td>
+                    <td className="px-4 py-3 text-right text-yellow-600">{item.reservedQuantity}</td>
+                    <td className="px-4 py-3 text-right text-gray-900 dark:text-slate-100">{item.totalQuantity}</td>
+                    <td className="px-4 py-3 text-right text-gray-700 dark:text-slate-300">
+                      {item.price > 0 ? `₹${(item.price * item.availableQuantity).toLocaleString('en-IN')}` : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="bg-gray-50 dark:bg-slate-700">
+                  <td colSpan={4} className="px-4 py-3 text-sm font-semibold text-gray-700 dark:text-slate-300">Total Value</td>
+                  <td className="px-4 py-3 text-right text-sm font-bold text-blue-700 dark:text-blue-400">₹{totalValue.toLocaleString('en-IN')}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

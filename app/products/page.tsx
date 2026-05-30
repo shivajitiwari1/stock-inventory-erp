@@ -13,6 +13,8 @@ interface Product {
   quantity?: number;
   image: string;
   minQuantity: number;
+  supplierId?: string;
+  supplierName?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -35,6 +37,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [inventory, setInventory] = useState<any[]>([]);
   const [warehouses, setWarehouses] = useState<any[]>([]);
+  const [suppliers, setSuppliers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -47,9 +50,13 @@ export default function ProductsPage() {
     if (cached) {
       setProducts(cached);
       setLoading(false);
-      Promise.all([fetch('/api/inventory'), fetch('/api/warehouses')])
-        .then(([invRes, whRes]) => Promise.all([invRes.json(), whRes.json()]))
-        .then(([invData, whData]) => { setInventory(invData || []); setWarehouses(whData || []); })
+      Promise.all([fetch('/api/inventory'), fetch('/api/warehouses'), fetch('/api/suppliers')])
+        .then(([invRes, whRes, suppRes]) => Promise.all([invRes.json(), whRes.json(), suppRes.json()]))
+        .then(([invData, whData, suppData]) => {
+          setInventory(invData || []);
+          setWarehouses(whData || []);
+          setSuppliers(suppData.suppliers || suppData || []);
+        })
         .catch(err => console.error('Failed to fetch data:', err));
     } else {
       fetchData();
@@ -58,17 +65,21 @@ export default function ProductsPage() {
 
   const fetchData = async () => {
     try {
-      const [prodRes, invRes, whRes] = await Promise.all([
+      const [prodRes, invRes, whRes, suppRes] = await Promise.all([
         fetch('/api/products'),
         fetch('/api/inventory'),
         fetch('/api/warehouses'),
+        fetch('/api/suppliers'),
       ]);
-      const [prodData, invData, whData] = await Promise.all([prodRes.json(), invRes.json(), whRes.json()]);
+      const [prodData, invData, whData, suppData] = await Promise.all([
+        prodRes.json(), invRes.json(), whRes.json(), suppRes.json(),
+      ]);
       const list = prodData || [];
       setProducts(list);
       writeCache(list);
       setInventory(invData || []);
       setWarehouses(whData || []);
+      setSuppliers(suppData.suppliers || suppData || []);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     } finally {
@@ -161,7 +172,8 @@ export default function ProductsPage() {
             <thead className="bg-gray-50 dark:bg-slate-700">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Product</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden md:table-cell">Price</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden lg:table-cell">Supplier</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden md:table-cell">Per Unit Price</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase hidden md:table-cell">Min Qty</th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Stock</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">Actions</th>
@@ -186,6 +198,7 @@ export default function ProductsPage() {
                       </div>
                     </div>
                   </td>
+                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400 hidden lg:table-cell">{product.supplierName || '—'}</td>
                   <td className="px-6 py-4 text-sm text-right text-gray-900 dark:text-slate-100 hidden md:table-cell">₹{(product.price || 0).toFixed(2)}</td>
                   <td className="px-6 py-4 text-sm text-right text-gray-900 dark:text-slate-100 hidden md:table-cell">{product.minQuantity || '—'}</td>
                   <td className="px-6 py-4 text-center">
@@ -231,6 +244,7 @@ export default function ProductsPage() {
         <ProductModal
           product={editingProduct}
           warehouses={warehouses.filter((w: any) => w.status !== 'ARCHIVED')}
+          suppliers={suppliers.filter((s: any) => s.status !== 'INACTIVE')}
           onClose={() => { setShowAddModal(false); setEditingProduct(null); }}
           onSave={saved => {
             const isNew = !editingProduct;
@@ -257,16 +271,29 @@ export default function ProductsPage() {
   );
 }
 
-function ProductModal({ product, warehouses, onClose, onSave }: { product?: Product | null; warehouses: any[]; onClose: () => void; onSave: (p: Product) => void }) {
+function ProductModal({ product, warehouses, suppliers, onClose, onSave }: {
+  product?: Product | null;
+  warehouses: any[];
+  suppliers: any[];
+  onClose: () => void;
+  onSave: (p: Product) => void;
+}) {
   const [formData, setFormData] = useState({
     name: product?.name || '',
     description: product?.description || '',
     unitType: product?.unitType || 'PCS',
     price: product ? product.price.toString() : '',
     minQuantity: product?.minQuantity ? product.minQuantity.toString() : '',
+    supplierId: product?.supplierId || '',
+    supplierName: product?.supplierName || '',
   });
   const [warehouseId, setWarehouseId] = useState('');
   const [saving, setSaving] = useState(false);
+
+  const setSupplier = (id: string) => {
+    const s = suppliers.find((s: any) => s.id === id);
+    setFormData(f => ({ ...f, supplierId: id, supplierName: s?.name || '' }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -311,6 +338,14 @@ function ProductModal({ product, warehouses, onClose, onSave }: { product?: Prod
               className={inputCls} required placeholder="Product name" />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Supplier</label>
+            <select value={formData.supplierId} onChange={e => setSupplier(e.target.value)} className={inputCls}>
+              <option value="">Select Supplier (optional)</option>
+              {suppliers.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Unit Type</label>
@@ -334,7 +369,7 @@ function ProductModal({ product, warehouses, onClose, onSave }: { product?: Prod
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Price (₹)</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Price in Single Unit (₹)</label>
             <input type="number" step="0.01" min="0" value={formData.price}
               onChange={e => setFormData({ ...formData, price: e.target.value })}
               className={inputCls} placeholder="e.g. 500.00" />

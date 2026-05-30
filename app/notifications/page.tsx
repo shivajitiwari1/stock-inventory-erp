@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FiPlus, FiTrash2, FiBell, FiInfo, FiAlertTriangle, FiCheckCircle, FiAlertCircle, FiX, FiLoader } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiBell, FiInfo, FiAlertTriangle, FiCheckCircle, FiAlertCircle, FiX, FiLoader, FiEdit } from 'react-icons/fi';
 import { useAuth } from '@/components/AuthContext';
 
 interface Notification {
@@ -60,6 +60,7 @@ export default function NotificationsPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editingNotification, setEditingNotification] = useState<Notification | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -115,6 +116,15 @@ export default function NotificationsPage() {
       return updated;
     });
     setShowModal(false);
+  };
+
+  const handleEdited = (updated: Notification) => {
+    setNotifications(prev => {
+      const list = prev.map(n => n.id === updated.id ? updated : n);
+      writeCache(list);
+      return list;
+    });
+    setEditingNotification(null);
   };
 
   if (loading) return (
@@ -207,7 +217,14 @@ export default function NotificationsPage() {
                       </span>
                       <span className="text-gray-400 text-xs"> / {totalTargets}</span>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 flex items-center gap-3">
+                      <button
+                        onClick={() => setEditingNotification(n)}
+                        disabled={!!deletingId}
+                        className="text-blue-600 hover:text-blue-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <FiEdit className="w-4 h-4" />
+                      </button>
                       <button
                         onClick={() => handleDelete(n.id)}
                         disabled={!!deletingId}
@@ -235,6 +252,113 @@ export default function NotificationsPage() {
           onSend={handleSend}
         />
       )}
+
+      {editingNotification && (
+        <EditNotificationModal
+          notification={editingNotification}
+          onClose={() => setEditingNotification(null)}
+          onSaved={handleEdited}
+        />
+      )}
+    </div>
+  );
+}
+
+function EditNotificationModal({ notification, onClose, onSaved }: {
+  notification: Notification;
+  onClose: () => void;
+  onSaved: (n: Notification) => void;
+}) {
+  const [form, setForm] = useState({
+    title: notification.title,
+    message: notification.message,
+    type: notification.type,
+  });
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const res = await fetch(`/api/notifications/${notification.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, edit: true }),
+      });
+      if (!res.ok) throw new Error();
+      onSaved(await res.json());
+    } catch {
+      setSaveError('Failed to update notification.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const inputCls = "w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 text-sm";
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-lg p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">Edit Notification</h2>
+          <button type="button" onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-slate-300 dark:hover:bg-slate-700">
+            <FiX className="w-5 h-5" />
+          </button>
+        </div>
+
+        {saveError && (
+          <div className="mb-4 flex items-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg px-3 py-2 text-sm">
+            <FiAlertCircle className="w-4 h-4 shrink-0" />
+            <span>{saveError}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Type *</label>
+            <div className="grid grid-cols-4 gap-2">
+              {TYPE_OPTIONS.map(t => {
+                const Icon = t.icon;
+                return (
+                  <button key={t.value} type="button"
+                    onClick={() => setForm({ ...form, type: t.value as any })}
+                    className={`flex flex-col items-center gap-1 py-2 rounded-lg border-2 text-xs font-medium transition-colors
+                      ${form.type === t.value ? `border-current ${t.color} bg-gray-50 dark:bg-slate-700` : 'border-gray-200 dark:border-slate-600 text-gray-500 hover:border-gray-300'}`}>
+                    <Icon className="w-4 h-4" />
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Title *</label>
+            <input type="text" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
+              required className={inputCls} />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Message *</label>
+            <textarea value={form.message} onChange={e => setForm({ ...form, message: e.target.value })}
+              required rows={3} className={inputCls} />
+          </div>
+
+          <div className="flex space-x-3 pt-1">
+            <button type="submit" disabled={saving}
+              className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50 flex items-center justify-center gap-2">
+              {saving && <FiLoader className="w-4 h-4 animate-spin" />}
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+            <button type="button" onClick={onClose}
+              className="flex-1 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-300 py-2.5 rounded-lg hover:bg-gray-300 dark:hover:bg-slate-600 font-medium">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

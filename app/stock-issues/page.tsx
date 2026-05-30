@@ -9,6 +9,7 @@ interface StockIssue {
   productId: string;
   productName: string;
   quantity: number;
+  returnedQty?: number;
   unit: string;
   warehouseId: string;
   contractorId: string;
@@ -24,13 +25,14 @@ interface Product { id: string; name: string; unitType?: string; price?: number;
 interface Contractor { id: string; name: string; role: string; }
 interface Warehouse { id: string; name: string; status?: string; }
 
-const STATUSES = ['Issued', 'Partially Returned', 'Fully Returned', 'Damaged', 'Lost'] as const;
+const STATUSES = ['Issued', 'Partially Returned', 'Fully Returned', 'Completed', 'Damaged', 'Lost'] as const;
 
 const statusBadge = (status: string) => {
   const map: Record<string, string> = {
     'Issued': 'bg-green-100 text-green-700',
     'Partially Returned': 'bg-yellow-100 text-yellow-700',
     'Fully Returned': 'bg-blue-100 text-blue-700',
+    'Completed': 'bg-purple-100 text-purple-700',
     'Damaged': 'bg-red-100 text-red-700',
     'Lost': 'bg-red-200 text-red-900',
   };
@@ -281,6 +283,7 @@ function StockIssueModal({ issue, products, contractors, warehouses, onClose, on
     productId: issue?.productId || '',
     productName: issue?.productName || '',
     quantity: issue?.quantity?.toString() || '',
+    returnedQty: issue?.returnedQty?.toString() || '',
     unit: issue?.unit || '',
     warehouseId: issue?.warehouseId || '',
     contractorId: issue?.contractorId || '',
@@ -320,6 +323,7 @@ function StockIssueModal({ issue, products, contractors, warehouses, onClose, on
         body: JSON.stringify({
           ...form,
           quantity: Number(form.quantity),
+          returnedQty: Number(form.returnedQty) || 0,
           notes: form.gstNumber || null,
           gatePass: form.gatePass || null,
         }),
@@ -400,6 +404,18 @@ function StockIssueModal({ issue, products, contractors, warehouses, onClose, on
                 className={inputCls} placeholder="e.g. Bags" />
             </div>
           </div>
+
+          {form.status === 'Partially Returned' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                Returned Quantity *
+                <span className="ml-1 text-xs text-gray-400 font-normal">(items returned to stock)</span>
+              </label>
+              <input type="number" min="1" max={form.quantity || undefined} value={form.returnedQty}
+                onChange={e => setForm({ ...form, returnedQty: e.target.value })}
+                required className={inputCls} placeholder="e.g. 3" />
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Contractor / Worker *</label>

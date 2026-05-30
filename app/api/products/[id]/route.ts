@@ -29,20 +29,22 @@ export async function PUT(request: NextRequest, context: any) {
     const now = new Date().toISOString();
     const current = existing[0];
 
-    const name        = body.name        ?? current.name;
-    const sku         = body.sku         ?? current.sku;
-    const category    = body.category    ?? current.category;
-    const description = body.description ?? current.description;
-    const unitType    = body.unitType    ?? current.unitType;
-    const price       = body.price       ?? current.price;
-    const image       = body.image       ?? current.image;
-    const minQuantity = body.minQuantity ?? current.minQuantity;
+    const name         = body.name         ?? current.name;
+    const sku          = body.sku          ?? current.sku;
+    const category     = body.category     ?? current.category;
+    const description  = body.description  ?? current.description;
+    const unitType     = body.unitType     ?? current.unitType;
+    const price        = body.price        ?? current.price;
+    const image        = body.image        ?? current.image;
+    const minQuantity  = body.minQuantity  ?? current.minQuantity;
+    const supplierId   = body.supplierId   ?? current.supplierId   ?? '';
+    const supplierName = body.supplierName ?? current.supplierName ?? '';
 
     await d1Run(
       `UPDATE products
-       SET name = ?, sku = ?, category = ?, description = ?, unitType = ?, price = ?, image = ?, minQuantity = ?, updatedAt = ?
+       SET name = ?, sku = ?, category = ?, description = ?, unitType = ?, price = ?, image = ?, minQuantity = ?, supplierId = ?, supplierName = ?, updatedAt = ?
        WHERE id = ?`,
-      [name, sku, category, description, unitType, price, image, minQuantity, now, id]
+      [name, sku, category, description, unitType, price, image, minQuantity, supplierId, supplierName, now, id]
     );
 
     const updated = await d1Query<any>('SELECT * FROM products WHERE id = ?', [id]);
