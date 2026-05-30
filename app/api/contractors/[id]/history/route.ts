@@ -45,7 +45,7 @@ export async function GET(_req: NextRequest, context: any) {
       events.push({
         type: row.action === 'CREATE' ? 'CREATED' : row.action === 'UPDATE' ? 'EDITED' : 'DELETED',
         label: row.action === 'CREATE' ? 'Record created' : row.action === 'UPDATE' ? 'Record edited' : 'Record deleted',
-        changes: row.changes ? JSON.parse(row.changes) : null,
+        changes: row.changes ? (() => { try { return JSON.parse(row.changes) } catch { return null } })() : null,
         by: row.userName || null,
         timestamp: row.timestamp,
       })
@@ -63,7 +63,7 @@ export async function GET(_req: NextRequest, context: any) {
     for (const row of issueRows) {
       events.push({
         type: 'STOCK_ISSUED',
-        label: `${row.productName} · ${row.quantity} ${row.unit}${row.purpose ? ' → ' + row.purpose : ''}`,
+        label: `${row.productName ?? 'Unknown'} · ${row.quantity ?? 0} ${row.unit ?? ''}${row.purpose ? ' → ' + row.purpose : ''}`.trim(),
         detail: `Issue #${row.id}`,
         by: row.issuedBy || null,
         timestamp: row.createdAt,
@@ -72,7 +72,8 @@ export async function GET(_req: NextRequest, context: any) {
 
     events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     return NextResponse.json(events)
-  } catch {
+  } catch (err) {
+    console.error('[contractor history]', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
