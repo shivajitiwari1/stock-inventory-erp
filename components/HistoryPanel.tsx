@@ -32,6 +32,7 @@ const EVENT_META: Record<
 
 function formatTs(ts: string): string {
   const d = new Date(ts)
+  if (isNaN(d.getTime())) return 'Unknown time'
   const now = new Date()
   const isToday = d.toDateString() === now.toDateString()
   const time = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
@@ -43,14 +44,16 @@ function formatTs(ts: string): string {
 export default function HistoryPanel({ entityType, entityId, entityName, onClose }: HistoryPanelProps) {
   const [events, setEvents] = useState<HistoryEvent[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState(false)
 
   useEffect(() => {
     setLoading(true)
     setEvents([])
+    setFetchError(false)
     fetch(`/api/${entityType}s/${entityId}/history`)
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() })
       .then(data => { setEvents(Array.isArray(data) ? data : []); setLoading(false) })
-      .catch(() => setLoading(false))
+      .catch(() => { setFetchError(true); setLoading(false) })
   }, [entityType, entityId])
 
   return (
@@ -66,6 +69,7 @@ export default function HistoryPanel({ entityType, entityId, entityName, onClose
       <div
         className="fixed top-0 right-0 h-full z-50 flex flex-col"
         style={{ width: 340, background: '#111c2d', borderLeft: '1px solid #1e3050', boxShadow: '-4px 0 24px rgba(0,0,0,0.4)' }}
+        onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div style={{ padding: '14px 16px', borderBottom: '1px solid #1e3050', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -75,6 +79,7 @@ export default function HistoryPanel({ entityType, entityId, entityName, onClose
           </div>
           <button
             onClick={onClose}
+            aria-label="Close history panel"
             style={{ background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', padding: 4, marginTop: -2 }}
           >
             <FiX size={18} />
@@ -91,17 +96,23 @@ export default function HistoryPanel({ entityType, entityId, entityName, onClose
             </>
           )}
 
+          {!loading && fetchError && (
+            <div style={{ color: '#f87171', fontSize: 12, textAlign: 'center', paddingTop: 32 }}>
+              Failed to load history.
+            </div>
+          )}
+
           {!loading && events.length === 0 && (
             <div style={{ color: '#6b7280', fontSize: 12, textAlign: 'center', paddingTop: 32 }}>
               No history found.
             </div>
           )}
 
-          {!loading && events.map((ev, i) => {
+          {!loading && !fetchError && events.map((ev, i) => {
             const meta = EVENT_META[ev.type]
             return (
               <div
-                key={i}
+                key={`${ev.timestamp}-${ev.type}-${i}`}
                 style={{
                   background: '#162032',
                   borderRadius: 6,
