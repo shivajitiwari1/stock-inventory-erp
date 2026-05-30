@@ -154,7 +154,11 @@ export default function ContractorsPage() {
               )}
               {filtered.map(c => (
                 <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-slate-700">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-slate-100">{c.name}</td>
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-slate-100">
+                    <button onClick={() => setHistoryTarget({ id: c.id, name: c.name })} className="hover:text-blue-600 hover:underline text-left">
+                      {c.name}
+                    </button>
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400 hidden sm:table-cell">{c.phone}</td>
                   <td className="px-6 py-4 text-sm">
                     <span className={`rounded-full px-2 py-1 text-xs font-semibold ${roleBadge(c.role)}`}>{c.role}</span>

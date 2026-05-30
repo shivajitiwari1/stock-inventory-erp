@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { FiX } from 'react-icons/fi'
+import { FiX, FiClock } from 'react-icons/fi'
 
 interface HistoryEvent {
   type: 'CREATED' | 'EDITED' | 'DELETED' | 'STOCK_ISSUED' | 'SUPPLY_RECEIVED'
@@ -57,53 +57,47 @@ export default function HistoryPanel({ entityType, entityId, entityName, onClose
   }, [entityType, entityId])
 
   return (
-    <>
-      {/* Dimmed backdrop */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.55)' }} onClick={onClose}>
+      {/* Popup card */}
       <div
-        className="fixed inset-0 z-40"
-        style={{ background: 'rgba(0,0,0,0.35)' }}
-        onClick={onClose}
-      />
-
-      {/* Slide-out panel */}
-      <div
-        className="fixed top-0 right-0 h-full z-50 flex flex-col"
-        style={{ width: 340, background: '#111c2d', borderLeft: '1px solid #1e3050', boxShadow: '-4px 0 24px rgba(0,0,0,0.4)' }}
+        className="flex flex-col w-full max-w-lg rounded-2xl overflow-hidden"
+        style={{ background: '#111c2d', border: '1px solid #1e3050', boxShadow: '0 24px 64px rgba(0,0,0,0.6)', maxHeight: '80vh' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div style={{ padding: '14px 16px', borderBottom: '1px solid #1e3050', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <div style={{ color: '#a78bfa', fontSize: 10, fontWeight: 700, letterSpacing: 1, marginBottom: 3 }}>HISTORY</div>
-            <div style={{ color: '#e5e7eb', fontSize: 13, fontWeight: 600 }}>{entityName}</div>
+        <div style={{ padding: '18px 20px', borderBottom: '1px solid #1e3050', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <FiClock size={16} style={{ color: '#a78bfa' }} />
+            <div>
+              <div style={{ color: '#a78bfa', fontSize: 10, fontWeight: 700, letterSpacing: 1, marginBottom: 2 }}>ACTIVITY HISTORY</div>
+              <div style={{ color: '#e5e7eb', fontSize: 15, fontWeight: 700 }}>{entityName}</div>
+            </div>
           </div>
           <button
             onClick={onClose}
             aria-label="Close history panel"
-            style={{ background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', padding: 4, marginTop: -2 }}
+            style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: '#9ca3af', cursor: 'pointer', padding: '6px', borderRadius: 8, display: 'flex', alignItems: 'center' }}
           >
-            <FiX size={18} />
+            <FiX size={16} />
           </button>
         </div>
 
         {/* Event list */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {loading && (
-            <>
-              {[0, 1, 2].map(i => (
-                <div key={i} style={{ height: 64, background: '#162032', borderRadius: 6, opacity: 0.5 }} />
-              ))}
-            </>
+            [0, 1, 2, 3].map(i => (
+              <div key={i} style={{ height: 68, background: '#162032', borderRadius: 8, opacity: 0.4 + i * 0.1 }} />
+            ))
           )}
 
           {!loading && fetchError && (
-            <div style={{ color: '#f87171', fontSize: 12, textAlign: 'center', paddingTop: 32 }}>
+            <div style={{ color: '#f87171', fontSize: 13, textAlign: 'center', paddingTop: 40 }}>
               Failed to load history.
             </div>
           )}
 
-          {!loading && events.length === 0 && (
-            <div style={{ color: '#6b7280', fontSize: 12, textAlign: 'center', paddingTop: 32 }}>
+          {!loading && !fetchError && events.length === 0 && (
+            <div style={{ color: '#6b7280', fontSize: 13, textAlign: 'center', paddingTop: 40 }}>
               No history found.
             </div>
           )}
@@ -115,30 +109,30 @@ export default function HistoryPanel({ entityType, entityId, entityName, onClose
                 key={`${ev.timestamp}-${ev.type}-${i}`}
                 style={{
                   background: '#162032',
-                  borderRadius: 6,
-                  padding: '10px 12px',
+                  borderRadius: 8,
+                  padding: '12px 14px',
                   borderLeft: `3px solid ${meta.border}`,
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <span style={{ background: meta.bg, color: meta.text, padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, letterSpacing: 0.5 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
+                  <span style={{ background: meta.bg, color: meta.text, padding: '3px 9px', borderRadius: 5, fontSize: 10, fontWeight: 700, letterSpacing: 0.5 }}>
                     {meta.label}
                   </span>
-                  <span style={{ color: '#6b7280', fontSize: 9 }}>{formatTs(ev.timestamp)}</span>
+                  <span style={{ color: '#6b7280', fontSize: 11 }}>{formatTs(ev.timestamp)}</span>
                 </div>
 
-                <div style={{ color: '#e5e7eb', fontSize: 11, marginBottom: 3 }}>{ev.label}</div>
+                <div style={{ color: '#e5e7eb', fontSize: 13, marginBottom: 4, fontWeight: 500 }}>{ev.label}</div>
 
                 {ev.changes && Object.entries(ev.changes).map(([field, { from, to }]) => (
-                  <div key={field} style={{ fontSize: 10, marginBottom: 2 }}>
-                    <span style={{ color: '#9ca3af' }}>{field}: </span>
-                    <span style={{ color: '#ef4444', textDecoration: 'line-through', marginRight: 4 }}>{from}</span>
+                  <div key={field} style={{ fontSize: 12, marginBottom: 3 }}>
+                    <span style={{ color: '#9ca3af', textTransform: 'capitalize' }}>{field}: </span>
+                    <span style={{ color: '#ef4444', textDecoration: 'line-through', marginRight: 6 }}>{from}</span>
                     <span style={{ color: '#34d399' }}>{to}</span>
                   </div>
                 ))}
 
                 {(ev.detail || ev.by) && (
-                  <div style={{ color: '#6b7280', fontSize: 9, marginTop: 2 }}>
+                  <div style={{ color: '#6b7280', fontSize: 11, marginTop: 4 }}>
                     {[ev.detail, ev.by ? `by ${ev.by}` : null].filter(Boolean).join(' · ')}
                   </div>
                 )}
@@ -148,12 +142,12 @@ export default function HistoryPanel({ entityType, entityId, entityName, onClose
         </div>
 
         {/* Footer */}
-        {!loading && (
-          <div style={{ padding: '10px 16px', borderTop: '1px solid #1e3050', color: '#6b7280', fontSize: 10, textAlign: 'center' }}>
+        {!loading && !fetchError && (
+          <div style={{ padding: '12px 20px', borderTop: '1px solid #1e3050', color: '#6b7280', fontSize: 11, textAlign: 'center', flexShrink: 0 }}>
             {events.length} event{events.length !== 1 ? 's' : ''} · newest first
           </div>
         )}
       </div>
-    </>
+    </div>
   )
 }
