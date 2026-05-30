@@ -55,7 +55,7 @@ export async function GET(_req: NextRequest, context: any) {
       events.push({
         type: 'CREATED',
         label: 'Record created',
-        by: 'Unknown',
+        by: null,
         timestamp: supplier.createdAt,
       })
     }
