@@ -41,3 +41,19 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+.env*.local
+
+# Playwright / automation artifacts
+.playwright-mcp/
+simulation-videos/
+
+# Claude / AI tool dirs
+.claude/
+.superpowers/
+
+# Screenshot & debug images
+*.png
+admin-*.png
+login-*.png
+manager-*.png
+staff-*.png
