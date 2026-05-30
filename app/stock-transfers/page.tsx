@@ -50,16 +50,6 @@ export default function StockTransfersPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const cached = readCache<Transfer>();
-    if (cached) {
-      setTransfers(cached);
-      setLoading(false);
-      Promise.all([fetch('/api/warehouses'), fetch('/api/products')])
-        .then(([whRes, prRes]) => Promise.all([whRes.json(), prRes.json()]))
-        .then(([whData, prData]) => { setWarehouses(whData || []); setProducts(prData || []); })
-        .catch(error => console.error('Failed to fetch data:', error));
-      return;
-    }
     const fetchData = async () => {
       try {
         const [trRes, whRes, prRes] = await Promise.all([
@@ -95,7 +85,8 @@ export default function StockTransfersPage() {
     writeCache(updated);
     try {
       const res = await fetch(`/api/stock-transfers/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error(`${res.status}`);
+      // 404 means already deleted — treat as success, keep removed from UI
+      if (!res.ok && res.status !== 404) throw new Error(`${res.status}`);
     } catch {
       setTransfers(previous);
       writeCache(previous);
