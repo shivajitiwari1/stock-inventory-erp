@@ -41,33 +41,3 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function PUT(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { id } = body;
-
-    const [existing] = await d1Query('SELECT * FROM suppliers WHERE id = ?', [id]);
-    if (!existing) {
-      return NextResponse.json({ error: 'Supplier not found' }, { status: 404 });
-    }
-
-    await d1Run(
-      `UPDATE suppliers SET name = ?, email = ?, phone = ?, address = ?, city = ?, country = ?, status = ? WHERE id = ?`,
-      [
-        body.name ?? existing.name,
-        body.email ?? existing.email,
-        body.phone ?? existing.phone,
-        body.address ?? existing.address,
-        body.city ?? existing.city,
-        body.country ?? existing.country,
-        body.status ?? existing.status,
-        id,
-      ]
-    );
-
-    const [updated] = await d1Query('SELECT * FROM suppliers WHERE id = ?', [id]);
-    return NextResponse.json(updated);
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to update supplier' }, { status: 500 });
-  }
-}
