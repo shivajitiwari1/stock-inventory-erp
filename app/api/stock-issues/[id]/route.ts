@@ -72,8 +72,8 @@ export async function PUT(request: NextRequest, context: any) {
           // More items now out → deduct more from inventory
           await d1Run(
             `UPDATE inventory SET
-               availableQuantity = MAX(0, availableQuantity - ?),
-               totalQuantity = MAX(0, totalQuantity - ?),
+               availableQuantity = GREATEST(0, availableQuantity - ?),
+               totalQuantity = GREATEST(0, totalQuantity - ?),
                lastUpdated = ?
              WHERE productId = ? AND warehouseId = ?`,
             [delta, delta, now, productId, warehouseId]

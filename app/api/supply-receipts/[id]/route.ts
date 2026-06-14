@@ -34,7 +34,7 @@ export async function PUT(request: NextRequest, context: any) {
       if (!item.productId || !oldWarehouseId || !(Number(item.quantity) > 0)) continue;
       const qty = Number(item.quantity);
       await d1Run(
-        'UPDATE inventory SET availableQuantity = MAX(0, availableQuantity - ?), totalQuantity = MAX(0, totalQuantity - ?), lastUpdated = ? WHERE productId = ? AND warehouseId = ?',
+        'UPDATE inventory SET availableQuantity = GREATEST(0, availableQuantity - ?), totalQuantity = GREATEST(0, totalQuantity - ?), lastUpdated = ? WHERE productId = ? AND warehouseId = ?',
         [qty, qty, now, item.productId, oldWarehouseId]
       );
     }

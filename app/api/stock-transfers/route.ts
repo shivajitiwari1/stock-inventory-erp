@@ -35,7 +35,7 @@ export async function applyInventory(
   if (direction === 1) {
     // Deduct from source
     await d1Run(
-      `UPDATE inventory SET availableQuantity = MAX(0, availableQuantity - ?), totalQuantity = MAX(0, totalQuantity - ?), lastUpdated = ? WHERE productId = ? AND warehouseId = ?`,
+      `UPDATE inventory SET availableQuantity = GREATEST(0, availableQuantity - ?), totalQuantity = GREATEST(0, totalQuantity - ?), lastUpdated = ? WHERE productId = ? AND warehouseId = ?`,
       [qty, qty, now, productId, fromWhId]
     );
     // Add to destination (upsert)
@@ -68,7 +68,7 @@ export async function applyInventory(
       [qty, qty, now, productId, fromWhId]
     );
     await d1Run(
-      `UPDATE inventory SET availableQuantity = MAX(0, availableQuantity - ?), totalQuantity = MAX(0, totalQuantity - ?), lastUpdated = ? WHERE productId = ? AND warehouseId = ?`,
+      `UPDATE inventory SET availableQuantity = GREATEST(0, availableQuantity - ?), totalQuantity = GREATEST(0, totalQuantity - ?), lastUpdated = ? WHERE productId = ? AND warehouseId = ?`,
       [qty, qty, now, productId, toWhId]
     );
   }

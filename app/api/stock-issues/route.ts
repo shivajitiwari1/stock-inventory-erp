@@ -51,8 +51,8 @@ export async function POST(request: NextRequest) {
     if (body.productId && body.warehouseId && netOut > 0) {
       await d1Run(
         `UPDATE inventory SET
-           availableQuantity = MAX(0, availableQuantity - ?),
-           totalQuantity = MAX(0, totalQuantity - ?),
+           availableQuantity = GREATEST(0, availableQuantity - ?),
+           totalQuantity = GREATEST(0, totalQuantity - ?),
            lastUpdated = ?
          WHERE productId = ? AND warehouseId = ?`,
         [netOut, netOut, now, body.productId, body.warehouseId]
