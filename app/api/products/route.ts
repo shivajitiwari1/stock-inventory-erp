@@ -74,8 +74,9 @@ export async function POST(request: NextRequest) {
     for (const whId of warehouseIds) {
       const invId = Date.now().toString() + Math.random().toString(36).slice(2);
       await d1Run(
-        `INSERT OR IGNORE INTO inventory (id, productId, warehouseId, totalQuantity, availableQuantity, reservedQuantity, damagedQuantity, lostQuantity, lastUpdated)
-         VALUES (?, ?, ?, 0, 0, 0, 0, 0, ?)`,
+        `INSERT INTO inventory (id, productId, warehouseId, totalQuantity, availableQuantity, reservedQuantity, damagedQuantity, lostQuantity, lastUpdated)
+         VALUES (?, ?, ?, 0, 0, 0, 0, 0, ?)
+         ON CONFLICT (productId, warehouseId) DO NOTHING`,
         [invId, id, whId, now]
       );
     }
