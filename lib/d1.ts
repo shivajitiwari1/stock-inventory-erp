@@ -18,8 +18,12 @@ function prepare(sql: string): string {
   return toPositional(quoteCamel(sql));
 }
 
+const NEON_URL =
+  process.env.DATABASE_URL ??
+  'postgresql://neondb_owner:npg_P60vmzusrwET@ep-muddy-paper-adyflik6-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
+
 function getDb() {
-  return neon(process.env.DATABASE_URL!);
+  return neon(NEON_URL);
 }
 
 export async function d1Query<T = any>(sql: string, params: any[] = []): Promise<T[]> {
