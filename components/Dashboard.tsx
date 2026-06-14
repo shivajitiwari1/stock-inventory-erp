@@ -16,7 +16,7 @@ export interface DashboardStats {
 export interface DashboardData {
   stats: DashboardStats;
   stockTrend: any[];
-  categoryDistribution: any[];
+  warehouseDistribution: any[];
   recentMovements: any[];
   products: any[];
 }
@@ -124,26 +124,26 @@ const Dashboard: React.FC<{ data: DashboardData }> = ({ data }) => {
           </ResponsiveContainer>
         </div>
 
-        {/* Category Distribution */}
+        {/* Warehouse Distribution */}
         <div className="bg-white dark:bg-slate-700 rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-100 dark:border-slate-500 min-w-0">
           <div className="flex items-center justify-between mb-4 sm:mb-6">
-            <h3 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-slate-100">Stock by Category</h3>
+            <h3 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-slate-100">Stock by Warehouse</h3>
             <div className="p-2 bg-purple-100 rounded-lg">
               <FiPackage className="w-5 h-5 text-purple-600" />
             </div>
           </div>
           <ResponsiveContainer width="100%" height={240}>
             <BarChart
-              data={data.categoryDistribution}
+              data={data.warehouseDistribution}
               layout="vertical"
               margin={{ top: 0, right: 20, left: 0, bottom: 0 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} horizontal={false} />
               <XAxis type="number" stroke={chartAxisColor} fontSize={11} tick={{ fill: chartAxisColor }} />
-              <YAxis type="category" dataKey="name" stroke={chartAxisColor} fontSize={12} tick={{ fill: chartAxisColor, fontWeight: 500 }} width={90} />
+              <YAxis type="category" dataKey="name" stroke={chartAxisColor} fontSize={12} tick={{ fill: chartAxisColor, fontWeight: 500 }} width={110} />
               <Tooltip cursor={false} contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} />
-              <Bar dataKey="value" name="Stock" radius={[0, 4, 4, 0]}>
-                {data.categoryDistribution.map((entry: any, index: number) => (
+              <Bar dataKey="value" name="Available Stock" radius={[0, 4, 4, 0]}>
+                {data.warehouseDistribution.map((entry: any, index: number) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Bar>

@@ -11,7 +11,7 @@ export interface DashboardStats {
 export interface DashboardData {
   stats: DashboardStats;
   stockTrend: Array<{ date: string; quantity: number; product: string }>;
-  categoryDistribution: Array<{ name: string; value: number }>;
+  warehouseDistribution: Array<{ name: string; value: number }>;
   recentMovements: Array<any>;
   products: Array<any>;
 }
@@ -30,14 +30,17 @@ export const getDashboardData = async (): Promise<DashboardData> => {
   }, 0);
   const outOfStockCount = inventory.filter((item: any) => item.availableQuantity === 0).length;
 
-  const categoryDistributionMap = products.reduce((map: any, product: any) => {
-    const inventoryItem = inventory.find((item: any) => item.productId === product.id);
-    const quantity = inventoryItem?.availableQuantity || 0;
-    map[product.category] = (map[product.category] || 0) + quantity;
+  const warehouseDistributionMap = warehouses.reduce((map: any, wh: any) => {
+    const whStock = inventory
+      .filter((item: any) => item.warehouseId === wh.id)
+      .reduce((sum: number, item: any) => sum + (item.availableQuantity || 0), 0);
+    map[wh.name] = whStock;
     return map;
   }, {} as Record<string, number>);
 
-  const categoryDistribution = Object.entries(categoryDistributionMap).map(([name, value]) => ({ name, value: value as number }));
+  const warehouseDistribution = Object.entries(warehouseDistributionMap)
+    .map(([name, value]) => ({ name, value: value as number }))
+    .sort((a, b) => b.value - a.value);
 
   const stockTrend = inventory
     .map((item: any) => {
@@ -76,7 +79,7 @@ export const getDashboardData = async (): Promise<DashboardData> => {
       }, new Date(0).toISOString()),
     },
     stockTrend,
-    categoryDistribution,
+    warehouseDistribution,
     recentMovements,
     products, // Add products to the return object
   };
