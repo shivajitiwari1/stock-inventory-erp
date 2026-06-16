@@ -57,7 +57,14 @@ export default function StockIssuesPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState('');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const { canDo } = useAuth();
+
+  const handleSort = (key: string) => {
+    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortKey(key); setSortDir('asc'); }
+  };
 
   useEffect(() => {
     Promise.all([
@@ -96,12 +103,19 @@ export default function StockIssuesPage() {
     }
   };
 
-  const filtered = issues.filter(i => {
-    const matchSearch = (i.productName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (i.contractorName || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchStatus = statusFilter ? i.status === statusFilter : true;
-    return matchSearch && matchStatus;
-  });
+  const filtered = issues
+    .filter(i => {
+      const matchSearch = (i.productName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (i.contractorName || '').toLowerCase().includes(searchTerm.toLowerCase());
+      const matchStatus = statusFilter ? i.status === statusFilter : true;
+      return matchSearch && matchStatus;
+    })
+    .sort((a, b) => {
+      if (!sortKey) return 0;
+      const av = String((a as any)[sortKey] ?? '');
+      const bv = String((b as any)[sortKey] ?? '');
+      return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    });
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen">
@@ -168,12 +182,12 @@ export default function StockIssuesPage() {
             <thead className="bg-gray-50 dark:bg-slate-700">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden sm:table-cell">MI No.</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Item</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Qty</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden sm:table-cell">Contractor / Worker</th>
+                <th onClick={() => handleSort('productName')} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Item {sortKey === 'productName' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th onClick={() => handleSort('quantity')} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Qty {sortKey === 'quantity' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th onClick={() => handleSort('contractorName')} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden sm:table-cell cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Contractor / Worker {sortKey === 'contractorName' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden md:table-cell">Gate Pass</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden md:table-cell">Issue Date</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Status</th>
+                <th onClick={() => handleSort('issueDate')} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden md:table-cell cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Issue Date {sortKey === 'issueDate' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th onClick={() => handleSort('status')} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Status {sortKey === 'status' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide sticky right-0 bg-gray-50 dark:bg-slate-700 z-10">Actions</th>
               </tr>
             </thead>

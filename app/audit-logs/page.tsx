@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { FiSearch } from 'react-icons/fi';
 
 interface AuditLog {
   id: string;
@@ -17,6 +18,9 @@ interface AuditLog {
 export default function AuditLogsPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortKey, setSortKey] = useState('');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
     const fetchLogs = async () => {
@@ -42,11 +46,38 @@ export default function AuditLogsPage() {
     );
   }
 
+  const handleSort = (key: string) => {
+    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortKey(key); setSortDir('asc'); }
+  };
+
+  const filteredLogs = logs
+    .filter(l => ['action', 'entityType', 'userName', 'details'].some(f => String((l as any)[f] ?? '').toLowerCase().includes(searchTerm.toLowerCase())))
+    .sort((a, b) => {
+      if (!sortKey) return 0;
+      const av = String((a as any)[sortKey] ?? '');
+      const bv = String((b as any)[sortKey] ?? '');
+      return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    });
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Audit Logs</h1>
         <p className="mt-2 text-gray-600">Review activity records for products, inventory, and system actions.</p>
+      </div>
+
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
+        <div className="relative">
+          <FiSearch className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Search by action, entity type, user, or details..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100"
+          />
+        </div>
       </div>
 
       <div className="rounded-xl bg-white shadow-sm border border-gray-200 overflow-hidden">
@@ -57,20 +88,20 @@ export default function AuditLogsPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Timestamp</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">User</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Action</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Entity</th>
+                <th onClick={() => handleSort('timestamp')} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Timestamp {sortKey === 'timestamp' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th onClick={() => handleSort('userName')} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">User {sortKey === 'userName' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th onClick={() => handleSort('action')} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Action {sortKey === 'action' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th onClick={() => handleSort('entityType')} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Entity {sortKey === 'entityType' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Details</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">IP Address</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {logs.length === 0 ? (
+              {filteredLogs.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-10 text-center text-gray-400">No audit logs found.</td>
                 </tr>
-              ) : logs.map((log) => (
+              ) : filteredLogs.map((log) => (
                 <tr key={log.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                     {new Date(log.timestamp).toLocaleString()}

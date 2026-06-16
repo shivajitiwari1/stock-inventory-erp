@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/AuthContext';
-import { FiEdit, FiX, FiLoader } from 'react-icons/fi';
+import { FiEdit, FiX, FiLoader, FiSearch } from 'react-icons/fi';
 
 interface AttributeQuantityRule {
   key: string;
@@ -42,12 +42,18 @@ function writeCache(list: InventoryItem[]) {
   try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(list)); } catch {}
 }
 
+type SortKey = 'productName' | 'warehouseName' | 'availableQuantity' | 'reservedQuantity' | 'totalQuantity' | 'minQuantity' | 'status';
+type SortDir = 'asc' | 'desc';
+
 export default function StockManagementPage() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const { canDo } = useAuth();
   const [loading, setLoading] = useState(true);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [showArchivedWh, setShowArchivedWh] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortKey, setSortKey] = useState<SortKey>('productName');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
 
   useEffect(() => {
     fetchInventory();
@@ -103,9 +109,48 @@ export default function StockManagementPage() {
   const lowStockCount = inventory.filter(i => i.availableQuantity > 0 && i.availableQuantity <= i.minQuantity).length;
   const outOfStockCount = inventory.filter(i => i.availableQuantity === 0).length;
 
-  const displayInventory = showArchivedWh
-    ? inventory
-    : inventory.filter(item => !item.warehouseArchived);
+  const handleSort = (key: SortKey) => {
+    if (key === sortKey) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const getStatus = (item: InventoryItem) =>
+    item.availableQuantity === 0 ? 'out'
+      : item.availableQuantity <= item.minQuantity ? 'low' : 'healthy';
+
+  const statusOrder: Record<string, number> = { out: 0, low: 1, healthy: 2 };
+
+  const displayInventory = (() => {
+    const base = showArchivedWh ? inventory : inventory.filter(i => !i.warehouseArchived);
+    const term = searchTerm.trim().toLowerCase();
+    const filtered = term
+      ? base.filter(i =>
+          i.productName.toLowerCase().includes(term) ||
+          i.warehouseName.toLowerCase().includes(term)
+        )
+      : base;
+
+    return [...filtered].sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === 'status') {
+        cmp = statusOrder[getStatus(a)] - statusOrder[getStatus(b)];
+      } else if (
+        sortKey === 'availableQuantity' ||
+        sortKey === 'reservedQuantity' ||
+        sortKey === 'totalQuantity' ||
+        sortKey === 'minQuantity'
+      ) {
+        cmp = a[sortKey] - b[sortKey];
+      } else {
+        cmp = (a[sortKey] as string).localeCompare(b[sortKey] as string);
+      }
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  })();
 
   if (loading) {
     return (
@@ -149,6 +194,20 @@ export default function StockManagementPage() {
         ))}
       </div>
 
+      {/* Search */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="relative">
+          <FiSearch className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Search by product or warehouse..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
       {/* Inventory table */}
       <div className="rounded-xl bg-white shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
@@ -158,23 +217,37 @@ export default function StockManagementPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Product</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">Warehouse</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Supplier</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Available</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Reserved</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Total</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Min Qty</th>
-                <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Action</th>
+                {(
+                  [
+                    { key: 'productName', label: 'Product', align: 'left', cls: '' },
+                    { key: 'warehouseName', label: 'Warehouse', align: 'left', cls: 'hidden sm:table-cell' },
+                    { key: null, label: 'Supplier', align: 'left', cls: 'hidden lg:table-cell' },
+                    { key: 'availableQuantity', label: 'Available', align: 'right', cls: '' },
+                    { key: 'reservedQuantity', label: 'Reserved', align: 'right', cls: 'hidden md:table-cell' },
+                    { key: 'totalQuantity', label: 'Total', align: 'right', cls: '' },
+                    { key: 'minQuantity', label: 'Min Qty', align: 'right', cls: 'hidden md:table-cell' },
+                    { key: 'status', label: 'Status', align: 'center', cls: '' },
+                    { key: null, label: 'Action', align: 'center', cls: '' },
+                  ] as { key: SortKey | null; label: string; align: string; cls: string }[]
+                ).map(({ key, label, align, cls }) => (
+                  <th
+                    key={label}
+                    onClick={key ? () => handleSort(key) : undefined}
+                    className={`px-6 py-3 text-${align} text-xs font-semibold text-gray-500 uppercase ${cls} ${key ? 'cursor-pointer select-none hover:text-gray-700' : ''}`}
+                  >
+                    {label}
+                    {key && sortKey === key && (
+                      <span className="ml-1">{sortDir === 'asc' ? '▲' : '▼'}</span>
+                    )}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {displayInventory.length === 0 ? (
                 <tr><td colSpan={9} className="px-6 py-10 text-center text-gray-400">No inventory records found.</td></tr>
               ) : displayInventory.map((item) => {
-                const status = item.availableQuantity === 0 ? 'out'
-                  : item.availableQuantity <= item.minQuantity ? 'low' : 'healthy';
+                const status = getStatus(item);
                 return (
                   <tr key={item.id} className={`hover:bg-gray-50 ${item.warehouseArchived ? 'opacity-60' : ''}`}>
                     <td className="px-6 py-4">

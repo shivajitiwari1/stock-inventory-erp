@@ -40,6 +40,8 @@ export default function ContractorsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Contractor | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortKey, setSortKey] = useState('');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [historyTarget, setHistoryTarget] = useState<{ id: string; name: string } | null>(null);
@@ -84,10 +86,19 @@ export default function ContractorsPage() {
     }
   };
 
-  const filtered = contractors.filter(c =>
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.company.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleSort = (key: string) => {
+    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortKey(key); setSortDir('asc'); }
+  };
+
+  const filtered = contractors
+    .filter(c => ['name', 'phone', 'role', 'company'].some(f => String((c as any)[f] ?? '').toLowerCase().includes(searchTerm.toLowerCase())))
+    .sort((a, b) => {
+      if (!sortKey) return 0;
+      const av = String((a as any)[sortKey] ?? '');
+      const bv = String((b as any)[sortKey] ?? '');
+      return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    });
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen">
@@ -127,7 +138,7 @@ export default function ContractorsPage() {
           <FiSearch className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
           <input
             type="text"
-            placeholder="Search by name or company..."
+            placeholder="Search by name, phone, role, or company..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100"
@@ -140,10 +151,10 @@ export default function ContractorsPage() {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
             <thead className="bg-gray-50 dark:bg-slate-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden sm:table-cell">Phone</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Role</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden md:table-cell">Company</th>
+                <th onClick={() => handleSort('name')} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Name {sortKey === 'name' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th onClick={() => handleSort('phone')} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden sm:table-cell cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Phone {sortKey === 'phone' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th onClick={() => handleSort('role')} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Role {sortKey === 'role' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th onClick={() => handleSort('company')} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden md:table-cell cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Company {sortKey === 'company' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Actions</th>
               </tr>
             </thead>

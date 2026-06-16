@@ -25,6 +25,8 @@ export default function InventoryPage() {
   const [warehouseFilter, setWarehouseFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showArchivedWh, setShowArchivedWh] = useState(false);
+  const [sortKey, setSortKey] = useState('');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -63,19 +65,31 @@ export default function InventoryPage() {
   // Derived filter options
   const warehouses = useMemo(() => [...new Set(inventory.map(i => i.warehouseName))], [inventory]);
 
+  const handleSort = (key: string) => {
+    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortKey(key); setSortDir('asc'); }
+  };
+
   // Filtered list
   const filtered = useMemo(() => {
-    return inventory.filter(item => {
+    const base = inventory.filter(item => {
       if (!showArchivedWh && item.warehouseArchived) return false;
       const matchSearch = !search ||
-        item.productName.toLowerCase().includes(search.toLowerCase());
+        item.productName.toLowerCase().includes(search.toLowerCase()) ||
+        item.warehouseName.toLowerCase().includes(search.toLowerCase());
       const matchWarehouse = !warehouseFilter || item.warehouseName === warehouseFilter;
       const status = item.availableQuantity === 0 ? 'out'
         : item.availableQuantity <= item.minQuantity ? 'low' : 'good';
       const matchStatus = !statusFilter || status === statusFilter;
       return matchSearch && matchWarehouse && matchStatus;
     });
-  }, [inventory, search, warehouseFilter, statusFilter, showArchivedWh]);
+    if (!sortKey) return base;
+    return [...base].sort((a, b) => {
+      const av = String((a as any)[sortKey] ?? '');
+      const bv = String((b as any)[sortKey] ?? '');
+      return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    });
+  }, [inventory, search, warehouseFilter, statusFilter, showArchivedWh, sortKey, sortDir]);
 
   const exportXLS = async () => {
     const wb = new ExcelJS.Workbook();
@@ -229,7 +243,7 @@ export default function InventoryPage() {
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
-              placeholder="Search by product name..."
+              placeholder="Search by product or warehouse..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -295,11 +309,11 @@ export default function InventoryPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Product</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide hidden sm:table-cell">Warehouse</th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide">Available</th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide hidden md:table-cell">Reserved</th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide">Total</th>
+                <th onClick={() => handleSort('productName')} className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Product {sortKey === 'productName' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th onClick={() => handleSort('warehouseName')} className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide hidden sm:table-cell cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Warehouse {sortKey === 'warehouseName' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th onClick={() => handleSort('availableQuantity')} className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Available {sortKey === 'availableQuantity' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th onClick={() => handleSort('reservedQuantity')} className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide hidden md:table-cell cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Reserved {sortKey === 'reservedQuantity' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th onClick={() => handleSort('totalQuantity')} className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Total {sortKey === 'totalQuantity' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide hidden md:table-cell">Min Qty</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide hidden md:table-cell">Last Updated</th>
                 <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wide">Status</th>

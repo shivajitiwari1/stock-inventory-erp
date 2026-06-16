@@ -52,6 +52,8 @@ export default function SupplyReceiptsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<SupplyReceipt | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortKey, setSortKey] = useState('');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const { canDo } = useAuth();
@@ -95,10 +97,19 @@ export default function SupplyReceiptsPage() {
     }
   };
 
-  const filtered = receipts.filter(r =>
-    r.supplierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.gatePassNumber.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleSort = (key: string) => {
+    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortKey(key); setSortDir('asc'); }
+  };
+
+  const filtered = receipts
+    .filter(r => ['supplierName', 'warehouseName', 'gatePassNumber'].some(f => String((r as any)[f] ?? '').toLowerCase().includes(searchTerm.toLowerCase())))
+    .sort((a, b) => {
+      if (!sortKey) return 0;
+      const av = String((a as any)[sortKey] ?? '');
+      const bv = String((b as any)[sortKey] ?? '');
+      return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    });
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen">
@@ -138,7 +149,7 @@ export default function SupplyReceiptsPage() {
           <FiSearch className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
           <input
             type="text"
-            placeholder="Search by supplier or gate pass..."
+            placeholder="Search by supplier, warehouse, or gate pass..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100"
@@ -152,11 +163,11 @@ export default function SupplyReceiptsPage() {
             <thead className="bg-gray-50 dark:bg-slate-700">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden sm:table-cell">Receipt ID</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Supplier</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden sm:table-cell">Warehouse</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden sm:table-cell">Date</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden md:table-cell">Amount (₹)</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden md:table-cell">Gate Pass</th>
+                <th onClick={() => handleSort('supplierName')} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Supplier {sortKey === 'supplierName' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th onClick={() => handleSort('warehouseName')} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden sm:table-cell cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Warehouse {sortKey === 'warehouseName' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th onClick={() => handleSort('dateTime')} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden sm:table-cell cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Date {sortKey === 'dateTime' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th onClick={() => handleSort('totalAmount')} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden md:table-cell cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Amount (₹) {sortKey === 'totalAmount' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th onClick={() => handleSort('createdAt')} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide hidden md:table-cell cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Gate Pass {sortKey === 'createdAt' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Receipt</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Actions</th>
               </tr>

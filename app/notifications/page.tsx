@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FiPlus, FiTrash2, FiBell, FiInfo, FiAlertTriangle, FiCheckCircle, FiAlertCircle, FiX, FiLoader, FiEdit } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiBell, FiInfo, FiAlertTriangle, FiCheckCircle, FiAlertCircle, FiX, FiLoader, FiEdit, FiSearch } from 'react-icons/fi';
 import { useAuth } from '@/components/AuthContext';
 
 interface Notification {
@@ -63,6 +63,9 @@ export default function NotificationsPage() {
   const [editingNotification, setEditingNotification] = useState<Notification | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortKey, setSortKey] = useState('');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
     const cached = readCache();
@@ -114,6 +117,26 @@ export default function NotificationsPage() {
     });
     setShowModal(false);
   };
+
+  const handleSort = (key: string) => {
+    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortKey(key); setSortDir('asc'); }
+  };
+
+  const filteredNotifications = (() => {
+    const base = [...notifications].filter(n =>
+      ['title', 'message', 'type'].some(f => String((n as any)[f] ?? '').toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+    if (sortKey) {
+      return base.sort((a, b) => {
+        const av = String((a as any)[sortKey] ?? '');
+        const bv = String((b as any)[sortKey] ?? '');
+        return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+      });
+    }
+    // Default: newest first (original behaviour)
+    return base.reverse();
+  })();
 
   const handleEdited = (updated: Notification) => {
     setNotifications(prev => {
@@ -167,19 +190,36 @@ export default function NotificationsPage() {
         ))}
       </div>
 
+      {/* Search */}
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
+        <div className="relative">
+          <FiSearch className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Search by title, message, or type..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100"
+          />
+        </div>
+      </div>
+
       {/* Notifications list */}
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
             <thead className="bg-gray-50 dark:bg-slate-700">
               <tr>
-                {['Type', 'Title & Message', 'Target', 'Sent', 'Seen by', 'Actions'].map(h => (
-                  <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase">{h}</th>
-                ))}
+                <th onClick={() => handleSort('type')} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Type {sortKey === 'type' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th onClick={() => handleSort('title')} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Title & Message {sortKey === 'title' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase">Target</th>
+                <th onClick={() => handleSort('createdAt')} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Sent {sortKey === 'createdAt' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase">Seen by</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
-              {notifications.length === 0 && (
+              {filteredNotifications.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-5 py-12 text-center">
                     <FiBell className="w-10 h-10 text-gray-300 mx-auto mb-2" />
@@ -187,7 +227,7 @@ export default function NotificationsPage() {
                   </td>
                 </tr>
               )}
-              {[...notifications].reverse().map(n => {
+              {filteredNotifications.map(n => {
                 const totalTargets = (n.targetUserId === 'ALL' || n.targetUserId === 'everyone') ? users.length : 1;
                 const isDeleting = deletingId === n.id;
                 return (

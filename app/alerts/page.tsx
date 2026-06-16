@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { FiEdit2, FiCheck, FiX } from 'react-icons/fi';
+import { FiEdit2, FiCheck, FiX, FiSearch } from 'react-icons/fi';
 
 interface AlertItem {
   id: string;
@@ -68,6 +68,9 @@ export default function AlertsPage() {
   const [lowStock, setLowStock] = useState<AlertItem[]>([]);
   const [outOfStock, setOutOfStock] = useState<AlertItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortKey, setSortKey] = useState('');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   const handleMinQtyUpdate = (productId: string, newMin: number) => {
     const update = (list: AlertItem[]) => list.map(i => i.productId === productId ? { ...i, minQuantity: newMin } : i);
@@ -114,6 +117,24 @@ export default function AlertsPage() {
     fetchData();
   }, []);
 
+  const handleSort = (key: string) => {
+    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortKey(key); setSortDir('asc'); }
+  };
+
+  const applyFilter = (list: AlertItem[]) =>
+    list
+      .filter(i => ['productName', 'warehouseName'].some(f => String((i as any)[f] ?? '').toLowerCase().includes(searchTerm.toLowerCase())))
+      .sort((a, b) => {
+        if (!sortKey) return 0;
+        const av = String((a as any)[sortKey] ?? '');
+        const bv = String((b as any)[sortKey] ?? '');
+        return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+      });
+
+  const filteredLowStock = applyFilter(lowStock);
+  const filteredOutOfStock = applyFilter(outOfStock);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -127,6 +148,19 @@ export default function AlertsPage() {
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Alerts</h1>
         <p className="mt-2 text-gray-600">Track low stock and out of stock conditions across your warehouses.</p>
+      </div>
+
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
+        <div className="relative">
+          <FiSearch className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Search by product or warehouse..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100"
+          />
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -153,16 +187,16 @@ export default function AlertsPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Product</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Warehouse</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Available</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Min Qty</th>
+                  <th onClick={() => handleSort('productName')} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Product {sortKey === 'productName' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                  <th onClick={() => handleSort('warehouseName')} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Warehouse {sortKey === 'warehouseName' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                  <th onClick={() => handleSort('availableQuantity')} className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Available {sortKey === 'availableQuantity' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                  <th onClick={() => handleSort('minQuantity')} className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Min Qty {sortKey === 'minQuantity' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {lowStock.length === 0 ? (
+                {filteredLowStock.length === 0 ? (
                   <tr><td colSpan={4} className="px-6 py-6 text-center text-gray-400">No low stock alerts.</td></tr>
-                ) : lowStock.map((item) => (
+                ) : filteredLowStock.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 text-sm text-gray-900">{item.productName}</td>
                     <td className="px-6 py-4 text-sm text-gray-500 hidden sm:table-cell">{item.warehouseName}</td>
@@ -185,15 +219,15 @@ export default function AlertsPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Product</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Warehouse</th>
+                  <th onClick={() => handleSort('productName')} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Product {sortKey === 'productName' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                  <th onClick={() => handleSort('warehouseName')} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Warehouse {sortKey === 'warehouseName' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
                   <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {outOfStock.length === 0 ? (
+                {filteredOutOfStock.length === 0 ? (
                   <tr><td colSpan={3} className="px-6 py-6 text-center text-gray-400">No out of stock items.</td></tr>
-                ) : outOfStock.map((item) => (
+                ) : filteredOutOfStock.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 text-sm text-gray-900">{item.productName}</td>
                     <td className="px-6 py-4 text-sm text-gray-500 hidden sm:table-cell">{item.warehouseName}</td>

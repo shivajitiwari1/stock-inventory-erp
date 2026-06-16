@@ -75,6 +75,8 @@ const UsersPage: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortKey, setSortKey] = useState('');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showRoleModal, setShowRoleModal] = useState(false);
@@ -178,10 +180,19 @@ const UsersPage: React.FC = () => {
     }
   };
 
-  const filteredUsers = users.filter(u =>
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleSort = (key: string) => {
+    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortKey(key); setSortDir('asc'); }
+  };
+
+  const filteredUsers = users
+    .filter(u => ['name', 'email', 'role'].some(f => String((u as any)[f] ?? '').toLowerCase().includes(searchTerm.toLowerCase())))
+    .sort((a, b) => {
+      if (!sortKey) return 0;
+      const av = String((a as any)[sortKey] ?? '');
+      const bv = String((b as any)[sortKey] ?? '');
+      return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    });
 
   const getRoleName = (key: string) => roles.find(r => r.key === key)?.name || key;
 
@@ -253,10 +264,10 @@ const UsersPage: React.FC = () => {
           </div>
 
           {/* Search */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
             <div className="relative">
               <FiSearch className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
-              <input type="text" placeholder="Search users..." value={searchTerm}
+              <input type="text" placeholder="Search by name, email, or role..." value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100" />
             </div>
@@ -268,11 +279,11 @@ const UsersPage: React.FC = () => {
               <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
                 <thead className="bg-gray-50 dark:bg-slate-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase hidden sm:table-cell">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase">Role</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase hidden md:table-cell">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase hidden md:table-cell">Last Login</th>
+                    <th onClick={() => handleSort('name')} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Name {sortKey === 'name' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                    <th onClick={() => handleSort('email')} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase hidden sm:table-cell cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Email {sortKey === 'email' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                    <th onClick={() => handleSort('role')} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Role {sortKey === 'role' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                    <th onClick={() => handleSort('status')} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase hidden md:table-cell cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Status {sortKey === 'status' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+                    <th onClick={() => handleSort('createdAt')} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase hidden md:table-cell cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-slate-600">Last Login {sortKey === 'createdAt' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase">Actions</th>
                   </tr>
                 </thead>
