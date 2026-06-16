@@ -210,7 +210,7 @@ export default function ProductsPage() {
                     {(() => {
                       const s = getStockStatus(product);
                       return (
-                        <span className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                        <span className={`rounded-full px-2 py-1 text-xs font-semibold whitespace-nowrap ${
                           s === 'out' ? 'bg-red-100 text-red-700' :
                           s === 'low' ? 'bg-yellow-100 text-yellow-700' :
                           'bg-green-100 text-green-700'

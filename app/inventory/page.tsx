@@ -350,7 +350,7 @@ export default function InventoryPage() {
                       {item.lastUpdated ? new Date(item.lastUpdated).toLocaleDateString() : '—'}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
+                      <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
                         status === 'good' ? 'bg-green-100 text-green-700' :
                         status === 'low'  ? 'bg-yellow-100 text-yellow-700' :
                                             'bg-red-100 text-red-700'
